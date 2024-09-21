@@ -20,7 +20,6 @@ class WebViewActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_web_view)
-
         val webView: WebView = findViewById(R.id.webView)
         webView.settings.javaScriptEnabled = true
         webView.settings.domStorageEnabled = true
@@ -54,7 +53,9 @@ class WebViewActivity : AppCompatActivity() {
                 return true
             }
         }
-//        webView.loadUrl("https://www.example.com") // Ersetze dies mit der gewünschten URL
-        webView.loadUrl("https://www.fsiebecke.de/deeplinks.html")
+        val url = intent.getStringExtra("EXTRA_URL")
+        if (url != null) {
+            webView.loadUrl(url)
+        }
     }
 }

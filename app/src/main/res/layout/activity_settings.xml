@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="16dp">
+
+    <!-- BLZ Eingabefeld -->
+    <EditText
+        android:id="@+id/editTextBLZ"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="BLZ" />
+
+    <!-- Anmeldename Eingabefeld -->
+    <EditText
+        android:id="@+id/editTextUsername"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Anmeldename" />
+
+    <!-- PIN Eingabefeld -->
+    <EditText
+        android:id="@+id/editTextPIN"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:inputType="numberPassword"
+        android:hint="PIN" />
+
+    <!-- SF Stage Spinner -->
+    <Spinner
+        android:id="@+id/spinnerSFStage"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:entries="@array/sf_stage_array" />
+
+    <!-- MKA-Linie Eingabefeld -->
+    <EditText
+        android:id="@+id/editTextMKALine"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="MKA-Linie" />
+
+    <!-- Deeplink-URL Eingabefeld -->
+    <EditText
+        android:id="@+id/editTextDeeplinkURL"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Deeplink-URL" />
+
+    <!-- Save Button -->
+    <Button
+        android:id="@+id/buttonSave"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Save" />
+
+    <!-- Log Button -->
+    <Button
+        android:id="@+id/buttonLog"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Log" />
+
+    <!-- Log TextView -->
+    <TextView
+        android:id="@+id/textViewLog"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text=""
+        android:paddingTop="16dp" />
+
+</LinearLayout>

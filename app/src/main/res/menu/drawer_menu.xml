@@ -1,10 +1,36 @@
 <?xml version="1.0" encoding="utf-8"?>
 
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
-<item
-    android:id="@+id/nav_function1"
-    android:title="Funktion 1"/>
-<item
-    android:id="@+id/nav_function2"
-    android:title="Funktion 2"/>
+    <item
+        android:id="@+id/nav_function_appstart"
+        android:title="App-Start"/>
+
+    <item
+        android:id="@+id/nav_function_rundruf"
+        android:title="Rundruf"/>
+
+    <item
+        android:id="@+id/nav_function_kontakt"
+        android:title="Kontakt"/>
+
+    <item
+        android:id="@+id/nav_function_angebote"
+        android:title="Angebote"/>
+
+    <item
+        android:id="@+id/nav_function_webview"
+        android:title="Webview"/>
+
+    <item
+        android:id="@+id/nav_function_greensmilies"
+        android:title="Greensmilies"/>
+
+    <item
+        android:id="@+id/nav_function_message"
+        android:title="Hinweis"/>
+
+    <item
+        android:id="@+id/nav_function_einstellungen"
+        android:title="Einstellungen"/>
+
 </menu>

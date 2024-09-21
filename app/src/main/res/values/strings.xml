@@ -3,5 +3,15 @@
     <string name="title_activity_web_view">WebViewActivity</string>
     <string name="navigation_drawer_open">Open Navigation</string>
     <string name="navigation_drawer_close">Close Navigation</string>
-
+    <string name="title_activity_settings">SettingsActivity</string>
+    <string-array name="sf_stage_array">
+        <item>Rhein</item>
+        <item>Beta</item>
+        <item>Prod</item>
+    </string-array>
+    <string name="default_blz">94059421</string>
+    <string name="default_stage">Beta</string>
+    <string name="default_mka">si01a</string>
+    <string name="default_deeplinks_url">https://www.fsiebecke.de/deeplinks.html</string>
+    <string name="greensmilies_url">https://www.greensmilies.com/test/tel.html</string>
 </resources>

@@ -1,6 +1,7 @@
 package com.example.deeplinkwebviewapp
 
 import android.content.Intent
+import android.content.SharedPreferences
 import android.net.Uri
 import android.os.Bundle
 import androidx.appcompat.app.AlertDialog
@@ -10,16 +11,21 @@ import androidx.core.view.GravityCompat
 import androidx.drawerlayout.widget.DrawerLayout
 import com.google.android.material.navigation.NavigationView
 import androidx.appcompat.app.ActionBarDrawerToggle
+import androidx.preference.PreferenceManager
 
 class MainActivity : AppCompatActivity() {
 
     private lateinit var drawerLayout: DrawerLayout
     private lateinit var navView: NavigationView
     private lateinit var toggle: ActionBarDrawerToggle // Fügt ActionBarDrawerToggle hinzu
+    private lateinit var sharedPreferences: SharedPreferences
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+
+        // SharedPreferences initialisieren
+        sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this)
 
         // Toolbar hinzufügen
         val toolbar: Toolbar = findViewById(R.id.toolbar)
@@ -40,13 +46,40 @@ class MainActivity : AppCompatActivity() {
         // Menü-Item-Listener
         navView.setNavigationItemSelectedListener { menuItem ->
             when (menuItem.itemId) {
-                R.id.nav_function1 -> {
+                R.id.nav_function_appstart -> {
+                    true
+                }
+                R.id.nav_function_rundruf -> {
+                    true
+                }
+                R.id.nav_function_kontakt -> {
+                    true
+                }
+                R.id.nav_function_angebote -> {
+                    true
+                }
+                R.id.nav_function_rundruf -> {
+                    true
+                }
+                R.id.nav_function_webview -> {
+                    val url = sharedPreferences.getString("DeeplinkURL", getString(R.string.default_deeplinks_url))
+                    if (url != null) {
+                        openWebView(url)
+                    }
+                    true
+                }
+                R.id.nav_function_greensmilies -> {
+                    openWebView(getString(R.string.greensmilies_url))
+                    true
+                }
+                R.id.nav_function_message -> {
                     // Öffne Funktion 1
                     showAlertDialog()
                     true
                 }
-                R.id.nav_function2 -> {
-                    openWebView()
+                R.id.nav_function_einstellungen -> {
+                    val intent = Intent(this, SettingsActivity::class.java)
+                    startActivity(intent)
                     true
                 }
                 else -> false
@@ -64,8 +97,8 @@ class MainActivity : AppCompatActivity() {
 
     private fun showAlertDialog() {
         val builder = AlertDialog.Builder(this)
-        builder.setTitle("Message")
-        builder.setMessage("This is your message!")
+        builder.setTitle("Hinweis")
+        builder.setMessage("Dies ist ein wichtiger Hinweis!")
         builder.setPositiveButton("OK") { dialog, _ ->
             dialog.dismiss()
         }
@@ -73,8 +106,10 @@ class MainActivity : AppCompatActivity() {
         dialog.show()
     }
 
-    private fun openWebView() {
-        val intent = Intent(this, WebViewActivity::class.java)
+    private fun openWebView(url: String) {
+        val intent = Intent(this, WebViewActivity::class.java).apply {
+            putExtra("EXTRA_URL", url) // Den Parameter hinzufügen
+        }
         startActivity(intent)
     }
 
