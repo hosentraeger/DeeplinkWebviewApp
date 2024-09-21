@@ -19,7 +19,7 @@ class MainActivity : AppCompatActivity() {
         // Deeplink verarbeiten
         if (intent?.action == Intent.ACTION_VIEW) {
             val data: Uri? = intent.data
-            if (data != null && data.path == "/showAlert") {
+            if (data != null && data.path == "/_deeplink/showAlert") {
                 showAlertDialog()
             }
         }
