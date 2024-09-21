@@ -1,4 +1,7 @@
 <resources>
     <string name="app_name">DeeplinkWebviewApp</string>
     <string name="title_activity_web_view">WebViewActivity</string>
+    <string name="navigation_drawer_open">Open Navigation</string>
+    <string name="navigation_drawer_close">Close Navigation</string>
+
 </resources>
