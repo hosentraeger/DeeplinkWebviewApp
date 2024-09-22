@@ -5,7 +5,6 @@ import android.content.SharedPreferences
 import android.net.Uri
 import android.os.Bundle
 import android.util.Log
-import android.widget.TextView
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.Toolbar
@@ -16,12 +15,61 @@ import androidx.appcompat.app.ActionBarDrawerToggle
 import androidx.preference.PreferenceManager
 import com.google.firebase.messaging.FirebaseMessaging
 
+import com.google.gson.Gson
+import okhttp3.MediaType.Companion.toMediaType
+import okhttp3.OkHttpClient
+import okhttp3.Request
+import okhttp3.RequestBody
+import okhttp3.Response
+
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+
+data class DeviceData(
+    val device_id: String = "12345",
+    val push_id: String,
+    val login_id: String = "royb",
+    val last_login: String = "2024-09-22T12:34:56Z"
+)
+
+class MyHttpClient {
+
+    private val client = OkHttpClient()
+    private val gson = Gson()
+
+    fun postDeviceData(pushId: String): String? {
+        val deviceData = DeviceData(push_id = pushId)
+
+        // JSON-String erstellen
+        val json = gson.toJson(deviceData)
+
+        // RequestBody erstellen
+        val requestBody = RequestBody.create("application/json; charset=utf-8".toMediaType(), json)
+
+        // POST-Anfrage erstellen
+        val request = Request.Builder()
+            .url("https://www.fsiebecke.de/appstart") // Ersetze dies durch deine URL
+            .post(requestBody)
+            .build()
+
+        client.newCall(request).execute().use { response: Response ->
+            return if (response.isSuccessful) {
+                response.body?.string()
+            } else {
+                null
+            }
+        }
+    }
+}
+
 class MainActivity : AppCompatActivity() {
 
     private lateinit var drawerLayout: DrawerLayout
     private lateinit var navView: NavigationView
     private lateinit var toggle: ActionBarDrawerToggle // Fügt ActionBarDrawerToggle hinzu
     private lateinit var sharedPreferences: SharedPreferences
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -134,6 +182,9 @@ class MainActivity : AppCompatActivity() {
 
             // FCM Token ins Log schreiben und in der SettingsActivity anzeigen
             Logger.log("FCM Token: $token")
+
+            // Hier den POST-Request senden
+            sendDeviceData ( token )
         }
     }
 
@@ -161,6 +212,16 @@ class MainActivity : AppCompatActivity() {
             drawerLayout.closeDrawer(GravityCompat.START)
         } else {
             super.onBackPressed()
+        }
+    }
+    fun sendDeviceData(pushId: String) {
+        val httpClient = MyHttpClient()
+        CoroutineScope(Dispatchers.IO).launch {
+            val response = httpClient.postDeviceData(pushId)
+            // Update UI auf dem Haupt-Thread, wenn nötig
+            if (response != null) {
+                // Verarbeite die Antwort hier
+            }
         }
     }
 }
