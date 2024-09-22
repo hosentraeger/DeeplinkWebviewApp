@@ -4,6 +4,7 @@ import android.content.Intent
 import android.content.SharedPreferences
 import android.net.Uri
 import android.os.Bundle
+import android.util.Log
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.Toolbar
@@ -12,6 +13,7 @@ import androidx.drawerlayout.widget.DrawerLayout
 import com.google.android.material.navigation.NavigationView
 import androidx.appcompat.app.ActionBarDrawerToggle
 import androidx.preference.PreferenceManager
+import com.google.firebase.messaging.FirebaseMessaging
 
 class MainActivity : AppCompatActivity() {
 
@@ -92,6 +94,18 @@ class MainActivity : AppCompatActivity() {
             if (data != null && data.path == "/_deeplink/showAlert") {
                 showAlertDialog()
             }
+        }
+
+        FirebaseMessaging.getInstance().token.addOnCompleteListener { task ->
+            if (!task.isSuccessful) {
+                // Token-Abruf fehlgeschlagen
+                return@addOnCompleteListener
+            }
+
+            // FCM-Token abrufen
+            val token = task.result
+            // Hier kannst du das Token speichern oder zu deinem Server senden
+            Log.d("FCMToken", "FCM Token: $token")
         }
     }
 

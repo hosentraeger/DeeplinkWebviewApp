@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "664831534455",
+    "project_id": "pushtoapp-c3caa",
+    "storage_bucket": "pushtoapp-c3caa.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:664831534455:android:c9e3c9dd4209ff991fed72",
+        "android_client_info": {
+          "package_name": "com.example.deeplinkwebviewapp"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA3WDqsvgw6IkhSo5vzeYrrT9KPgTwA5tY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
