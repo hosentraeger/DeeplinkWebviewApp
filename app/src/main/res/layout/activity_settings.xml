@@ -48,6 +48,12 @@
         android:layout_height="wrap_content"
         android:hint="Deeplink-URL" />
 
+    <TextView
+        android:id="@+id/textViewFCMToken"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="FCM Token wird hier angezeigt" />
+
     <!-- Save Button -->
     <Button
         android:id="@+id/buttonSave"
@@ -55,19 +61,12 @@
         android:layout_height="wrap_content"
         android:text="Save" />
 
-    <!-- Log Button -->
-    <Button
-        android:id="@+id/buttonLog"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="Log" />
-
     <!-- Log TextView -->
     <TextView
         android:id="@+id/textViewLog"
-        android:layout_width="match_parent"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text=""
-        android:paddingTop="16dp" />
+        android:text="Log"
+        android:textIsSelectable="true" />
 
 </LinearLayout>

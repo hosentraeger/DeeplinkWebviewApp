@@ -28,6 +28,17 @@ class MainActivity : AppCompatActivity() {
 
         // SharedPreferences initialisieren
         sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this)
+        if (false == sharedPreferences.getBoolean("valid", false)) {
+            val editor = sharedPreferences.edit()
+            editor.putString("BLZ", getString(R.string.default_blz))
+            editor.putString("Username", "")
+            editor.putString("PIN", "")
+            editor.putString("MKALine", getString(R.string.default_mka))
+            editor.putString("SFStage", getString(R.string.default_stage))
+            editor.putString("DeeplinkURL", getString(R.string.default_deeplink_url))
+            editor.putBoolean("valid", true) // "key_name" ist der Schlüssel, 'true' der Boolean-Wert
+            editor.commit()
+        }
 
         // Toolbar hinzufügen
         val toolbar: Toolbar = findViewById(R.id.toolbar)
@@ -64,7 +75,7 @@ class MainActivity : AppCompatActivity() {
                     true
                 }
                 R.id.nav_function_webview -> {
-                    val url = sharedPreferences.getString("DeeplinkURL", getString(R.string.default_deeplinks_url))
+                    val url = sharedPreferences.getString("DeeplinkURL", getString(R.string.default_deeplink_url))
                     if (url != null) {
                         openWebView(url)
                     }
@@ -96,6 +107,7 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
+        // Firebase Messaging Token abrufen und in die Logs schreiben
         FirebaseMessaging.getInstance().token.addOnCompleteListener { task ->
             if (!task.isSuccessful) {
                 // Token-Abruf fehlgeschlagen
@@ -104,8 +116,17 @@ class MainActivity : AppCompatActivity() {
 
             // FCM-Token abrufen
             val token = task.result
+
             // Hier kannst du das Token speichern oder zu deinem Server senden
             Log.d("FCMToken", "FCM Token: $token")
+
+            // FCM-Token in SharedPreferences speichern
+            val editor = sharedPreferences.edit()
+            editor.putString("FCMToken", token)
+            editor.apply() // Async speichern
+
+            // FCM Token ins Log schreiben und in der SettingsActivity anzeigen
+            SettingsActivity.appendLog("FCM Token: $token")
         }
     }
 

@@ -1,37 +1,50 @@
 package com.example.deeplinkwebviewapp
 
-import android.content.Context
-import android.content.SharedPreferences
 import android.os.Bundle
-import android.widget.Button
 import android.widget.EditText
 import android.widget.Spinner
+import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.preference.PreferenceManager
 import android.widget.ArrayAdapter
-import android.widget.TextView
+import android.content.ClipboardManager
+import android.content.ClipData
+import android.widget.Toast
 
 class SettingsActivity : AppCompatActivity() {
 
-    private lateinit var sharedPreferences: SharedPreferences
+    private lateinit var blzEditText: EditText
+    private lateinit var usernameEditText: EditText
+    private lateinit var pinEditText: EditText
+    private lateinit var mkaEditText: EditText
+    private lateinit var deeplinkURLEditText: EditText
+    private lateinit var stageSpinner: Spinner
+    private lateinit var logTextView: TextView
+
+    // Statisches Log, das außerhalb der SettingsActivity aktualisiert werden kann
+    companion object {
+        private var logContent: StringBuilder = StringBuilder()
+
+        // Methode, um dem Log etwas hinzuzufügen
+        fun appendLog(logEntry: String) {
+            logContent.append(logEntry).append("\n")
+        }
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_settings)
 
-        // SharedPreferences initialisieren
-        sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this)
-
         // Zugriff auf die Views
-        val blzEditText: EditText = findViewById(R.id.editTextBLZ)
-        val usernameEditText: EditText = findViewById(R.id.editTextUsername)
-        val pinEditText: EditText = findViewById(R.id.editTextPIN)
-        val mkaEditText: EditText = findViewById(R.id.editTextMKALine)
-        val deeplinkURLEditText: EditText = findViewById(R.id.editTextDeeplinkURL)
-        val logTextView: TextView = findViewById(R.id.textViewLog)
+        blzEditText = findViewById(R.id.editTextBLZ)
+        usernameEditText = findViewById(R.id.editTextUsername)
+        pinEditText = findViewById(R.id.editTextPIN)
+        mkaEditText = findViewById(R.id.editTextMKALine)
+        deeplinkURLEditText = findViewById(R.id.editTextDeeplinkURL)
+        logTextView = findViewById(R.id.textViewLog)
 
         // Spinner für SF Stage
-        val stageSpinner: Spinner = findViewById(R.id.spinnerSFStage)
+        stageSpinner = findViewById(R.id.spinnerSFStage)
         val adapter: ArrayAdapter<CharSequence> = ArrayAdapter.createFromResource(
             this,
             R.array.sf_stage_array,  // String array für "Rhein", "Beta", "Prod"
@@ -42,45 +55,41 @@ class SettingsActivity : AppCompatActivity() {
         }
 
         // Gespeicherte Daten laden
+        val sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this)
         blzEditText.setText(sharedPreferences.getString("BLZ", getString(R.string.default_blz)))
-        usernameEditText.setText(sharedPreferences.getString("Username", ""))
-        pinEditText.setText(sharedPreferences.getString("PIN", ""))
+        usernameEditText.setText(sharedPreferences.getString("Username", getString(R.string.default_username)))
+        pinEditText.setText(sharedPreferences.getString("PIN", getString(R.string.default_pin)))
         mkaEditText.setText(sharedPreferences.getString("MKALine", getString(R.string.default_mka)))
-        deeplinkURLEditText.setText(sharedPreferences.getString("DeeplinkURL", getString(R.string.default_deeplinks_url)))
+        deeplinkURLEditText.setText(sharedPreferences.getString("DeeplinkURL", getString(R.string.default_deeplink_url)))
 
         // SF Stage Auswahl
         val stage = sharedPreferences.getString("SFStage", getString(R.string.default_stage))
         val stagePosition = adapter.getPosition(stage)
         stageSpinner.setSelection(stagePosition)
 
-        // Speichern Button
-        val saveButton: Button = findViewById(R.id.buttonSave)
-        saveButton.setOnClickListener {
-            // Werte speichern
-            sharedPreferences.edit().apply {
-                putString("BLZ", blzEditText.text.toString())
-                putString("Username", usernameEditText.text.toString())
-                putString("PIN", pinEditText.text.toString())
-                putString("MKALine", mkaEditText.text.toString())
-                putString("SFStage", stageSpinner.selectedItem.toString())
-                putString("DeeplinkURL", deeplinkURLEditText.text.toString())
-                apply()
-            }
+        // Zugriff auf das FCM-Token Textfeld
+        val fcmTokenTextView: TextView = findViewById(R.id.textViewFCMToken)
+
+// FCM-Token laden und anzeigen
+        val fcmToken = sharedPreferences.getString("FCMToken", "Token nicht verfügbar")
+        fcmTokenTextView.text = fcmToken
+
+// Optional: Wenn du möchtest, dass das Token kopiert werden kann
+        fcmTokenTextView.setOnLongClickListener {
+            val clipboard = getSystemService(CLIPBOARD_SERVICE) as ClipboardManager
+            val clip = ClipData.newPlainText("FCM Token", fcmToken)
+            clipboard.setPrimaryClip(clip)
+            Toast.makeText(this, "FCM-Token kopiert", Toast.LENGTH_SHORT).show()
+            true
         }
 
-        // Log Button
-        val logButton: Button = findViewById(R.id.buttonLog)
-        logButton.setOnClickListener {
-            // Log-Werte anzeigen
-            val logText = """
-                BLZ: ${blzEditText.text}
-                Username: ${usernameEditText.text}
-                PIN: ${pinEditText.text}
-                SF Stage: ${stageSpinner.selectedItem}
-                MKA-Linie: ${mkaEditText.text}
-                Deeplink-URL: ${deeplinkURLEditText.text}
-            """.trimIndent()
-            logTextView.text = logText
-        }
+        // Log anzeigen
+        logTextView.text = logContent.toString()
+    }
+
+    // Log aktualisieren, wenn die Aktivität wieder sichtbar wird
+    override fun onResume() {
+        super.onResume()
+        logTextView.text = logContent.toString()
     }
 }
