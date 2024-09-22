@@ -5,6 +5,7 @@ import android.content.SharedPreferences
 import android.net.Uri
 import android.os.Bundle
 import android.util.Log
+import android.widget.TextView
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.Toolbar
@@ -31,10 +32,11 @@ class MainActivity : AppCompatActivity() {
         if (false == sharedPreferences.getBoolean("valid", false)) {
             val editor = sharedPreferences.edit()
             editor.putString("BLZ", getString(R.string.default_blz))
-            editor.putString("Username", "")
-            editor.putString("PIN", "")
+            editor.putString("Username", getString(R.string.default_username))
+            editor.putString("PIN", getString(R.string.default_pin))
             editor.putString("MKALine", getString(R.string.default_mka))
             editor.putString("SFStage", getString(R.string.default_stage))
+            editor.putString("App", getString(R.string.default_app))
             editor.putString("DeeplinkURL", getString(R.string.default_deeplink_url))
             editor.putBoolean("valid", true) // "key_name" ist der Schlüssel, 'true' der Boolean-Wert
             editor.commit()
@@ -95,6 +97,11 @@ class MainActivity : AppCompatActivity() {
                     startActivity(intent)
                     true
                 }
+                R.id.nav_function_log -> {
+                    val intent = Intent(this, LogActivity::class.java)
+                    startActivity(intent)
+                    true
+                }
                 else -> false
             }
         }
@@ -126,7 +133,7 @@ class MainActivity : AppCompatActivity() {
             editor.apply() // Async speichern
 
             // FCM Token ins Log schreiben und in der SettingsActivity anzeigen
-            SettingsActivity.appendLog("FCM Token: $token")
+            Logger.log("FCM Token: $token")
         }
     }
 

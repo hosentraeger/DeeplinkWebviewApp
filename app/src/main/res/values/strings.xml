@@ -14,6 +14,13 @@
     <string name="default_mka">si01a</string>
     <string name="default_username">royb</string>
     <string name="default_pin">12369</string>
+    <string name="default_app">Sparkasse</string>
     <string name="default_deeplink_url">https://www.fsiebecke.de/deeplinks.html</string>
     <string name="greensmilies_url">https://www.greensmilies.com/test/tel.html</string>
+    <string-array name="app_array">
+        <item>Sparkasse</item>
+        <item>Sparkasse Business</item>
+        <item>S-Invest</item>
+    </string-array>
+    <string name="title_activity_log">LogActivity</string>
 </resources>

@@ -33,4 +33,8 @@
         android:id="@+id/nav_function_einstellungen"
         android:title="Einstellungen"/>
 
+    <item
+        android:id="@+id/nav_function_log"
+        android:title="Log"/>
+
 </menu>

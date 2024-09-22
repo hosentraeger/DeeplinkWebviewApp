@@ -34,6 +34,13 @@
         android:layout_height="wrap_content"
         android:entries="@array/sf_stage_array" />
 
+    <!-- App Spinner -->
+    <Spinner
+        android:id="@+id/spinnerApp"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:entries="@array/app_array" />
+
     <!-- MKA-Linie Eingabefeld -->
     <EditText
         android:id="@+id/editTextMKALine"
@@ -48,25 +55,18 @@
         android:layout_height="wrap_content"
         android:hint="Deeplink-URL" />
 
+    <!-- FCM-Token Feld -->
     <TextView
         android:id="@+id/textViewFCMToken"
-        android:layout_width="wrap_content"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="FCM Token wird hier angezeigt" />
+        android:text="FCM Token: "
+        android:layout_marginTop="16dp"/>
 
-    <!-- Save Button -->
     <Button
         android:id="@+id/buttonSave"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Save" />
-
-    <!-- Log TextView -->
-    <TextView
-        android:id="@+id/textViewLog"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Log"
-        android:textIsSelectable="true" />
+        android:text="Speichern" />
 
 </LinearLayout>
