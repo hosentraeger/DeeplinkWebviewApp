@@ -1,33 +1,31 @@
 package com.example.deeplinkwebviewapp
 
+import android.Manifest
+import android.app.NotificationChannel
+import android.app.NotificationManager
+import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
+import android.content.pm.PackageManager
 import android.net.Uri
+import android.os.Build
 import android.os.Bundle
 import android.util.Log
+import androidx.appcompat.app.ActionBarDrawerToggle
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.Toolbar
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
 import androidx.core.view.GravityCompat
 import androidx.drawerlayout.widget.DrawerLayout
-import com.google.android.material.navigation.NavigationView
-import androidx.appcompat.app.ActionBarDrawerToggle
 import androidx.preference.PreferenceManager
 import com.android.identity.util.UUID
+import com.google.android.material.navigation.NavigationView
 import com.google.firebase.messaging.FirebaseMessaging
-
-import com.google.gson.Gson
-
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-
 import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
 import java.util.Locale
-
-import com.example.deeplinkwebviewapp.DeviceDataSingleton
-import okhttp3.RequestBody.Companion.toRequestBody
 
 class MainActivity : AppCompatActivity() {
 
@@ -36,7 +34,9 @@ class MainActivity : AppCompatActivity() {
     private lateinit var toggle: ActionBarDrawerToggle // Fügt ActionBarDrawerToggle hinzu
     private lateinit var sharedPreferences: SharedPreferences
     private lateinit var previousLogin: String
-    private val gson = Gson()
+    companion object {
+        private const val TAG = "MainActivity"
+    }
 
     fun getCurrentTimestamp(): String {
         // Aktuelles Datum und Zeit in UTC
@@ -51,7 +51,32 @@ class MainActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        createNotificationChannel()
         setContentView(R.layout.activity_main)
+
+        // Berechtigungen für Benachrichtigungen anfragen (Android 13+)
+        if (ContextCompat.checkSelfPermission(
+                this,
+                Manifest.permission.POST_NOTIFICATIONS
+            ) != PackageManager.PERMISSION_GRANTED
+        ) {
+            // Berechtigung anfordern
+            ActivityCompat.requestPermissions(
+                this,
+                arrayOf(Manifest.permission.POST_NOTIFICATIONS),
+                101
+            )
+        }
+        val intent = intent
+        if (intent != null && intent.extras != null) {
+            Log.d(
+                TAG,
+                "App started from push notification with extras: " + intent.extras.toString()
+            )
+        }
+        // Überprüfe die Absicht und speichere die Werte
+        handleIntent(intent)
+
         val deviceData = DeviceDataSingleton.deviceData
 
         // SharedPreferences initialisieren
@@ -165,7 +190,7 @@ class MainActivity : AppCompatActivity() {
             val token = task.result
 
             // Hier kannst du das Token speichern oder zu deinem Server senden
-            Log.d("FCMToken", "FCM Token: $token")
+            Log.d(TAG, "FCM Token: $token")
 
             // FCM-Token in SharedPreferences speichern
             val editor = sharedPreferences.edit()
@@ -181,10 +206,53 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    override fun onNewIntent(intent: Intent) {
+        Log.d("MainActivity", "onNewIntent called with intent: $intent")
+        super.onNewIntent(intent)
+        // Handle the new intent when the activity is already running
+        handleIntent(intent)
+    }
+
+    override fun onResume() {
+        super.onResume()
+    }
+
+    private fun handleIntent(intent: Intent) {
+        val extras = intent.extras
+        if (extras != null) {
+            // Logge die gesamten Extras für Debugging
+            for (key in extras.keySet()) {
+                val value = extras.get(key)
+                Log.d("PushNotification", "Key: $key, Value: $value")
+            }
+
+            // Jetzt kannst du die spezifischen Keys abrufen, wenn nötig
+            val customKey1 = extras.getString("customKey1")
+            val customKey2 = extras.getString("customKey2")
+            Log.d("PushNotification", "customKey1: $customKey1, customKey2: $customKey2")
+            showPusNotificationAlertDialog(customKey1,customKey2)
+
+        } else {
+            Log.d("PushNotification", "No extras found in the intent.")
+        }
+    }
+
     private fun showAlertDialog() {
         val builder = AlertDialog.Builder(this)
         builder.setTitle("Hinweis")
         builder.setMessage("Dies ist ein wichtiger Hinweis!")
+        builder.setPositiveButton("OK") { dialog, _ ->
+            dialog.dismiss()
+        }
+        val dialog = builder.create()
+        dialog.show()
+    }
+
+
+    private fun showPusNotificationAlertDialog(customKey1: String?, customKey2: String?) {
+        val builder = AlertDialog.Builder(this)
+        builder.setTitle("Benachrichtigung erhalten")
+        builder.setMessage("Custom Key 1: $customKey1\nCustom Key 2: $customKey2")
         builder.setPositiveButton("OK") { dialog, _ ->
             dialog.dismiss()
         }
@@ -216,6 +284,36 @@ class MainActivity : AppCompatActivity() {
             } else {
                 Logger.log("Fehler beim Senden der Gerätedaten.")
             }
+        }
+    }
+
+    override fun onRequestPermissionsResult(
+        requestCode: Int,
+        permissions: Array<out String>,
+        grantResults: IntArray
+    ) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        if (requestCode == 101) {
+            // Überprüfe, ob die Benachrichtigungserlaubnis erteilt wurde
+            if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                // Benachrichtigungsberechtigung erteilt
+            } else {
+                // Benachrichtigungsberechtigung abgelehnt
+            }
+        }
+    }
+    private fun createNotificationChannel() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            val channelId = getString(R.string.default_notification_channel_id)
+            val channelName = getString(R.string.default_notification_channel_name)
+            val channelDescriptionText = getString(R.string.default_notification_channel_description)
+            val importance = NotificationManager.IMPORTANCE_HIGH
+            val channel = NotificationChannel(channelId, channelName, importance).apply {
+                description = channelDescriptionText
+            }
+            // Register the channel with the system
+            val notificationManager: NotificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+            notificationManager.createNotificationChannel(channel)
         }
     }
 }

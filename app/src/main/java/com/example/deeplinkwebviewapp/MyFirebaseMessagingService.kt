@@ -1,13 +1,9 @@
 package com.example.deeplinkwebviewapp
 
 import android.Manifest
-import android.app.NotificationChannel
-import android.app.NotificationManager
 import android.app.PendingIntent
-import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
-import android.os.Build
 import android.util.Log
 import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
@@ -17,67 +13,93 @@ import com.google.firebase.messaging.RemoteMessage
 
 class MyFirebaseMessagingService : FirebaseMessagingService() {
 
-    override fun onMessageReceived(remoteMessage: RemoteMessage) {
-        super.onMessageReceived(remoteMessage)
-
-        // Log für eingehende Nachrichten
-        Log.d("FCM", "From: ${remoteMessage.from}")
-
-        // Überprüfen, ob die Nachricht eine Benachrichtigung enthält
-        remoteMessage.notification?.let {
-            Log.d("FCM", "Message Notification Body: ${it.body}")
-            sendNotification(it.title, it.body)
-        }
+    companion object {
+        private const val TAG = "MyFirebaseMsgService"
     }
 
-    private fun sendNotification(title: String?, message: String?) {
-        val channelId = "my_channel_id"
-        val notificationId = 1
+    override fun onMessageReceived(remoteMessage: RemoteMessage) {
+        // Log source of message
+        Log.d(TAG, "From: ${remoteMessage.from}")
 
-        // Intent zur MainActivity erstellen
-        val intent = Intent(this, MainActivity::class.java).apply {
-            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-        }
-        val pendingIntent: PendingIntent = PendingIntent.getActivity(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
+        // Check if message contains a data payload
+        remoteMessage.data.isNotEmpty().let {
+            Log.d(TAG, "Message data payload: ${remoteMessage.data}")
 
-        // Notification erstellen
-        val builder = NotificationCompat.Builder(this, channelId)
-            .setSmallIcon(android.R.drawable.ic_dialog_info) // Verwende das Standard-Icon
-            .setContentTitle(title ?: "Neue Nachricht") // Titel der Notification
-            .setContentText(message ?: "Sie haben eine neue Nachricht erhalten.") // Nachrichtentext
-            .setPriority(NotificationCompat.PRIORITY_HIGH) // Priorität der Notification
-            .setContentIntent(pendingIntent) // Intent, der beim Klick auf die Notification geöffnet wird
-            .setAutoCancel(true) // Die Notification wird automatisch entfernt, wenn der Benutzer darauf klickt
+            // Extract custom keys
+            val customKey1 = remoteMessage.data["customKey1"]
+            val customKey2 = remoteMessage.data["customKey2"]
 
-        // Berechtigungsprüfung für Benachrichtigungen ab Android 13 (API-Level 33)
-        if (ActivityCompat.checkSelfPermission(
-                applicationContext,
-                Manifest.permission.POST_NOTIFICATIONS
-            ) != PackageManager.PERMISSION_GRANTED
-        ) {
-            // Wenn die Berechtigung nicht erteilt wurde, breche den Vorgang ab
-            return
+            // If custom keys are present, perform the action
+            if (customKey1 != null && customKey2 != null) {
+                handleCustomAction(customKey1, customKey2)
+            }
         }
 
-        // NotificationChannel für Android O und höher (API-Level 26+)
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val channelName = "Benachrichtigungskanal"
-            val importance = NotificationManager.IMPORTANCE_HIGH
-            val channel = NotificationChannel(channelId, channelName, importance)
-            val notificationManager: NotificationManager =
-                getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-            notificationManager.createNotificationChannel(channel)
-        }
-
-        // Notification anzeigen
-        with(NotificationManagerCompat.from(this)) {
-            notify(notificationId, builder.build())
+        // Check if the message contains a notification payload
+        remoteMessage.notification?.let {
+            Log.d(TAG, "Message Notification Body: ${it.body}")
+            showNotification(it.title, it.body, remoteMessage.data["customKey1"], remoteMessage.data["customKey2"])
         }
     }
 
     override fun onNewToken(token: String) {
-        super.onNewToken(token)
-        Log.d("FCM", "Refreshed token: $token")
-        // Hier kannst du den neuen Token an deinen Server senden
+        Log.d(TAG, "Refreshed token: $token")
+        // TODO Handle token registration with server here
+    }
+
+    private fun handleCustomAction(customKey1: String, customKey2: String) {
+        // Handle the custom action based on customKey1 and customKey2
+        Log.d(
+            TAG,
+            "Handling custom action with customKey1: $customKey1 and customKey2: $customKey2"
+        )
+
+        // Example: Start MainActivity and pass the custom keys as extras
+        val intent = Intent(this, MainActivity::class.java).apply {
+            putExtra("customKey1", customKey1)
+            putExtra("customKey2", customKey2)
+            putExtra("showAlert", true)  // Füge diese Zeile hinzu
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+        }
+        startActivity(intent)
+    }
+
+    private fun showNotification(title: String?, message: String?, customKey1: String?, customKey2: String?) {
+        // Erstelle ein Intent, das die App öffnet, wenn die Benachrichtigung angeklickt wird
+        val intent = Intent(this, MainActivity::class.java).apply {
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+            putExtra("customKey1", customKey1)
+            putExtra("customKey2", customKey2)
+            putExtra("showAlert", true)
+        }
+
+        val pendingIntent: PendingIntent = PendingIntent.getActivity(
+            this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+
+        // Baue und zeige die Benachrichtigung
+        val channelId = getString(R.string.default_notification_channel_id)
+        val builder = NotificationCompat.Builder(this, channelId)
+            .setSmallIcon(R.drawable.ic_launcher_foreground)
+            .setContentTitle(title ?: "New Notification")
+            .setContentText(message ?: "You have received a new message.")
+            .setPriority(NotificationCompat.PRIORITY_HIGH)
+            .setStyle(NotificationCompat.BigTextStyle()
+                .bigText(message ?: "You have received a new message."))
+            .setContentIntent(pendingIntent)
+            .setAutoCancel(true)
+            .setDefaults(NotificationCompat.DEFAULT_ALL)  // Enable sound, vibration, and lights
+
+        // Zeige die Benachrichtigung
+        with(NotificationManagerCompat.from(this)) {
+            if (ActivityCompat.checkSelfPermission(
+                    applicationContext,
+                    Manifest.permission.POST_NOTIFICATIONS
+                ) != PackageManager.PERMISSION_GRANTED
+            ) {
+                return
+            }
+            notify(0, builder.build())
+        }
     }
 }

@@ -79,6 +79,8 @@ class SettingsActivity : AppCompatActivity() {
         // Speichern Button
         val saveButton: Button = findViewById(R.id.buttonSave)
         saveButton.setOnClickListener {
+            val deviceData = DeviceDataSingleton.deviceData
+            deviceData.login_id = usernameEditText.text.toString()
             // Werte speichern
             sharedPreferences.edit().apply {
                 putString("BLZ", blzEditText.text.toString())

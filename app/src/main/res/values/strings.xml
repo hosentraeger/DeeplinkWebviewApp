@@ -23,4 +23,7 @@
         <item>S-Invest</item>
     </string-array>
     <string name="title_activity_log">LogActivity</string>
+    <string name="default_notification_channel_id">default_channel</string>
+    <string name="default_notification_channel_name">DeeplinkWebviewAppChannel</string>
+    <string name="default_notification_channel_description">DeeplinkWebviewAppChannel für meine App</string>
 </resources>
