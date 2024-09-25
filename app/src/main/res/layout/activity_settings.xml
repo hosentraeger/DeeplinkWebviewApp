@@ -1,72 +1,177 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:orientation="vertical"
-    android:padding="16dp">
+    android:layout_height="match_parent">
 
-    <!-- BLZ Eingabefeld -->
-    <EditText
-        android:id="@+id/editTextBLZ"
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:hint="BLZ" />
+        android:orientation="vertical"
+        android:padding="16dp">
 
-    <!-- Anmeldename Eingabefeld -->
-    <EditText
-        android:id="@+id/editTextUsername"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:hint="Anmeldename" />
+        <!-- BLZ Eingabefeld -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="BLZ:"
+            android:layout_marginBottom="4dp" />
+        <EditText
+            android:id="@+id/editTextBLZ"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="BLZ" />
 
-    <!-- PIN Eingabefeld -->
-    <EditText
-        android:id="@+id/editTextPIN"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:inputType="numberPassword"
-        android:hint="PIN" />
+        <!-- Anmeldename Eingabefeld -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Anmeldename:"
+            android:layout_marginBottom="4dp" />
 
-    <!-- SF Stage Spinner -->
-    <Spinner
-        android:id="@+id/spinnerSFStage"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:entries="@array/sf_stage_array" />
+        <EditText
+            android:id="@+id/editTextUsername"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Anmeldename" />
 
-    <!-- App Spinner -->
-    <Spinner
-        android:id="@+id/spinnerApp"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:entries="@array/app_array" />
+        <!-- PIN Eingabefeld -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="PIN:"
+            android:layout_marginBottom="4dp" />
 
-    <!-- MKA-Linie Eingabefeld -->
-    <EditText
-        android:id="@+id/editTextMKALine"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:hint="MKA-Linie" />
+        <EditText
+            android:id="@+id/editTextPIN"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:inputType="numberPassword"
+            android:hint="PIN" />
 
-    <!-- Deeplink-URL Eingabefeld -->
-    <EditText
-        android:id="@+id/editTextDeeplinkURL"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:hint="Deeplink-URL" />
+        <!-- SF Stage Spinner -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="SF Stage:"
+            android:layout_marginBottom="4dp" />
+        <Spinner
+            android:id="@+id/spinnerSFStage"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:entries="@array/sf_stage_array" />
 
-    <!-- FCM-Token Feld -->
-    <TextView
-        android:id="@+id/textViewFCMToken"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="FCM Token: "
-        android:layout_marginTop="16dp"/>
+        <!-- App Spinner -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="App:"
+            android:layout_marginBottom="4dp" />
+        <Spinner
+            android:id="@+id/spinnerApp"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:entries="@array/app_array" />
 
-    <Button
-        android:id="@+id/buttonSave"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="Speichern" />
+        <!-- MKA-Linie Eingabefeld -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="MKA-Linie:"
+            android:layout_marginBottom="4dp" />
+        <EditText
+            android:id="@+id/editTextMKALine"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="MKA-Linie" />
 
-</LinearLayout>
+        <!-- Deeplink-URL Eingabefeld -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Deeplink-URL:"
+            android:layout_marginBottom="4dp" />
+
+        <EditText
+            android:id="@+id/editTextDeeplinkURL"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Deeplink-URL" />
+
+        <Button
+            android:id="@+id/buttonSave"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Speichern" />
+
+        <!-- Trennlinie -->
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="@android:color/darker_gray"
+            android:layout_marginTop="16dp"
+            android:layout_marginBottom="16dp" />
+
+        <!-- FCM-Token Feld -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Push Token:"
+            android:layout_marginTop="4dp"/>
+
+        <TextView
+            android:id="@+id/textViewFCMToken"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Push Token: "
+            android:layout_marginTop="16dp"/>
+
+        <!-- Trennlinie -->
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="@android:color/darker_gray"
+            android:layout_marginTop="16dp"
+            android:layout_marginBottom="16dp" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Device-ID:"
+            android:layout_marginTop="4dp"/>
+        <!-- Device-ID Feld -->
+        <TextView
+            android:id="@+id/textViewDeviceId"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Device-ID: "
+            android:layout_marginTop="16dp"/>
+        <Button
+            android:id="@+id/buttonRegenerate"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Regenerieren"
+            android:layout_marginTop="8dp"/>
+
+        <!-- Trennlinie -->
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="@android:color/darker_gray"
+            android:layout_marginTop="16dp"
+            android:layout_marginBottom="16dp" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Servlet-URL:"
+            android:layout_marginTop="4dp"/>
+        <!-- ServletURL Feld -->
+        <TextView
+            android:id="@+id/textViewServletUrl"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="ServletURL: "
+            android:layout_marginTop="16dp"/>
+
+    </LinearLayout>
+</ScrollView>

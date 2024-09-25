@@ -9,6 +9,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.preference.PreferenceManager
 import android.widget.ArrayAdapter
 import android.widget.TextView
+import com.android.identity.util.UUID
 
 class SettingsActivity : AppCompatActivity() {
 
@@ -16,6 +17,8 @@ class SettingsActivity : AppCompatActivity() {
     private lateinit var appSpinner: Spinner
     private lateinit var stageSpinner: Spinner
     private lateinit var fcmTokenTextView: TextView
+    private lateinit var deviceIdTextView: TextView
+    private lateinit var servletUrlTextView: TextView
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -31,6 +34,8 @@ class SettingsActivity : AppCompatActivity() {
         val mkaEditText: EditText = findViewById(R.id.editTextMKALine)
         val deeplinkURLEditText: EditText = findViewById(R.id.editTextDeeplinkURL)
         fcmTokenTextView = findViewById(R.id.textViewFCMToken)  // FCM Token TextView
+        deviceIdTextView = findViewById(R.id.textViewDeviceId)  // FCM Token TextView
+        servletUrlTextView = findViewById(R.id.textViewServletUrl)  // FCM Token TextView
 
         // Spinner für SF Stage
         stageSpinner = findViewById(R.id.spinnerSFStage)
@@ -88,8 +93,42 @@ class SettingsActivity : AppCompatActivity() {
             Logger.log("Einstellungen gespeichert.") // Logger verwenden
         }
 
+        val deviceData = DeviceDataSingleton.deviceData
         // FCM-Token anzeigen
         val fcmToken = sharedPreferences.getString("FCMToken", "Token nicht verfügbar")
-        fcmTokenTextView.text = "FCM Token: $fcmToken"
+        fcmTokenTextView.text = deviceData.push_id
+        deviceIdTextView.text = deviceData.device_id
+        // Füge in deiner onCreate-Methode nach der Button-Initialisierung folgendes hinzu
+        val regenerateButton: Button = findViewById(R.id.buttonRegenerate)
+
+        regenerateButton.setOnClickListener {
+            regenerateDeviceId()
+        }
+
+        servletUrlTextView.text = "<servlet url>"
+    }
+    private fun regenerateDeviceId() {
+        val newDeviceId = UUID.randomUUID().toString()
+        val deviceData = DeviceDataSingleton.deviceData
+        deviceData.device_id = newDeviceId  // Update der Gerätedaten
+
+        // Gerätedaten an den Server senden
+        MyHttpClient.getInstance().postDeviceData(deviceData) { response ->
+            runOnUiThread {
+                if (response != null) {
+                    Logger.log("Gerätedaten erfolgreich gesendet: $response")
+                    // UI aktualisieren
+                    updateDeviceIdTextView() // Aktualisiere die Anzeige
+                } else {
+                    Logger.log("Fehler beim Senden der Gerätedaten.")
+                }
+            }
+        }
+    }
+
+    // Funktion zur Aktualisierung der TextView
+    private fun updateDeviceIdTextView() {
+        val deviceData = DeviceDataSingleton.deviceData
+        deviceIdTextView.text = deviceData.device_id
     }
 }

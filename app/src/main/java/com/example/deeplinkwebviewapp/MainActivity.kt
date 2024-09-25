@@ -13,55 +13,21 @@ import androidx.drawerlayout.widget.DrawerLayout
 import com.google.android.material.navigation.NavigationView
 import androidx.appcompat.app.ActionBarDrawerToggle
 import androidx.preference.PreferenceManager
+import com.android.identity.util.UUID
 import com.google.firebase.messaging.FirebaseMessaging
 
 import com.google.gson.Gson
-import okhttp3.MediaType.Companion.toMediaType
-import okhttp3.OkHttpClient
-import okhttp3.Request
-import okhttp3.RequestBody
-import okhttp3.Response
 
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
-data class DeviceData(
-    val device_id: String = "12345",
-    val push_id: String,
-    val login_id: String = "royb",
-    val last_login: String = "2024-09-22T12:34:56Z"
-)
+import java.time.ZonedDateTime
+import java.time.format.DateTimeFormatter
+import java.util.Locale
 
-class MyHttpClient {
-
-    private val client = OkHttpClient()
-    private val gson = Gson()
-
-    fun postDeviceData(pushId: String): String? {
-        val deviceData = DeviceData(push_id = pushId)
-
-        // JSON-String erstellen
-        val json = gson.toJson(deviceData)
-
-        // RequestBody erstellen
-        val requestBody = RequestBody.create("application/json; charset=utf-8".toMediaType(), json)
-
-        // POST-Anfrage erstellen
-        val request = Request.Builder()
-            .url("https://www.fsiebecke.de/appstart") // Ersetze dies durch deine URL
-            .post(requestBody)
-            .build()
-
-        client.newCall(request).execute().use { response: Response ->
-            return if (response.isSuccessful) {
-                response.body?.string()
-            } else {
-                null
-            }
-        }
-    }
-}
+import com.example.deeplinkwebviewapp.DeviceDataSingleton
+import okhttp3.RequestBody.Companion.toRequestBody
 
 class MainActivity : AppCompatActivity() {
 
@@ -69,16 +35,29 @@ class MainActivity : AppCompatActivity() {
     private lateinit var navView: NavigationView
     private lateinit var toggle: ActionBarDrawerToggle // Fügt ActionBarDrawerToggle hinzu
     private lateinit var sharedPreferences: SharedPreferences
+    private lateinit var previousLogin: String
+    private val gson = Gson()
 
+    fun getCurrentTimestamp(): String {
+        // Aktuelles Datum und Zeit in UTC
+        val currentDateTime = ZonedDateTime.now(java.time.ZoneOffset.UTC)
+
+        // Formatierer für das gewünschte ISO 8601 Format
+        val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.getDefault())
+
+        // Datum und Zeit formatieren und als String zurückgeben
+        return currentDateTime.format(formatter)
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+        val deviceData = DeviceDataSingleton.deviceData
 
         // SharedPreferences initialisieren
         sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this)
+        val editor = sharedPreferences.edit()
         if (false == sharedPreferences.getBoolean("valid", false)) {
-            val editor = sharedPreferences.edit()
             editor.putString("BLZ", getString(R.string.default_blz))
             editor.putString("Username", getString(R.string.default_username))
             editor.putString("PIN", getString(R.string.default_pin))
@@ -86,9 +65,20 @@ class MainActivity : AppCompatActivity() {
             editor.putString("SFStage", getString(R.string.default_stage))
             editor.putString("App", getString(R.string.default_app))
             editor.putString("DeeplinkURL", getString(R.string.default_deeplink_url))
+            editor.putString("PushId", deviceData.push_id)
             editor.putBoolean("valid", true) // "key_name" ist der Schlüssel, 'true' der Boolean-Wert
-            editor.commit()
         }
+
+        previousLogin = sharedPreferences.getString("LastLogin", deviceData.last_login).toString()
+        deviceData.device_id = sharedPreferences.getString("DeviceId", deviceData.device_id).toString()
+        if (deviceData.device_id == "" ) {
+            editor.putString("DeviceId", UUID.randomUUID().toString())
+        }
+        deviceData.push_id = sharedPreferences.getString("PushId", deviceData.push_id).toString()
+        deviceData.login_id = sharedPreferences.getString("Username", deviceData.login_id).toString()
+        deviceData.last_login = getCurrentTimestamp()
+        editor.commit()
+
 
         // Toolbar hinzufügen
         val toolbar: Toolbar = findViewById(R.id.toolbar)
@@ -110,6 +100,8 @@ class MainActivity : AppCompatActivity() {
         navView.setNavigationItemSelectedListener { menuItem ->
             when (menuItem.itemId) {
                 R.id.nav_function_appstart -> {
+                    // Hier den POST-Request senden
+                    sendDeviceData ( )
                     true
                 }
                 R.id.nav_function_rundruf -> {
@@ -182,9 +174,10 @@ class MainActivity : AppCompatActivity() {
 
             // FCM Token ins Log schreiben und in der SettingsActivity anzeigen
             Logger.log("FCM Token: $token")
-
-            // Hier den POST-Request senden
-            sendDeviceData ( token )
+            if ( deviceData.push_id != token ) {
+                deviceData.push_id = token
+                sendDeviceData ( )
+            }
         }
     }
 
@@ -214,13 +207,14 @@ class MainActivity : AppCompatActivity() {
             super.onBackPressed()
         }
     }
-    fun sendDeviceData(pushId: String) {
-        val httpClient = MyHttpClient()
-        CoroutineScope(Dispatchers.IO).launch {
-            val response = httpClient.postDeviceData(pushId)
-            // Update UI auf dem Haupt-Thread, wenn nötig
+    fun sendDeviceData() {
+        val deviceData: DeviceData = DeviceDataSingleton.deviceData
+
+        MyHttpClient.getInstance().postDeviceData(deviceData) { response ->
             if (response != null) {
-                // Verarbeite die Antwort hier
+                Logger.log("Gerätedaten erfolgreich gesendet: $response")
+            } else {
+                Logger.log("Fehler beim Senden der Gerätedaten.")
             }
         }
     }

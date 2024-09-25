@@ -13,6 +13,7 @@ drawerlayout = "1.2.0"
 material = "1.12.0"
 preferenceKtx = "1.2.1"
 firebaseMessagingKtx = "24.0.1"
+identityJvm = "202408.1"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -34,6 +35,7 @@ androidx-drawerlayout = { group = "androidx.drawerlayout", name = "drawerlayout"
 material = { group = "com.google.android.material", name = "material", version.ref = "material" }
 androidx-preference-ktx = { group = "androidx.preference", name = "preference-ktx", version.ref = "preferenceKtx" }
 firebase-messaging-ktx = { group = "com.google.firebase", name = "firebase-messaging-ktx", version.ref = "firebaseMessagingKtx" }
+identity-jvm = { group = "com.android.identity", name = "identity-jvm", version.ref = "identityJvm" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
