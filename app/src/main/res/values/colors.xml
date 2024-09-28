@@ -7,7 +7,7 @@
     <color name="teal_700">#FF018786</color>
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
-    <color name="colorPrimary">#6200EE</color>
-    <color name="colorPrimaryDark">#3700B3</color>
-    <color name="colorAccent">#03DAC6</color>
+    <color name="colorPrimary">#FF5733</color> <!-- Beispielhafte Farbe passend zum Bild -->
+    <color name="colorPrimaryDark">#C70039</color> <!-- Dunklere Version -->
+    <color name="colorAccent">#FFC300</color> <!-- Akzentfarbe -->
 </resources>
