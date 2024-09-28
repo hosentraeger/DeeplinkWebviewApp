@@ -1,4 +1,4 @@
-package com.example.deeplinkwebviewapp
+package `mipmap-xxhdpi`.service
 
 import android.Manifest
 import android.app.PendingIntent
@@ -8,6 +8,8 @@ import android.util.Log
 import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
+import com.example.deeplinkwebviewapp.R
+import com.example.deeplinkwebviewapp.ui.MainActivity
 import com.google.firebase.messaging.FirebaseMessagingService
 import com.google.firebase.messaging.RemoteMessage
 

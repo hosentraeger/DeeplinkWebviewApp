@@ -48,6 +48,18 @@
             android:inputType="numberPassword"
             android:hint="PIN" />
 
+        <!-- Anmeldename Eingabefeld -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Personennummer:"
+            android:layout_marginBottom="4dp" />
+
+        <EditText
+            android:id="@+id/editTextPersonennummer"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Personennummer" />
         <!-- SF Stage Spinner -->
         <TextView
             android:layout_width="wrap_content"

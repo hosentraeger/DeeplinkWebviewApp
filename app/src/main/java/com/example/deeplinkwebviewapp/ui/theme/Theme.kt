@@ -1,4 +1,4 @@
-package com.example.deeplinkwebviewapp.ui.theme
+package `mipmap-xhdpi`.deeplinkwebviewapp.ui.theme
 
 import android.app.Activity
 import android.os.Build
@@ -12,15 +12,15 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.LocalContext
 
 private val DarkColorScheme = darkColorScheme(
-    primary = Purple80,
-    secondary = PurpleGrey80,
-    tertiary = Pink80
+    primary = `mipmap-xhdpi`.deeplinkwebviewapp.ui.theme.Purple80,
+    secondary = `mipmap-xhdpi`.deeplinkwebviewapp.ui.theme.PurpleGrey80,
+    tertiary = `mipmap-xhdpi`.deeplinkwebviewapp.ui.theme.Pink80
 )
 
 private val LightColorScheme = lightColorScheme(
-    primary = Purple40,
-    secondary = PurpleGrey40,
-    tertiary = Pink40
+    primary = `mipmap-xhdpi`.deeplinkwebviewapp.ui.theme.Purple40,
+    secondary = `mipmap-xhdpi`.deeplinkwebviewapp.ui.theme.PurpleGrey40,
+    tertiary = `mipmap-xhdpi`.deeplinkwebviewapp.ui.theme.Pink40
 
     /* Other default colors to override
     background = Color(0xFFFFFBFE),
@@ -52,7 +52,7 @@ fun DeeplinkWebviewAppTheme(
 
     MaterialTheme(
         colorScheme = colorScheme,
-        typography = Typography,
+        typography = `mipmap-xhdpi`.deeplinkwebviewapp.ui.theme.Typography,
         content = content
     )
 }

@@ -1,4 +1,4 @@
-package com.example.deeplinkwebviewapp
+package `mipmap-xhdpi`.deeplinkwebviewapp.ui
 
 import android.content.ActivityNotFoundException
 import android.content.Intent
@@ -14,6 +14,7 @@ import android.webkit.WebView
 import android.webkit.WebViewClient
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import com.example.deeplinkwebviewapp.R
 
 class WebViewActivity : AppCompatActivity() {
 

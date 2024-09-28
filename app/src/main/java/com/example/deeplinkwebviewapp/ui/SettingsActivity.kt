@@ -1,4 +1,4 @@
-package com.example.deeplinkwebviewapp
+package `mipmap-xhdpi`.deeplinkwebviewapp.ui
 
 import android.content.SharedPreferences
 import android.os.Bundle
@@ -10,6 +10,10 @@ import androidx.preference.PreferenceManager
 import android.widget.ArrayAdapter
 import android.widget.TextView
 import com.android.identity.util.UUID
+import `mipmap-xhdpi`.deeplinkwebviewapp.data.DeviceDataSingleton
+import `mipmap-xhdpi`.deeplinkwebviewapp.Logger
+import `mipmap-xhdpi`.deeplinkwebviewapp.ui.http.MyHttpClient
+import com.example.deeplinkwebviewapp.R
 
 class SettingsActivity : AppCompatActivity() {
 
@@ -30,6 +34,7 @@ class SettingsActivity : AppCompatActivity() {
         // Zugriff auf die Views
         val blzEditText: EditText = findViewById(R.id.editTextBLZ)
         val usernameEditText: EditText = findViewById(R.id.editTextUsername)
+        val personenNummerEditText: EditText = findViewById(R.id.editTextPersonennummer)
         val pinEditText: EditText = findViewById(R.id.editTextPIN)
         val mkaEditText: EditText = findViewById(R.id.editTextMKALine)
         val deeplinkURLEditText: EditText = findViewById(R.id.editTextDeeplinkURL)
@@ -62,6 +67,7 @@ class SettingsActivity : AppCompatActivity() {
         // Gespeicherte Daten laden
         blzEditText.setText(sharedPreferences.getString("BLZ", getString(R.string.default_blz)))
         usernameEditText.setText(sharedPreferences.getString("Username", ""))
+        personenNummerEditText.setText(sharedPreferences.getString("Personennummer", ""))
         pinEditText.setText(sharedPreferences.getString("PIN", ""))
         mkaEditText.setText(sharedPreferences.getString("MKALine", getString(R.string.default_mka)))
         deeplinkURLEditText.setText(sharedPreferences.getString("DeeplinkURL", getString(R.string.default_deeplink_url)))
@@ -79,12 +85,13 @@ class SettingsActivity : AppCompatActivity() {
         // Speichern Button
         val saveButton: Button = findViewById(R.id.buttonSave)
         saveButton.setOnClickListener {
-            val deviceData = DeviceDataSingleton.deviceData
+            val deviceData = `mipmap-xhdpi`.deeplinkwebviewapp.data.DeviceDataSingleton.deviceData
             deviceData.login_id = usernameEditText.text.toString()
             // Werte speichern
             sharedPreferences.edit().apply {
                 putString("BLZ", blzEditText.text.toString())
                 putString("Username", usernameEditText.text.toString())
+                putString("Personennummer", personenNummerEditText.text.toString())
                 putString("PIN", pinEditText.text.toString())
                 putString("MKALine", mkaEditText.text.toString())
                 putString("SFStage", stageSpinner.selectedItem.toString())
@@ -92,10 +99,10 @@ class SettingsActivity : AppCompatActivity() {
                 putString("DeeplinkURL", deeplinkURLEditText.text.toString())
                 apply()
             }
-            Logger.log("Einstellungen gespeichert.") // Logger verwenden
+            `mipmap-xhdpi`.deeplinkwebviewapp.Logger.log("Einstellungen gespeichert.") // Logger verwenden
         }
 
-        val deviceData = DeviceDataSingleton.deviceData
+        val deviceData = `mipmap-xhdpi`.deeplinkwebviewapp.data.DeviceDataSingleton.deviceData
         // FCM-Token anzeigen
         fcmTokenTextView.text = deviceData.push_id
         deviceIdTextView.text = deviceData.device_id
@@ -110,18 +117,18 @@ class SettingsActivity : AppCompatActivity() {
     }
     private fun regenerateDeviceId() {
         val newDeviceId = UUID.randomUUID().toString()
-        val deviceData = DeviceDataSingleton.deviceData
+        val deviceData = `mipmap-xhdpi`.deeplinkwebviewapp.data.DeviceDataSingleton.deviceData
         deviceData.device_id = newDeviceId  // Update der Gerätedaten
 
         // Gerätedaten an den Server senden
-        MyHttpClient.getInstance().postDeviceData(deviceData) { response ->
+        `mipmap-xhdpi`.deeplinkwebviewapp.ui.http.MyHttpClient.getInstance().postDeviceData(deviceData) { response ->
             runOnUiThread {
                 if (response != null) {
-                    Logger.log("Gerätedaten erfolgreich gesendet: $response")
+                    `mipmap-xhdpi`.deeplinkwebviewapp.Logger.log("Gerätedaten erfolgreich gesendet: $response")
                     // UI aktualisieren
                     updateDeviceIdTextView() // Aktualisiere die Anzeige
                 } else {
-                    Logger.log("Fehler beim Senden der Gerätedaten.")
+                    `mipmap-xhdpi`.deeplinkwebviewapp.Logger.log("Fehler beim Senden der Gerätedaten.")
                 }
             }
         }
@@ -129,7 +136,7 @@ class SettingsActivity : AppCompatActivity() {
 
     // Funktion zur Aktualisierung der TextView
     private fun updateDeviceIdTextView() {
-        val deviceData = DeviceDataSingleton.deviceData
+        val deviceData = `mipmap-xhdpi`.deeplinkwebviewapp.data.DeviceDataSingleton.deviceData
         deviceIdTextView.text = deviceData.device_id
     }
 }

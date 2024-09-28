@@ -1,48 +1,50 @@
-package com.example.deeplinkwebviewapp
+package `mipmap-xxxhdpi`
 
-import kotlinx.serialization.*
-import kotlinx.serialization.json.*
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
+import android.util.Base64
 import okhttp3.*
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.RequestBody.Companion.toRequestBody
-import java.util.*
 
 enum class STAGE { STAGE_RHEIN, STAGE_BETA, STAGE_PROD }
 
-@Serializable
-data class VkaResponse(
-    val services: List<Service>
-)
+class VkaData(private val _rawData: String) {
+    val rawJson = Json.decodeFromString<MyDataClass>(jsonString)
+    val rawData: String = _rawData
+    fun getValue(): String {
+        return rawData
+    }
+    fun getDefaultDisrupter(): ActionPage? {
+        return null
+    }
 
-@Serializable
-data class Service(
-    val IF: IfService
-)
+    fun getDefaultLogoutPage(): ActionPage? {
+        return null
+    }
 
-@Serializable
-data class IfService(
-    val status: String,
-    val id: Int,
-    val version: Int,
-    val overview: List<OverviewItem>,
-    val disrupter: Disrupter,
-    val logoutPageURL: String,
-    val eventId: String,
-    val persNr: String,
-    val mkaId: String
-)
+    fun getDefaultOverviewBanner(): ActionBanner? {
+        return null
+    }
 
-@Serializable
-data class OverviewItem(
+    fun getDefaultConfirmationBanner(): ActionBanner? {
+        return null
+    }
+
+}
+
+// Hilfsklasse für ActionBanner
+data class ActionBanner(
     val banner: String,
     val imgAlt: String,
     val url: String,
     val openOutsideApp: Boolean,
-    val aemAsset: Boolean
+    val aemAsset: Boolean,
+    val decodedImage: Bitmap? // Hier wird das dekodierte Bild gespeichert
 )
 
-@Serializable
-data class Disrupter(
+// Hilfsklasse für ActionPage
+data class ActionPage(
     val image: String,
     val imgAlt: String,
     val headline: String,
@@ -50,19 +52,26 @@ data class Disrupter(
     val text: String,
     val richText: Boolean,
     val aemAsset: Boolean,
-    val firstLink: Link,
-    val forwardLink: Link,
-    val noInterestLink: Link
+    val firstLink: ActionLink,
+    val forwardLink: ActionLink,
+    val noInterestLink: ActionLink,
+    val decodedImage: Bitmap? // Hier wird das dekodierte Bild gespeichert
 )
 
-@Serializable
-data class Link(
+// Hilfsklasse für ActionLink
+data class ActionLink(
     val title: String,
     val url: String,
-    val openOutsideApp: Boolean,
-    val altText: String? = null,
-    val highlighted: Boolean
+    val openOutsideApp: Boolean
 )
+fun decodeBase64Image(base64Image: String): Bitmap? {
+    return try {
+        val decodedString: ByteArray = Base64.decode(base64Image, Base64.DEFAULT)
+        BitmapFactory.decodeByteArray(decodedString, 0, decodedString.size)
+    } catch (e: IllegalArgumentException) {
+        null
+    }
+}
 
 class SfcService(
     private val stage: STAGE,
@@ -75,7 +84,7 @@ class SfcService(
 
     private val client = OkHttpClient()
 
-    suspend fun getVkaData(userName: String): VkaResponse? {
+    suspend fun updateVkaData(userName: String) {
         val url = buildUrl(stage, INTERFACE_VERSION, blz, productId)
 
         val body = """
@@ -114,12 +123,10 @@ class SfcService(
         return try {
             val response = client.newCall(request).execute()
             if (response.isSuccessful) {
-                Json.decodeFromString(response.body!!.string())
+                val responseBody = response.body?.string() ?: null
             } else {
-                null
             }
         } catch (e: Exception) {
-            null
         }
     }
 
@@ -137,9 +144,9 @@ class SfcServiceFactory {
     companion object {
         fun create(blz: String, strStage: String, productId: String): SfcService {
             var stage: STAGE = STAGE.STAGE_PROD
-            if ( strStage == "RHEIN")  stage = STAGE.STAGE_RHEIN
-            if ( strStage == "BETA")  stage = STAGE.STAGE_BETA
-            return SfcService(stage, blz, productId) // Replace PRODUCT_ID with your actual value
+            if (strStage == "RHEIN") stage = STAGE.STAGE_RHEIN
+            if (strStage == "BETA") stage = STAGE.STAGE_BETA
+            return SfcService(stage, blz, productId)
         }
     }
 }

@@ -1,4 +1,4 @@
-package com.example.deeplinkwebviewapp
+package `mipmap-xhdpi`.deeplinkwebviewapp
 
 import android.widget.TextView
 
@@ -8,7 +8,7 @@ object Logger {
 
     // Initialisiere den Logger mit einer TextView
     fun init(logTextView: TextView?) {
-        this.logTextView = logTextView
+        Logger.logTextView = logTextView
         // Zeige alle Logs in der TextView an, wenn sie verfügbar ist
         logTextView?.let {
             it.text = "" // Bestehenden Text löschen, um alles neu anzuzeigen

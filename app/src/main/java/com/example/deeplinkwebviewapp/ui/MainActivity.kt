@@ -1,4 +1,4 @@
-package com.example.deeplinkwebviewapp
+package `mipmap-xhdpi`.deeplinkwebviewapp.ui
 
 import android.Manifest
 import android.app.NotificationChannel
@@ -22,6 +22,13 @@ import androidx.drawerlayout.widget.DrawerLayout
 import androidx.lifecycle.lifecycleScope
 import androidx.preference.PreferenceManager
 import com.android.identity.util.UUID
+import `mipmap-xhdpi`.deeplinkwebviewapp.data.DeviceData
+import `mipmap-xhdpi`.deeplinkwebviewapp.data.DeviceDataSingleton
+import `mipmap-xhdpi`.deeplinkwebviewapp.Logger
+import `mipmap-xhdpi`.deeplinkwebviewapp.ui.http.MyHttpClient
+import com.example.deeplinkwebviewapp.R
+import com.example.deeplinkwebviewapp.service.SfcService
+import com.example.deeplinkwebviewapp.service.SfcServiceFactory
 import com.google.android.material.navigation.NavigationView
 import com.google.firebase.messaging.FirebaseMessaging
 import kotlinx.coroutines.Dispatchers
@@ -81,7 +88,7 @@ class MainActivity : AppCompatActivity() {
         // Überprüfe die Absicht und speichere die Werte
         handleIntent(intent)
 
-        val deviceData = DeviceDataSingleton.deviceData
+        val deviceData = `mipmap-xhdpi`.deeplinkwebviewapp.data.DeviceDataSingleton.deviceData
 
         // SharedPreferences initialisieren
         sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this)
@@ -179,12 +186,12 @@ class MainActivity : AppCompatActivity() {
                     true
                 }
                 R.id.nav_function_einstellungen -> {
-                    val settings_intent = Intent(this, SettingsActivity::class.java)
+                    val settings_intent = Intent(this, `mipmap-xhdpi`.deeplinkwebviewapp.ui.SettingsActivity::class.java)
                     startActivity(settings_intent)
                     true
                 }
                 R.id.nav_function_log -> {
-                    val log_intent = Intent(this, LogActivity::class.java)
+                    val log_intent = Intent(this, `mipmap-xhdpi`.deeplinkwebviewapp.ui.LogActivity::class.java)
                     startActivity(log_intent)
                     true
                 }
@@ -219,7 +226,7 @@ class MainActivity : AppCompatActivity() {
             editor.apply() // Async speichern
 
             // FCM Token ins Log schreiben und in der SettingsActivity anzeigen
-            Logger.log("FCM Token: $token")
+            `mipmap-xhdpi`.deeplinkwebviewapp.Logger.log("FCM Token: $token")
             if ( deviceData.push_id != token ) {
                 deviceData.push_id = token
                 sendDeviceData ( )
@@ -286,7 +293,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun openWebView(url: String) {
-        val intent = Intent(this, WebViewActivity::class.java).apply {
+        val intent = Intent(this, `mipmap-xhdpi`.deeplinkwebviewapp.ui.WebViewActivity::class.java).apply {
             putExtra("EXTRA_URL", url) // Den Parameter hinzufügen
         }
         startActivity(intent)
@@ -301,13 +308,13 @@ class MainActivity : AppCompatActivity() {
         }
     }
     fun sendDeviceData() {
-        val deviceData: DeviceData = DeviceDataSingleton.deviceData
+        val deviceData: `mipmap-xhdpi`.deeplinkwebviewapp.data.DeviceData = `mipmap-xhdpi`.deeplinkwebviewapp.data.DeviceDataSingleton.deviceData
 
-        MyHttpClient.getInstance().postDeviceData(deviceData) { response ->
+        `mipmap-xhdpi`.deeplinkwebviewapp.ui.http.MyHttpClient.getInstance().postDeviceData(deviceData) { response ->
             if (response != null) {
-                Logger.log("Gerätedaten erfolgreich gesendet: $response")
+                `mipmap-xhdpi`.deeplinkwebviewapp.Logger.log("Gerätedaten erfolgreich gesendet: $response")
             } else {
-                Logger.log("Fehler beim Senden der Gerätedaten.")
+                `mipmap-xhdpi`.deeplinkwebviewapp.Logger.log("Fehler beim Senden der Gerätedaten.")
             }
         }
     }
