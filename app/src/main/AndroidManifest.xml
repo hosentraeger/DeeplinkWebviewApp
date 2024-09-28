@@ -9,28 +9,29 @@
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:fullBackupContent="@xml/backup_rules"
         android:icon="@mipmap/ic_launcher_new"
+        android:roundIcon="@mipmap/ic_launcher_new_rounded"
         android:label="@string/app_name"
         android:networkSecurityConfig="@xml/network_security_config"
         android:supportsRtl="true"
         android:theme="@style/Theme.DeeplinkWebviewApp"
         tools:targetApi="31">
         <activity
-            android:name="mipmap-xhdpi.deeplinkwebviewapp.ui.LogActivity"
+            android:name="com.example.deeplinkwebviewapp.ui.LogActivity"
             android:exported="false"
             android:label="@string/title_activity_log"
             android:theme="@style/Theme.DeeplinkWebviewApp" />
         <activity
-            android:name="mipmap-xhdpi.deeplinkwebviewapp.ui.SettingsActivity"
+            android:name="com.example.deeplinkwebviewapp.ui.SettingsActivity"
             android:exported="false"
             android:label="@string/title_activity_settings"
             android:theme="@style/Theme.DeeplinkWebviewApp" />
         <activity
-            android:name="mipmap-xhdpi.deeplinkwebviewapp.ui.WebViewActivity"
+            android:name="com.example.deeplinkwebviewapp.ui.WebViewActivity"
             android:exported="false"
             android:label="@string/title_activity_web_view"
             android:theme="@style/Theme.DeeplinkWebviewApp" />
         <activity
-            android:name="mipmap-xhdpi.deeplinkwebviewapp.ui.MainActivity"
+            android:name="com.example.deeplinkwebviewapp.ui.MainActivity"
             android:exported="true"
             android:label="@string/app_name"
             android:theme="@style/Theme.DeeplinkWebviewApp">
@@ -52,7 +53,7 @@
         </activity>
 
         <service
-            android:name="mipmap-xxhdpi.service.MyFirebaseMessagingService"
+            android:name="com.example.deeplinkwebviewapp.service.MyFirebaseMessagingService"
             android:exported="false">
             <intent-filter>
                 <action android:name="com.google.firebase.MESSAGING_EVENT" />

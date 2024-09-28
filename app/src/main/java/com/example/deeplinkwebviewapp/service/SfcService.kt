@@ -1,4 +1,4 @@
-package `mipmap-xxxhdpi`
+package com.example.deeplinkwebviewapp.service
 
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
@@ -10,7 +10,7 @@ import okhttp3.RequestBody.Companion.toRequestBody
 enum class STAGE { STAGE_RHEIN, STAGE_BETA, STAGE_PROD }
 
 class VkaData(private val _rawData: String) {
-    val rawJson = Json.decodeFromString<MyDataClass>(jsonString)
+    val rawJson = _rawData
     val rawData: String = _rawData
     fun getValue(): String {
         return rawData

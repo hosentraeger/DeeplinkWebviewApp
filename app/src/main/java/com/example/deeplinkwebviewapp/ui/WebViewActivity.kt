@@ -1,4 +1,4 @@
-package `mipmap-xhdpi`.deeplinkwebviewapp.ui
+package com.example.deeplinkwebviewapp.ui
 
 import android.content.ActivityNotFoundException
 import android.content.Intent

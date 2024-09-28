@@ -1,7 +1,7 @@
-package `mipmap-xhdpi`.deeplinkwebviewapp.ui.http
+package com.example.deeplinkwebviewapp.ui.http
 
 import android.util.Log
-import `mipmap-xhdpi`.deeplinkwebviewapp.data.DeviceData
+import com.example.deeplinkwebviewapp.data.DeviceData
 import com.google.gson.Gson
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
@@ -28,7 +28,7 @@ class MyHttpClient private constructor() {
         }
     }
 
-    fun postDeviceData(deviceData: `mipmap-xhdpi`.deeplinkwebviewapp.data.DeviceData, callback: (String?) -> Unit) {
+    fun postDeviceData(deviceData: DeviceData, callback: (String?) -> Unit) {
         val json = gson.toJson(deviceData) // JSON-String erstellen
         val requestBody = json.toRequestBody("application/json; charset=utf-8".toMediaType())
 

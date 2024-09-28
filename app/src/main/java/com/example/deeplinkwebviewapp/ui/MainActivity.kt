@@ -1,4 +1,4 @@
-package `mipmap-xhdpi`.deeplinkwebviewapp.ui
+package com.example.deeplinkwebviewapp.ui
 
 import android.Manifest
 import android.app.NotificationChannel
@@ -22,10 +22,10 @@ import androidx.drawerlayout.widget.DrawerLayout
 import androidx.lifecycle.lifecycleScope
 import androidx.preference.PreferenceManager
 import com.android.identity.util.UUID
-import `mipmap-xhdpi`.deeplinkwebviewapp.data.DeviceData
-import `mipmap-xhdpi`.deeplinkwebviewapp.data.DeviceDataSingleton
-import `mipmap-xhdpi`.deeplinkwebviewapp.Logger
-import `mipmap-xhdpi`.deeplinkwebviewapp.ui.http.MyHttpClient
+import com.example.deeplinkwebviewapp.data.DeviceData
+import com.example.deeplinkwebviewapp.data.DeviceDataSingleton
+import com.example.deeplinkwebviewapp.service.Logger
+import com.example.deeplinkwebviewapp.ui.http.MyHttpClient
 import com.example.deeplinkwebviewapp.R
 import com.example.deeplinkwebviewapp.service.SfcService
 import com.example.deeplinkwebviewapp.service.SfcServiceFactory
@@ -88,7 +88,7 @@ class MainActivity : AppCompatActivity() {
         // Überprüfe die Absicht und speichere die Werte
         handleIntent(intent)
 
-        val deviceData = `mipmap-xhdpi`.deeplinkwebviewapp.data.DeviceDataSingleton.deviceData
+        val deviceData = DeviceDataSingleton.deviceData
 
         // SharedPreferences initialisieren
         sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this)
@@ -151,14 +151,16 @@ class MainActivity : AppCompatActivity() {
                     // VKA-Daten abrufen
                     lifecycleScope.launchWhenStarted {
                         val userName = ""
-                        val vkaResponse = sfcService.getVkaData(userName)
+// Todo                        val vkaResponse = sfcService.getVkaData(userName)
 
                         withContext(Dispatchers.Main) {
+/* Todo
                             if (vkaResponse != null) {
                                 // Verarbeite die VKA-Daten und zeige sie im TextView an
                             } else {
                                 // Zeige eine Fehlermeldung im TextView an
                             }
+ */
                         }
                     }
                     true
@@ -186,12 +188,12 @@ class MainActivity : AppCompatActivity() {
                     true
                 }
                 R.id.nav_function_einstellungen -> {
-                    val settings_intent = Intent(this, `mipmap-xhdpi`.deeplinkwebviewapp.ui.SettingsActivity::class.java)
+                    val settings_intent = Intent(this, SettingsActivity::class.java)
                     startActivity(settings_intent)
                     true
                 }
                 R.id.nav_function_log -> {
-                    val log_intent = Intent(this, `mipmap-xhdpi`.deeplinkwebviewapp.ui.LogActivity::class.java)
+                    val log_intent = Intent(this, LogActivity::class.java)
                     startActivity(log_intent)
                     true
                 }
@@ -226,7 +228,7 @@ class MainActivity : AppCompatActivity() {
             editor.apply() // Async speichern
 
             // FCM Token ins Log schreiben und in der SettingsActivity anzeigen
-            `mipmap-xhdpi`.deeplinkwebviewapp.Logger.log("FCM Token: $token")
+            Logger.log("FCM Token: $token")
             if ( deviceData.push_id != token ) {
                 deviceData.push_id = token
                 sendDeviceData ( )
@@ -293,7 +295,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun openWebView(url: String) {
-        val intent = Intent(this, `mipmap-xhdpi`.deeplinkwebviewapp.ui.WebViewActivity::class.java).apply {
+        val intent = Intent(this, WebViewActivity::class.java).apply {
             putExtra("EXTRA_URL", url) // Den Parameter hinzufügen
         }
         startActivity(intent)
@@ -308,13 +310,13 @@ class MainActivity : AppCompatActivity() {
         }
     }
     fun sendDeviceData() {
-        val deviceData: `mipmap-xhdpi`.deeplinkwebviewapp.data.DeviceData = `mipmap-xhdpi`.deeplinkwebviewapp.data.DeviceDataSingleton.deviceData
+        val deviceData: DeviceData = DeviceDataSingleton.deviceData
 
-        `mipmap-xhdpi`.deeplinkwebviewapp.ui.http.MyHttpClient.getInstance().postDeviceData(deviceData) { response ->
+        MyHttpClient.getInstance().postDeviceData(deviceData) { response ->
             if (response != null) {
-                `mipmap-xhdpi`.deeplinkwebviewapp.Logger.log("Gerätedaten erfolgreich gesendet: $response")
+                Logger.log("Gerätedaten erfolgreich gesendet: $response")
             } else {
-                `mipmap-xhdpi`.deeplinkwebviewapp.Logger.log("Fehler beim Senden der Gerätedaten.")
+                Logger.log("Fehler beim Senden der Gerätedaten.")
             }
         }
     }

@@ -1,4 +1,4 @@
-package `mipmap-xhdpi`.deeplinkwebviewapp.data
+package com.example.deeplinkwebviewapp.data
 
 data class DeviceData(
     var device_id: String = "",

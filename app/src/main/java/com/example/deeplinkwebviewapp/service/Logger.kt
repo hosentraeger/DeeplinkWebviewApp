@@ -1,4 +1,4 @@
-package `mipmap-xhdpi`.deeplinkwebviewapp
+package com.example.deeplinkwebviewapp.service
 
 import android.widget.TextView
 

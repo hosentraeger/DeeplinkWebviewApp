@@ -1,4 +1,4 @@
-package `mipmap-xxhdpi`.service
+package com.example.deeplinkwebviewapp.service
 
 import android.Manifest
 import android.app.PendingIntent

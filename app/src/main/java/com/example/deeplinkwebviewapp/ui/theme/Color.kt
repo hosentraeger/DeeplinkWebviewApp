@@ -1,4 +1,4 @@
-package `mipmap-xhdpi`.deeplinkwebviewapp.ui.theme
+package com.example.deeplinkwebviewapp.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
