@@ -97,7 +97,6 @@ class SettingsActivity : AppCompatActivity() {
 
         val deviceData = DeviceDataSingleton.deviceData
         // FCM-Token anzeigen
-        val fcmToken = sharedPreferences.getString("FCMToken", "Token nicht verfügbar")
         fcmTokenTextView.text = deviceData.push_id
         deviceIdTextView.text = deviceData.device_id
         // Füge in deiner onCreate-Methode nach der Button-Initialisierung folgendes hinzu

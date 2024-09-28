@@ -7,12 +7,17 @@
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:664831534455:android:c9e3c9dd4209ff991fed72",
+        "mobilesdk_app_id": "1:664831534455:android:b50354cc339cafec1fed72",
         "android_client_info": {
           "package_name": "com.example.deeplinkwebviewapp"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "664831534455-bbf7r8vsle9l0m5q4saajhqa32qsglco.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyA3WDqsvgw6IkhSo5vzeYrrT9KPgTwA5tY"
@@ -20,7 +25,41 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "664831534455-bbf7r8vsle9l0m5q4saajhqa32qsglco.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:664831534455:android:53dcbc3df412e0cf1fed72",
+        "android_client_info": {
+          "package_name": "de.fsiebecke.showcaseapp"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "664831534455-bbf7r8vsle9l0m5q4saajhqa32qsglco.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA3WDqsvgw6IkhSo5vzeYrrT9KPgTwA5tY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "664831534455-bbf7r8vsle9l0m5q4saajhqa32qsglco.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
         }
       }
     }

@@ -19,10 +19,13 @@ import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.core.view.GravityCompat
 import androidx.drawerlayout.widget.DrawerLayout
+import androidx.lifecycle.lifecycleScope
 import androidx.preference.PreferenceManager
 import com.android.identity.util.UUID
 import com.google.android.material.navigation.NavigationView
 import com.google.firebase.messaging.FirebaseMessaging
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
 import java.util.Locale
@@ -34,6 +37,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var toggle: ActionBarDrawerToggle // Fügt ActionBarDrawerToggle hinzu
     private lateinit var sharedPreferences: SharedPreferences
     private lateinit var previousLogin: String
+    private lateinit var sfcService: SfcService
     companion object {
         private const val TAG = "MainActivity"
     }
@@ -81,7 +85,7 @@ class MainActivity : AppCompatActivity() {
 
         // SharedPreferences initialisieren
         sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this)
-        val editor = sharedPreferences.edit()
+        var editor = sharedPreferences.edit()
         if (false == sharedPreferences.getBoolean("valid", false)) {
             editor.putString("BLZ", getString(R.string.default_blz))
             editor.putString("Username", getString(R.string.default_username))
@@ -108,6 +112,7 @@ class MainActivity : AppCompatActivity() {
         // Toolbar hinzufügen
         val toolbar: Toolbar = findViewById(R.id.toolbar)
         setSupportActionBar(toolbar)
+        supportActionBar?.title = "Showcase"
 
         // DrawerLayout und NavigationView
         drawerLayout = findViewById(R.id.drawer_layout)
@@ -135,6 +140,22 @@ class MainActivity : AppCompatActivity() {
                 R.id.nav_function_kontakt -> {
                     true
                 }
+                R.id.nav_function_vka -> {
+                    // VKA-Daten abrufen
+                    lifecycleScope.launchWhenStarted {
+                        val userName = ""
+                        val vkaResponse = sfcService.getVkaData(userName)
+
+                        withContext(Dispatchers.Main) {
+                            if (vkaResponse != null) {
+                                // Verarbeite die VKA-Daten und zeige sie im TextView an
+                            } else {
+                                // Zeige eine Fehlermeldung im TextView an
+                            }
+                        }
+                    }
+                    true
+                }
                 R.id.nav_function_angebote -> {
                     true
                 }
@@ -158,13 +179,13 @@ class MainActivity : AppCompatActivity() {
                     true
                 }
                 R.id.nav_function_einstellungen -> {
-                    val intent = Intent(this, SettingsActivity::class.java)
-                    startActivity(intent)
+                    val settings_intent = Intent(this, SettingsActivity::class.java)
+                    startActivity(settings_intent)
                     true
                 }
                 R.id.nav_function_log -> {
-                    val intent = Intent(this, LogActivity::class.java)
-                    startActivity(intent)
+                    val log_intent = Intent(this, LogActivity::class.java)
+                    startActivity(log_intent)
                     true
                 }
                 else -> false
@@ -193,7 +214,7 @@ class MainActivity : AppCompatActivity() {
             Log.d(TAG, "FCM Token: $token")
 
             // FCM-Token in SharedPreferences speichern
-            val editor = sharedPreferences.edit()
+            editor = sharedPreferences.edit()
             editor.putString("FCMToken", token)
             editor.apply() // Async speichern
 
@@ -204,6 +225,10 @@ class MainActivity : AppCompatActivity() {
                 sendDeviceData ( )
             }
         }
+        sfcService = SfcServiceFactory.create(
+            sharedPreferences.getString("BLZ", "").toString(),
+            sharedPreferences.getString("Stage", "").toString(),
+            "6.8.0" )
     }
 
     override fun onNewIntent(intent: Intent) {
@@ -222,7 +247,7 @@ class MainActivity : AppCompatActivity() {
         if (extras != null) {
             // Logge die gesamten Extras für Debugging
             for (key in extras.keySet()) {
-                val value = extras.get(key)
+                val value = extras.getString(key)
                 Log.d("PushNotification", "Key: $key, Value: $value")
             }
 

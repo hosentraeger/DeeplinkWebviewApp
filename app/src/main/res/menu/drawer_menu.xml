@@ -14,6 +14,10 @@
         android:title="Kontakt"/>
 
     <item
+        android:id="@+id/nav_function_vka"
+        android:title="Vertriebliche Kundenansprache"/>
+
+    <item
         android:id="@+id/nav_function_angebote"
         android:title="Angebote"/>
 
