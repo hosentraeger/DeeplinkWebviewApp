@@ -1,4 +1,4 @@
-package com.example.deeplinkwebviewapp.ui.http
+package com.example.deeplinkwebviewapp.service
 
 import android.util.Log
 import com.example.deeplinkwebviewapp.data.DeviceData

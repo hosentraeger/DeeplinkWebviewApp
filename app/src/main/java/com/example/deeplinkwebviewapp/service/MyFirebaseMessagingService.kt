@@ -72,7 +72,6 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
             putExtra("customKey1", customKey1)
             putExtra("customKey2", customKey2)
-            putExtra("showAlert", true)
         }
 
         val pendingIntent: PendingIntent = PendingIntent.getActivity(

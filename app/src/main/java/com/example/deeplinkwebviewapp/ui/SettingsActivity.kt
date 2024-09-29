@@ -1,35 +1,30 @@
 package com.example.deeplinkwebviewapp.ui
 
-import android.content.SharedPreferences
+import com.example.deeplinkwebviewapp.viewmodel.SettingsViewModel
+import com.example.deeplinkwebviewapp.viewmodel.SettingsViewModelFactory
 import android.os.Bundle
-import android.widget.Button
-import android.widget.EditText
-import android.widget.Spinner
+import android.widget.*
+import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.preference.PreferenceManager
-import android.widget.ArrayAdapter
-import android.widget.TextView
-import com.android.identity.util.UUID
-import com.example.deeplinkwebviewapp.data.DeviceDataSingleton
-import com.example.deeplinkwebviewapp.service.Logger
-import com.example.deeplinkwebviewapp.ui.http.MyHttpClient
 import com.example.deeplinkwebviewapp.R
 
 class SettingsActivity : AppCompatActivity() {
 
-    private lateinit var sharedPreferences: SharedPreferences
     private lateinit var appSpinner: Spinner
     private lateinit var stageSpinner: Spinner
     private lateinit var fcmTokenTextView: TextView
     private lateinit var deviceIdTextView: TextView
     private lateinit var servletUrlTextView: TextView
 
+    // ViewModel für die Einstellungen
+    private val settingsViewModel: SettingsViewModel by viewModels {
+        SettingsViewModelFactory(PreferenceManager.getDefaultSharedPreferences(this))
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_settings)
-
-        // SharedPreferences initialisieren
-        sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this)
 
         // Zugriff auf die Views
         val blzEditText: EditText = findViewById(R.id.editTextBLZ)
@@ -38,105 +33,72 @@ class SettingsActivity : AppCompatActivity() {
         val pinEditText: EditText = findViewById(R.id.editTextPIN)
         val mkaEditText: EditText = findViewById(R.id.editTextMKALine)
         val deeplinkURLEditText: EditText = findViewById(R.id.editTextDeeplinkURL)
-        fcmTokenTextView = findViewById(R.id.textViewFCMToken)  // FCM Token TextView
-        deviceIdTextView = findViewById(R.id.textViewDeviceId)  // FCM Token TextView
-        servletUrlTextView = findViewById(R.id.textViewServletUrl)  // FCM Token TextView
+        fcmTokenTextView = findViewById(R.id.textViewFCMToken)
+        deviceIdTextView = findViewById(R.id.textViewDeviceId)
+        servletUrlTextView = findViewById(R.id.textViewServletUrl)
 
-        // Spinner für SF Stage
+        // Spinner initialisieren
         stageSpinner = findViewById(R.id.spinnerSFStage)
+        appSpinner = findViewById(R.id.spinnerApp)
+
         val adapter: ArrayAdapter<CharSequence> = ArrayAdapter.createFromResource(
             this,
-            R.array.sf_stage_array,  // String array für "Rhein", "Beta", "Prod"
+            R.array.sf_stage_array,
             android.R.layout.simple_spinner_item
         ).also { arrayAdapter ->
             arrayAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
             stageSpinner.adapter = arrayAdapter
         }
 
-        // Spinner für App Auswahl
-        appSpinner = findViewById(R.id.spinnerApp)
-        val appSpinnerAdapter: ArrayAdapter<CharSequence> = ArrayAdapter.createFromResource(
-            this,
-            R.array.app_array,  // String array für die Apps
-            android.R.layout.simple_spinner_item
-        ).also { arrayAdapter ->
-            arrayAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
-            appSpinner.adapter = arrayAdapter
-        }
+        // Gespeicherte Daten anzeigen
+        blzEditText.setText(settingsViewModel.getBLZ())
+        usernameEditText.setText(settingsViewModel.getUsername())
+        personenNummerEditText.setText(settingsViewModel.getPersonennummer())
+        pinEditText.setText(settingsViewModel.getPIN())
+        mkaEditText.setText(settingsViewModel.getMKALine())
+        deeplinkURLEditText.setText(settingsViewModel.getDeeplinkURL())
 
-        // Gespeicherte Daten laden
-        blzEditText.setText(sharedPreferences.getString("BLZ", getString(R.string.default_blz)))
-        usernameEditText.setText(sharedPreferences.getString("Username", ""))
-        personenNummerEditText.setText(sharedPreferences.getString("Personennummer", ""))
-        pinEditText.setText(sharedPreferences.getString("PIN", ""))
-        mkaEditText.setText(sharedPreferences.getString("MKALine", getString(R.string.default_mka)))
-        deeplinkURLEditText.setText(sharedPreferences.getString("DeeplinkURL", getString(R.string.default_deeplink_url)))
-
-        // SF Stage Auswahl
-        val stage = sharedPreferences.getString("SFStage", getString(R.string.default_stage))
+        // Stage Spinner
+        val stage = settingsViewModel.getSFStage()
         val stagePosition = adapter.getPosition(stage)
         stageSpinner.setSelection(stagePosition)
 
-        // App Auswahl
-        val app = sharedPreferences.getString("App", getString(R.string.default_app))
-        val appPosition = appSpinnerAdapter.getPosition(app)
+        // App Spinner
+        val appAdapter: ArrayAdapter<CharSequence> = ArrayAdapter.createFromResource(
+            this,
+            R.array.app_array,
+            android.R.layout.simple_spinner_item
+        )
+        val app = settingsViewModel.getApp()
+        val appPosition = appAdapter.getPosition(app)
         appSpinner.setSelection(appPosition)
 
-        // Speichern Button
+        // Button zum Speichern der Einstellungen
         val saveButton: Button = findViewById(R.id.buttonSave)
         saveButton.setOnClickListener {
-            val deviceData = DeviceDataSingleton.deviceData
-            deviceData.login_id = usernameEditText.text.toString()
-            // Werte speichern
-            sharedPreferences.edit().apply {
-                putString("BLZ", blzEditText.text.toString())
-                putString("Username", usernameEditText.text.toString())
-                putString("Personennummer", personenNummerEditText.text.toString())
-                putString("PIN", pinEditText.text.toString())
-                putString("MKALine", mkaEditText.text.toString())
-                putString("SFStage", stageSpinner.selectedItem.toString())
-                putString("App", appSpinner.selectedItem.toString())
-                putString("DeeplinkURL", deeplinkURLEditText.text.toString())
-                apply()
-            }
-            Logger.log("Einstellungen gespeichert.") // Logger verwenden
+            settingsViewModel.saveSettings(
+                blzEditText.text.toString(),
+                usernameEditText.text.toString(),
+                personenNummerEditText.text.toString(),
+                pinEditText.text.toString(),
+                mkaEditText.text.toString(),
+                stageSpinner.selectedItem.toString(),
+                appSpinner.selectedItem.toString(),
+                deeplinkURLEditText.text.toString()
+            )
+            Toast.makeText(this, "Einstellungen gespeichert", Toast.LENGTH_SHORT).show()
         }
 
-        val deviceData = DeviceDataSingleton.deviceData
-        // FCM-Token anzeigen
-        fcmTokenTextView.text = deviceData.push_id
-        deviceIdTextView.text = deviceData.device_id
-        // Füge in deiner onCreate-Methode nach der Button-Initialisierung folgendes hinzu
+        // Button zum Regenerieren der Device-ID
         val regenerateButton: Button = findViewById(R.id.buttonRegenerate)
-
         regenerateButton.setOnClickListener {
-            regenerateDeviceId()
+            settingsViewModel.regenerateDeviceId()
+            deviceIdTextView.text = settingsViewModel.deviceData.device_id
         }
 
+        // FCM Token anzeigen
+        fcmTokenTextView.text = settingsViewModel.deviceData.push_id
+        deviceIdTextView.text = settingsViewModel.deviceData.device_id
         servletUrlTextView.text = "<servlet url>"
-    }
-    private fun regenerateDeviceId() {
-        val newDeviceId = UUID.randomUUID().toString()
-        val deviceData = DeviceDataSingleton.deviceData
-        deviceData.device_id = newDeviceId  // Update der Gerätedaten
-
-        // Gerätedaten an den Server senden
-        MyHttpClient.getInstance().postDeviceData(deviceData) { response ->
-            runOnUiThread {
-                if (response != null) {
-                    Logger.log("Gerätedaten erfolgreich gesendet: $response")
-                    // UI aktualisieren
-                    updateDeviceIdTextView() // Aktualisiere die Anzeige
-                } else {
-                    Logger.log("Fehler beim Senden der Gerätedaten.")
-                }
-            }
-        }
-    }
-
-    // Funktion zur Aktualisierung der TextView
-    private fun updateDeviceIdTextView() {
-        val deviceData = DeviceDataSingleton.deviceData
-        deviceIdTextView.text = deviceData.device_id
     }
 }
