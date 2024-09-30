@@ -30,11 +30,27 @@ class MainViewModel(
     private lateinit var previousLogin: String
 
     // SfcService initialisieren
-    val sfcService = SfcServiceFactory.create(
-        sharedPreferences.getString("BLZ", "").toString(),
-        sharedPreferences.getString("Stage", "").toString(),
-        "6.8.0"
+    val blz = sharedPreferences.getString("BLZ", "").toString()
+    val stage = sharedPreferences.getString("SFStage", "").toString()
+    private val sfcService = SfcServiceFactory.create(
+        blz,
+        //sharedPreferences.getString("BLZ", "").toString(),
+        stage,
+        //sharedPreferences.getString("Stage", "").toString(),
+        444 // TODO:
     )
+
+    private val _disrupterImageData = MutableLiveData<String>()
+    val disrupterImageData: LiveData<String> get() = _disrupterImageData
+
+    init {
+        sfcService.sfcResponse.observeForever { response ->
+            _disrupterImageData.value = response.disrupterImageData
+        }
+    }
+    fun loadVkaData(userId: String) {
+        sfcService.fetchVkaData(userId)
+    }
 
     private fun getCurrentTimestamp(): String {
         val currentDateTime = ZonedDateTime.now(java.time.ZoneOffset.UTC)
@@ -76,16 +92,6 @@ class MainViewModel(
         return when (itemId) {
             R.id.nav_function_appstart -> {
                 sendDeviceData()
-                true
-            }
-            R.id.nav_function_vka -> {
-/*
-Todo
-                lifecycleScope.launchWhenStarted {
-                    val userName = ""
-                    // TODO: Abrufen von VKA-Daten
-                }
- */
                 true
             }
             else -> false

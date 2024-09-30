@@ -2,18 +2,22 @@ package com.example.deeplinkwebviewapp.ui
 
 import com.example.deeplinkwebviewapp.viewmodel.MainViewModel
 import com.example.deeplinkwebviewapp.viewmodel.MainViewModelFactory
+import com.example.deeplinkwebviewapp.viewmodel.SettingsViewModel
+import com.example.deeplinkwebviewapp.viewmodel.SettingsViewModelFactory
 import android.Manifest
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.content.Context
 import android.content.Intent
-import android.content.SharedPreferences
 import android.content.pm.PackageManager
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
+import android.util.Base64
 import android.util.Log
-import androidx.activity.viewModels
+import android.widget.ImageView
 import androidx.appcompat.app.ActionBarDrawerToggle
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
@@ -22,6 +26,7 @@ import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.core.view.GravityCompat
 import androidx.drawerlayout.widget.DrawerLayout
+import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
 import com.example.deeplinkwebviewapp.R
 import com.google.android.material.navigation.NavigationView
@@ -31,9 +36,8 @@ class MainActivity : AppCompatActivity() {
     private lateinit var drawerLayout: DrawerLayout
     private lateinit var navView: NavigationView
     private lateinit var toggle: ActionBarDrawerToggle
-    private lateinit var sharedPreferences: SharedPreferences
     private lateinit var viewModel: MainViewModel
-    // private lateinit var viewModel: MainViewModel
+    private lateinit var settingsViewModel: SettingsViewModel
 
     companion object {
         private const val TAG = "MainActivity"
@@ -68,6 +72,35 @@ class MainActivity : AppCompatActivity() {
         // Device-Daten initialisieren
         viewModel.initializeDeviceData()
 
+        // Beobachte die LiveData für die Imagedaten
+        viewModel.disrupterImageData.observe(this) { imageData ->
+            // Hier kannst du die Bilddaten verarbeiten und z.B. ein ImageView aktualisieren
+            if (imageData != null) {
+                // Suche nach "disrupter" als Startpunkt
+                val startIndex = imageData.indexOf("disrupter")
+                if (startIndex > -1) {
+                    var nextToken = "\"image\":"
+                    // Suche nach "image" nach dem "disrupter" Schlüsselwort
+                    val nextIndex = imageData.indexOf(nextToken, startIndex)
+                    if (nextIndex > -1) {
+                        // Suche nach dem End-Anführungszeichen (") nach dem "image"
+                        val endIndex = imageData.indexOf("\"", nextIndex + nextToken.length + 1)
+                        if (endIndex > -1) {
+                            // Extrahiere den Base64-Text zwischen dem Start und dem End-Anführungszeichen
+                            val disrupterImageData = imageData.substring(nextIndex + nextToken.length + 1, endIndex).trim()
+
+                            val intent = Intent(this, DisrupterActivity::class.java)
+                            intent.putExtra("imageData", disrupterImageData) // Base64-Bilddaten übergeben
+                            startActivity(intent)
+                        }
+                    }
+                }
+            }
+        }
+
+        val settingsFactory = SettingsViewModelFactory(application, sharedPreferences)
+        settingsViewModel = ViewModelProvider(this, settingsFactory).get(SettingsViewModel::class.java)
+
         // Toolbar und NavigationView einrichten
         val toolbar: Toolbar = findViewById(R.id.toolbar)
         setSupportActionBar(toolbar)
@@ -94,6 +127,14 @@ class MainActivity : AppCompatActivity() {
                             getString(R.string.default_deeplink_url)
                         )!!
                     )
+                    true
+                }
+
+                R.id.nav_function_vka -> {
+                    val userId = settingsViewModel.getPersonennummer()
+                    if (userId != null ) {
+                        viewModel.loadVkaData(userId)
+                    }
                     true
                 }
 
@@ -133,11 +174,11 @@ class MainActivity : AppCompatActivity() {
         viewModel.fcmToken.observe(this) { token ->
             if (token != null) {
                 // Token erfolgreich abgerufen
-                Log.d("FCM Token", "Token: $token")
+                Log.d(TAG, "Token: $token")
                 // Hier kannst du den Token verwenden, z.B. an deinen Server senden
             } else {
                 // Fehler beim Abrufen des Tokens
-                Log.d("FCM Token", "Failed to retrieve token")
+                Log.d(TAG, "Failed to retrieve token")
             }
         }
     }
@@ -186,13 +227,13 @@ class MainActivity : AppCompatActivity() {
         val extras = intent.extras
 
         if (data != null) {
-            Log.d("IntentType", "Opened via Deep Link: $data")
+            Log.d(TAG, "Opened via Deep Link: $data")
             handleDeeplink(intent)
         } else if (extras != null && extras.containsKey("from")) {
-            Log.d("IntentType", "Opened via Push Notification")
+            Log.d(TAG, "Opened via Push Notification")
             handlePushNotification(intent)
         } else {
-            Log.d("IntentType", "Opened normally")
+            Log.d(TAG, "Opened normally")
         }
     }
 
@@ -211,7 +252,9 @@ class MainActivity : AppCompatActivity() {
         val customKey1 = intent?.getStringExtra("customKey1")
         val customKey2 = intent?.getStringExtra("customKey2")
 
-        if (customKey1 != null || customKey2 != null) {
+        if ( customKey1 == "IAM" && customKey2 != null ) {
+            viewModel.loadVkaData(customKey2)
+        } else if (customKey1 != null || customKey2 != null) {
             showPusNotificationAlertDialog(customKey1, customKey2) // Zeigt den Benachrichtigungsdialog
         }
     }
@@ -238,5 +281,4 @@ class MainActivity : AppCompatActivity() {
         }
         startActivity(intent)
     }
-
 }

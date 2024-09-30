@@ -51,7 +51,7 @@
                     android:scheme="https" />
             </intent-filter>
         </activity>
-
+        <activity android:name=".ui.DisrupterActivity"/>
         <service
             android:name="com.example.deeplinkwebviewapp.service.MyFirebaseMessagingService"
             android:exported="false">

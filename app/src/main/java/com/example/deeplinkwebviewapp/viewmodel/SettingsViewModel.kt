@@ -3,12 +3,15 @@ package com.example.deeplinkwebviewapp.viewmodel
 import com.example.deeplinkwebviewapp.service.MyHttpClient
 import com.example.deeplinkwebviewapp.data.DeviceDataSingleton
 import com.example.deeplinkwebviewapp.service.Logger
+
+import android.app.Application
 import android.content.SharedPreferences
-import androidx.lifecycle.ViewModel
+import androidx.lifecycle.AndroidViewModel
+
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.launch
 
-class SettingsViewModel(private val sharedPreferences: SharedPreferences) : ViewModel() {
+class SettingsViewModel(application: Application, private val sharedPreferences: SharedPreferences) : AndroidViewModel(application) {
 
     val deviceData = DeviceDataSingleton.deviceData
 

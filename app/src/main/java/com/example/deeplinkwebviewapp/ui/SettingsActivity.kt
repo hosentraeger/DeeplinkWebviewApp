@@ -1,12 +1,12 @@
 package com.example.deeplinkwebviewapp.ui
 
+import android.content.Context
 import com.example.deeplinkwebviewapp.viewmodel.SettingsViewModel
 import com.example.deeplinkwebviewapp.viewmodel.SettingsViewModelFactory
 import android.os.Bundle
 import android.widget.*
-import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
-import androidx.preference.PreferenceManager
+import androidx.lifecycle.ViewModelProvider
 import com.example.deeplinkwebviewapp.R
 
 class SettingsActivity : AppCompatActivity() {
@@ -16,15 +16,15 @@ class SettingsActivity : AppCompatActivity() {
     private lateinit var fcmTokenTextView: TextView
     private lateinit var deviceIdTextView: TextView
     private lateinit var servletUrlTextView: TextView
-
-    // ViewModel für die Einstellungen
-    private val settingsViewModel: SettingsViewModel by viewModels {
-        SettingsViewModelFactory(PreferenceManager.getDefaultSharedPreferences(this))
-    }
+    private lateinit var settingsViewModel: SettingsViewModel
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_settings)
+
+        val sharedPreferences = getSharedPreferences("MyPreferences", Context.MODE_PRIVATE)
+
+        settingsViewModel = ViewModelProvider(this, SettingsViewModelFactory(application, sharedPreferences)).get(SettingsViewModel::class.java)
 
         // Zugriff auf die Views
         val blzEditText: EditText = findViewById(R.id.editTextBLZ)
