@@ -10,14 +10,10 @@ import android.app.NotificationManager
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
-import android.graphics.Bitmap
-import android.graphics.BitmapFactory
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
-import android.util.Base64
 import android.util.Log
-import android.widget.ImageView
 import androidx.appcompat.app.ActionBarDrawerToggle
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
@@ -26,10 +22,11 @@ import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.core.view.GravityCompat
 import androidx.drawerlayout.widget.DrawerLayout
-import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
 import com.example.deeplinkwebviewapp.R
 import com.google.android.material.navigation.NavigationView
+
+import com.google.firebase.FirebaseApp
 
 class MainActivity : AppCompatActivity() {
 
@@ -47,6 +44,10 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         createNotificationChannel()
+
+        // Firebase initialisieren
+        FirebaseApp.initializeApp(this)
+
         setContentView(R.layout.activity_main)
 
         // Berechtigungen für Benachrichtigungen anfragen (Android 13+)
@@ -76,25 +77,9 @@ class MainActivity : AppCompatActivity() {
         viewModel.disrupterImageData.observe(this) { imageData ->
             // Hier kannst du die Bilddaten verarbeiten und z.B. ein ImageView aktualisieren
             if (imageData != null) {
-                // Suche nach "disrupter" als Startpunkt
-                val startIndex = imageData.indexOf("disrupter")
-                if (startIndex > -1) {
-                    var nextToken = "\"image\":"
-                    // Suche nach "image" nach dem "disrupter" Schlüsselwort
-                    val nextIndex = imageData.indexOf(nextToken, startIndex)
-                    if (nextIndex > -1) {
-                        // Suche nach dem End-Anführungszeichen (") nach dem "image"
-                        val endIndex = imageData.indexOf("\"", nextIndex + nextToken.length + 1)
-                        if (endIndex > -1) {
-                            // Extrahiere den Base64-Text zwischen dem Start und dem End-Anführungszeichen
-                            val disrupterImageData = imageData.substring(nextIndex + nextToken.length + 1, endIndex).trim()
-
-                            val intent = Intent(this, DisrupterActivity::class.java)
-                            intent.putExtra("imageData", disrupterImageData) // Base64-Bilddaten übergeben
-                            startActivity(intent)
-                        }
-                    }
-                }
+                val intent = Intent(this, DisrupterActivity::class.java)
+                intent.putExtra("imageData", imageData) // Base64-Bilddaten übergeben
+                startActivity(intent)
             }
         }
 
@@ -165,7 +150,9 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-        handleIntent(intent)
+        intent?.let {
+            handleIntent(it)
+        }
 
         // Abrufen des FCM Tokens
         viewModel.fetchFcmToken()
@@ -222,16 +209,26 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun handleIntent(intent: Intent) {
-        val intent = intent
         val data = intent.data
         val extras = intent.extras
 
         if (data != null) {
             Log.d(TAG, "Opened via Deep Link: $data")
             handleDeeplink(intent)
-        } else if (extras != null && extras.containsKey("from")) {
-            Log.d(TAG, "Opened via Push Notification")
-            handlePushNotification(intent)
+        } else if (extras != null) {
+            // Ausgabe aller erhaltenen Extras
+            for (key in extras.keySet()) {
+                Log.d(TAG, "Intent extra: $key = ${extras.get(key)}")
+            }
+
+            // Hier kannst du spezifische Schlüssel prüfen
+            if (extras.containsKey("your_custom_key")) {
+                Log.d(TAG, "Opened via Push Notification with your_custom_key")
+                handlePushNotification(intent)
+            } else {
+                Log.d(TAG, "Opened via Push Notification, but no 'from' key found")
+                handlePushNotification(intent)
+            }
         } else {
             Log.d(TAG, "Opened normally")
         }

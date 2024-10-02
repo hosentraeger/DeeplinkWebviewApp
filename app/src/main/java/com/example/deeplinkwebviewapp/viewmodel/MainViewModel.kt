@@ -1,8 +1,10 @@
 package com.example.deeplinkwebviewapp.viewmodel
 
+import com.example.deeplinkwebviewapp.data.SfcIfResponse
 import android.app.Application
 import android.content.Context
 import android.content.SharedPreferences
+import android.util.Log
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
@@ -22,34 +24,42 @@ class MainViewModel(
     application: Application,
     private val sharedPreferences: SharedPreferences
 ) : AndroidViewModel(application) {
+
+    companion object {
+        private const val TAG = "MainViewModel"
+    }
+
     private val context: Context = application.applicationContext
-    private val _fcmToken = MutableLiveData<String?>()
-    val fcmToken: LiveData<String?> get() = _fcmToken
     private val editor = sharedPreferences.edit()
     val deviceData: DeviceData = DeviceDataSingleton.deviceData
     private lateinit var previousLogin: String
 
-    // SfcService initialisieren
-    val blz = sharedPreferences.getString("BLZ", "").toString()
-    val stage = sharedPreferences.getString("SFStage", "").toString()
-    private val sfcService = SfcServiceFactory.create(
-        blz,
-        //sharedPreferences.getString("BLZ", "").toString(),
-        stage,
-        //sharedPreferences.getString("Stage", "").toString(),
-        444 // TODO:
-    )
-
+    private val _fcmToken = MutableLiveData<String?>()
+    val fcmToken: LiveData<String?> get() = _fcmToken
     private val _disrupterImageData = MutableLiveData<String>()
     val disrupterImageData: LiveData<String> get() = _disrupterImageData
 
-    init {
-        sfcService.sfcResponse.observeForever { response ->
-            _disrupterImageData.value = response.disrupterImageData
-        }
-    }
+    // SfcService initialisieren
+    private val sfcService = SfcServiceFactory.create(
+        sharedPreferences.getString("BLZ", "").toString(),
+        sharedPreferences.getString("SFStage", "").toString(),
+        444 // TODO:
+    )
+
     fun loadVkaData(userId: String) {
-        sfcService.fetchVkaData(userId)
+        sfcService.fetchVkaData(userId) { response: SfcIfResponse? ->
+            response?.let {
+                try {
+                    val disrupter = response.services.firstOrNull()?.IF?.disrupter
+                    _disrupterImageData.postValue( disrupter?.image ?: "Default image or error message")
+                } catch (e: Exception) {
+                    Log.e(TAG, "Error processing SfcIfResponse: ${e.localizedMessage}")
+                    _disrupterImageData.value = "Error processing data"
+                }
+            } ?: run {
+                Log.e("MainViewModel", "Fehler bei der Anfrage")
+            }
+        }
     }
 
     private fun getCurrentTimestamp(): String {

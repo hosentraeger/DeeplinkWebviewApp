@@ -1,37 +1,45 @@
 package com.example.deeplinkwebviewapp.service
 
+import com.example.deeplinkwebviewapp.data.SfcIfResponse
 import android.util.Log
-import androidx.lifecycle.LiveData
-import androidx.lifecycle.MutableLiveData
+import kotlinx.serialization.json.Json
 
 enum class STAGE { STAGE_RHEIN, STAGE_BETA, STAGE_PROD }
-
-data class SfcResponse(
-    var disrupterImageData: String = "",
-    val disrupterTitle: String = ""
-)
 
 class SfcService(
     private val stage: STAGE,
     private val blz: String,
-    private val interfaceVersion: String,
     private val productId: Int
 ) {
     companion object {
         const val INTERFACE_VERSION = "v2020.02"
         private const val TAG = "SfcService"
     }
-    private val client = MyHttpClient.getInstance() // MyHttpClient verwenden
-    private val _sfcResponse = MutableLiveData<SfcResponse>()
-    val sfcResponse: LiveData<SfcResponse> get() = _sfcResponse // expose as LiveData
 
-    fun fetchVkaData(userName: String) {
+    private val client = MyHttpClient.getInstance()
+
+    fun fetchVkaData(userName: String, callback: (SfcIfResponse?) -> Unit) {
         val url = buildUrl(stage, INTERFACE_VERSION)
         client.postSfcData(url, blz, productId, userName) { response ->
             response?.let {
-                _sfcResponse.postValue(it) // LiveData aktualisieren
+                try {
+//                    Log.d(TAG, "Response: $it") // Loggen der Response
+                    val sfcIfResponse = Json.decodeFromString<SfcIfResponse>(it)
+
+                    // Überprüfen, ob die Antwort den Status "NO_CONTENT" enthält
+                    if (sfcIfResponse.services.any { service -> service.IF?.status == "NO_CONTENT" }) {
+                        Log.e(TAG, "Keine Inhalte verfügbar (NO_CONTENT)")
+                        callback(null) // Rückgabe von null oder ein spezifisches Ergebnis im Fehlerfall
+                    } else {
+                        callback(sfcIfResponse) // Rückgabe der deserialisierten SfcIfResponse
+                    }
+                } catch (e: Exception) {
+                    Log.e(TAG, "Fehler bei der Deserialisierung: ${e.message}")
+                    callback(null) // Rückgabe von null im Fehlerfall
+                }
             } ?: run {
-                Log.e("SfcService", "Fehler bei der Anfrage")
+                Log.e(TAG, "Fehler bei der Anfrage: Response war null")
+                callback(null)
             }
         }
     }
@@ -52,7 +60,7 @@ class SfcServiceFactory {
             var stage: STAGE = STAGE.STAGE_PROD
             if (strStage == "Rhein") stage = STAGE.STAGE_RHEIN
             if (strStage == "Beta") stage = STAGE.STAGE_BETA
-            return SfcService(stage, blz, "v2020.02", productId)
+            return SfcService(stage, blz, productId)
         }
     }
 }

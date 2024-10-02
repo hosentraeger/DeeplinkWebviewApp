@@ -58,7 +58,7 @@ class MyHttpClient private constructor() {
         }
     }
     // Neue Methode für SFC-Daten
-    fun postSfcData(url: String, blz: String, productId: Int, userName: String, callback: (SfcResponse?) -> Unit) {
+    fun postSfcData(url: String, blz: String, productId: Int, userName: String, callback: (String?) -> Unit) {
         val body = """
         {
             "bankUsers": [
@@ -99,7 +99,7 @@ class MyHttpClient private constructor() {
                 val response = client.newCall(request).execute()
                 if (response.isSuccessful) {
                     val responseBody = response.body?.string() ?: ""
-                    callback(SfcResponse(disrupterImageData = responseBody)) // Rückgabe der Antwort
+                    callback(responseBody) // Rückgabe der Antwort
                 } else {
                     val errorBody = response.body?.string() ?: "Keine Antwort vom Server"
                     Log.e("MyHttpClient", "Fehler: ${response.code}, Fehlerinhalt: $errorBody")
