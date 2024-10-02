@@ -1,13 +1,102 @@
 <?xml version="1.0" encoding="utf-8"?>
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="16dp"
+    android:background="#FFFFFF">
 
     <ImageView
         android:id="@+id/disrupterImageView"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
+        android:layout_height="wrap_content"
         android:scaleType="fitCenter"
-        android:contentDescription="@string/disrupter_image" />
+        android:contentDescription="@string/disrupter_image"
+        android:layout_marginBottom="16dp"/>
 
-</FrameLayout>
+    <TextView
+        android:id="@+id/header_text"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:text="@string/header_text"
+        android:textSize="18sp"
+        android:textStyle="bold"
+        android:textColor="#000000"/>
+
+    <!-- Untertitel -->
+    <TextView
+        android:id="@+id/subtitle_text"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:text="@string/subtitle_text"
+        android:textSize="14sp"
+        android:textColor="#808080"/>
+
+    <!-- Rote Schaltfläche "Umfrage starten" -->
+    <Button
+        android:id="@+id/btn_link1"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:backgroundTint="@color/red"
+        android:text="@string/link1"
+        android:textColor="@android:color/white"
+        android:textAllCaps="false"
+        android:background="@drawable/rounded_button" />
+
+    <!-- Rote Schaltfläche "Umfrage starten" -->
+    <Button
+        android:id="@+id/btn_link2"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:backgroundTint="@color/red"
+        android:text="@string/link2"
+        android:textColor="@android:color/white"
+        android:textAllCaps="false"
+        android:background="@drawable/rounded_button" />
+
+    <!-- Rote Schaltfläche "Umfrage starten" -->
+    <Button
+        android:id="@+id/btn_link3"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:backgroundTint="@color/red"
+        android:text="@string/link3"
+        android:textColor="@android:color/white"
+        android:textAllCaps="false"
+        android:background="@drawable/rounded_button" />
+
+    <TextView
+        android:id="@+id/tv_remind_later"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:layout_gravity="center"
+        android:text="@string/remind_later"
+        android:textSize="14sp"
+        android:textColor="#0000FF"
+        android:textStyle="bold"
+        android:clickable="true"
+        android:focusable="true"
+        android:background="?attr/selectableItemBackground" />
+
+    <TextView
+        android:id="@+id/tv_no_interest"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:layout_marginTop="8dp"
+        android:text="@string/no_interest"
+        android:textSize="14sp"
+        android:textColor="#0000FF"
+        android:textStyle="bold"
+        android:clickable="true"
+        android:focusable="true"
+        android:background="?attr/selectableItemBackground" />
+
+</LinearLayout>

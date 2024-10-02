@@ -14,6 +14,9 @@ import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.util.Log
+import android.view.Menu
+import android.view.MenuItem
+import android.widget.EditText
 import androidx.appcompat.app.ActionBarDrawerToggle
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
@@ -50,6 +53,9 @@ class MainActivity : AppCompatActivity() {
 
         setContentView(R.layout.activity_main)
 
+        // Zeige den Login-Dialog, bevor die App startet
+        showLoginDialog()
+
         // Berechtigungen für Benachrichtigungen anfragen (Android 13+)
         if (ContextCompat.checkSelfPermission(
                 this,
@@ -75,7 +81,6 @@ class MainActivity : AppCompatActivity() {
 
         // Beobachte die LiveData für die Imagedaten
         viewModel.disrupterImageData.observe(this) { imageData ->
-            // Hier kannst du die Bilddaten verarbeiten und z.B. ein ImageView aktualisieren
             if (imageData != null) {
                 val intent = Intent(this, DisrupterActivity::class.java)
                 intent.putExtra("imageData", imageData) // Base64-Bilddaten übergeben
@@ -86,13 +91,14 @@ class MainActivity : AppCompatActivity() {
         val settingsFactory = SettingsViewModelFactory(application, sharedPreferences)
         settingsViewModel = ViewModelProvider(this, settingsFactory).get(SettingsViewModel::class.java)
 
+        drawerLayout = findViewById(R.id.drawer_layout)
+        navView = findViewById(R.id.nav_view)
+
         // Toolbar und NavigationView einrichten
         val toolbar: Toolbar = findViewById(R.id.toolbar)
         setSupportActionBar(toolbar)
         supportActionBar?.title = "Showcase"
 
-        drawerLayout = findViewById(R.id.drawer_layout)
-        navView = findViewById(R.id.nav_view)
         toggle = ActionBarDrawerToggle(
             this,
             drawerLayout,
@@ -102,52 +108,10 @@ class MainActivity : AppCompatActivity() {
         )
         drawerLayout.addDrawerListener(toggle)
         toggle.syncState()
+
         // NavigationItemSelectedListener
         navView.setNavigationItemSelectedListener { menuItem ->
-            when (menuItem.itemId) {
-                R.id.nav_function_webview -> {
-                    openWebView(
-                        sharedPreferences.getString(
-                            "DeeplinkURL",
-                            getString(R.string.default_deeplink_url)
-                        )!!
-                    )
-                    true
-                }
-
-                R.id.nav_function_vka -> {
-                    val userId = settingsViewModel.getPersonennummer()
-                    if (userId != null ) {
-                        viewModel.loadVkaData(userId)
-                    }
-                    true
-                }
-
-                R.id.nav_function_greensmilies -> {
-                    openWebView(getString(R.string.greensmilies_url))
-                    true
-                }
-
-                R.id.nav_function_einstellungen -> {
-                    startActivity(Intent(this, SettingsActivity::class.java))
-                    true
-                }
-
-                R.id.nav_function_log -> {
-                    startActivity(Intent(this, LogActivity::class.java))
-                    true
-                }
-
-                else -> {
-                    val handled = viewModel.onNavItemSelected(menuItem.itemId)
-                    if (handled) {
-                        drawerLayout.closeDrawer(GravityCompat.START)
-                        true
-                    } else {
-                        false
-                    }
-                }
-            }
+            handleNavigationItemSelected(menuItem)
         }
 
         intent?.let {
@@ -162,12 +126,64 @@ class MainActivity : AppCompatActivity() {
             if (token != null) {
                 // Token erfolgreich abgerufen
                 Log.d(TAG, "Token: $token")
-                // Hier kannst du den Token verwenden, z.B. an deinen Server senden
             } else {
                 // Fehler beim Abrufen des Tokens
                 Log.d(TAG, "Failed to retrieve token")
             }
         }
+    }
+
+    private fun handleNavigationItemSelected(menuItem: MenuItem): Boolean {
+        val handled = when (menuItem.itemId) {
+            R.id.nav_function_deeplink_hint -> {
+                showAlertDialog() // Aktion für den Deeplink-Hinweis
+                true
+            }
+            R.id.nav_function_greensmilies -> {
+                openWebView(getString(R.string.greensmilies_url)) // Aktion für Greensmilies
+                true
+            }
+            R.id.nav_function_einstellungen -> {
+                startActivity(Intent(this, SettingsActivity::class.java)) // Aktion für Einstellungen
+                true
+            }
+            R.id.nav_function_log -> {
+                startActivity(Intent(this, LogActivity::class.java)) // Aktion für Log
+                true
+            }
+            R.id.nav_function_logout -> {
+                finishAffinity() // Beendet alle Aktivitäten der App
+                true
+            }
+            R.id.nav_function_stoerer -> {
+                // Rufe die DisrupterActivity mit den Standardwerten auf
+                val intent = Intent(this, DisrupterActivity::class.java)
+
+                startActivity(intent)
+                true
+            }
+            // Hier können weitere Hauptmenüelemente hinzugefügt werden
+            else -> false
+        }
+
+        // Schließt das Drawer-Layout nach der Auswahl
+        drawerLayout.closeDrawer(GravityCompat.START)
+        return handled // Rückgabe des Behandlungsstatus
+    }
+
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        return when (item.itemId) {
+            android.R.id.home -> {
+                toggle.onOptionsItemSelected(item)
+                true
+            }
+            else -> super.onOptionsItemSelected(item)
+        }
+    }
+
+    override fun onCreateOptionsMenu(menu: Menu?): Boolean {
+        menuInflater.inflate(R.menu.drawer_menu, menu) // Inflate the menu
+        return true
     }
 
     override fun onNewIntent(intent: Intent) {
@@ -277,5 +293,44 @@ class MainActivity : AppCompatActivity() {
             putExtra("EXTRA_URL", url)
         }
         startActivity(intent)
+    }
+    private fun showLoginDialog() {
+        val dialogView = layoutInflater.inflate(R.layout.dialog_login, null)
+        val passwordInput = dialogView.findViewById<EditText>(R.id.password_input)
+
+        AlertDialog.Builder(this)
+            .setTitle("App-Login")
+            .setView(dialogView)
+            .setPositiveButton("Login") { dialog, _ ->
+                val inputPassword = passwordInput.text.toString()
+                val correctPassword = getString(R.string.app_password)
+
+                if (inputPassword == correctPassword) {
+                    // Login erfolgreich
+                    dialog.dismiss()
+                    // Starte die Hauptaktivität oder setze den Status auf eingeloggt
+                    proceedToMainApp()
+                } else {
+                    // Falsches Passwort
+                    showErrorDialog()
+                }
+            }
+            .setNegativeButton("Abbrechen") { dialog, _ ->
+                dialog.dismiss()
+            }
+            .show()
+    }
+
+    private fun proceedToMainApp() {
+        // Logik zum Starten der App nach erfolgreichem Login
+        Log.d("MainActivity", "Login erfolgreich!")
+    }
+
+    private fun showErrorDialog() {
+        AlertDialog.Builder(this)
+            .setTitle("Fehler")
+            .setMessage("Falsches Passwort")
+            .setPositiveButton("OK") { dialog, _ -> dialog.dismiss() }
+            .show()
     }
 }

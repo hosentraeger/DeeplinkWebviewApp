@@ -14,31 +14,49 @@
         android:title="Kontakt"/>
 
     <item
-        android:id="@+id/nav_function_vka"
-        android:title="Störer und Banner"/>
-
-    <item
         android:id="@+id/nav_function_angebote"
         android:title="Angebote"/>
 
+    <!-- Menüpunkt "Webview" mit Unterpunkten "Deeplinks" und "Greensmilies" -->
     <item
         android:id="@+id/nav_function_webview"
-        android:title="Webview"/>
+        android:title="Webview">
+        <menu>
+            <item
+                android:id="@+id/nav_function_deeplinks"
+                android:title="Deeplinks"/>
+            <item
+                android:id="@+id/nav_function_greensmilies"
+                android:title="Greensmilies"/>
+        </menu>
+    </item>
+
+    <!-- Neuer Menüpunkt "Demo" mit den Unterpunkten "Störer", "Banner" und "Deeplink-Hinweis" -->
+    <item
+        android:id="@+id/nav_function_demo"
+        android:title="Demo">
+        <menu>
+            <item
+                android:id="@+id/nav_function_stoerer"
+                android:title="Störer" />
+            <item
+                android:id="@+id/nav_function_banner"
+                android:title="Banner" />
+            <item
+                android:id="@+id/nav_function_deeplink_hint"
+                android:title="Deeplink-Hinweis" /> <!-- Alternative: Deeplink-Info oder Deeplink-Alert -->
+        </menu>
+    </item>
 
     <item
-        android:id="@+id/nav_function_greensmilies"
-        android:title="Greensmilies"/>
-
-    <item
-        android:id="@+id/nav_function_message"
-        android:title="Hinweis"/>
+        android:id="@+id/nav_function_log"
+        android:title="Log"/>
 
     <item
         android:id="@+id/nav_function_einstellungen"
         android:title="Einstellungen"/>
 
     <item
-        android:id="@+id/nav_function_log"
-        android:title="Log"/>
-
+        android:id="@+id/nav_function_logout"
+        android:title="Logout" /> <!-- optional: ein Icon für Logout -->
 </menu>

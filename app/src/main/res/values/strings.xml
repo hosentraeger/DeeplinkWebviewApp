@@ -28,4 +28,12 @@
     <string name="default_notification_channel_name">DeeplinkWebviewAppChannel</string>
     <string name="default_notification_channel_description">DeeplinkWebviewAppChannel für meine App</string>
     <string name="disrupter_image">Disrupter image</string>
+    <string name="header_text">HEADER TEXT</string>
+    <string name="subtitle_text">SUBTITLE TEXT</string>
+    <string name="no_interest">Kein Interesse</string>
+    <string name="remind_later">Später erinnern</string>
+    <string name="link1">LINK 1</string>
+    <string name="link2">LINK 2</string>
+    <string name="link3">LINK 3</string>
+    <string name="app_password">geheimes_passwort</string>
 </resources>

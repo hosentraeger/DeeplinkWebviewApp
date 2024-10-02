@@ -13,6 +13,8 @@ import com.example.deeplinkwebviewapp.ui.MainActivity
 import com.google.firebase.messaging.FirebaseMessagingService
 import com.google.firebase.messaging.RemoteMessage
 
+import com.example.deeplinkwebviewapp.MyApplication
+
 class MyFirebaseMessagingService : FirebaseMessagingService() {
 
     companion object {
@@ -23,25 +25,30 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
         // Log source of message
         Log.d(TAG, "From: ${remoteMessage.from}")
 
-        // Check if message contains a data payload
-        remoteMessage.data.isNotEmpty().let {
-            Log.d(TAG, "Message data payload: ${remoteMessage.data}")
+        if (MyApplication.isAppInForeground) {
+            // App ist im Vordergrund, führe eine In-App-Aktion aus
+            Log.d(TAG, "App is in foreground, processing push in-app.")
+            // Hier deine In-App-Logik ausführen
+            remoteMessage.data.isNotEmpty().let {
+                Log.d(TAG, "Message data payload: ${remoteMessage.data}")
 
-            // Extract custom keys
-            val customKey1 = remoteMessage.data["customKey1"]
-            val customKey2 = remoteMessage.data["customKey2"]
+                // Extract custom keys
+                val customKey1 = remoteMessage.data["customKey1"]
+                val customKey2 = remoteMessage.data["customKey2"]
 
-            // If custom keys are present, perform the action
-            if (customKey1 != null && customKey2 != null) {
-                handleCustomAction(customKey1, customKey2)
+                // If custom keys are present, perform the action
+                if (customKey1 != null && customKey2 != null) {
+                    handleCustomAction(customKey1, customKey2)
+                }
+            }
+        } else {        // Check if message contains a data payload
+            // Check if the message contains a notification payload
+            remoteMessage.notification?.let {
+                Log.d(TAG, "Message Notification Body: ${it.body}")
+                showNotification(it.title, it.body, remoteMessage.data["customKey1"], remoteMessage.data["customKey2"])
             }
         }
 
-        // Check if the message contains a notification payload
-        remoteMessage.notification?.let {
-            Log.d(TAG, "Message Notification Body: ${it.body}")
-            showNotification(it.title, it.body, remoteMessage.data["customKey1"], remoteMessage.data["customKey2"])
-        }
     }
 
     override fun onNewToken(token: String) {
@@ -61,7 +68,7 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
             putExtra("customKey1", customKey1)
             putExtra("customKey2", customKey2)
             putExtra("showAlert", true)  // Füge diese Zeile hinzu
-            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP
         }
         startActivity(intent)
     }
@@ -69,7 +76,7 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
     private fun showNotification(title: String?, message: String?, customKey1: String?, customKey2: String?) {
         // Erstelle ein Intent, das die App öffnet, wenn die Benachrichtigung angeklickt wird
         val intent = Intent(this, MainActivity::class.java).apply {
-            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP
             putExtra("customKey1", customKey1)
             putExtra("customKey2", customKey2)
         }
