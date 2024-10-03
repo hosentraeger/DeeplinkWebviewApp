@@ -2,28 +2,23 @@ package com.example.deeplinkwebviewapp.ui
 
 import android.graphics.BitmapFactory
 import android.os.Bundle
+import android.text.Html
 import android.util.Base64
+import android.view.View
 import android.widget.Button
 import android.widget.ImageView
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import com.example.deeplinkwebviewapp.R
+import com.example.deeplinkwebviewapp.data.Disrupter
+import kotlinx.serialization.json.Json
 
 class DisrupterActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_disrupter)
 
-        val base64Image = intent.getStringExtra("imageData")
         val imageView = findViewById<ImageView>(R.id.disrupterImageView)
-
-        if (base64Image != null) {
-            val decodedBytes = Base64.decode(base64Image, Base64.DEFAULT)
-            val bitmap = BitmapFactory.decodeByteArray(decodedBytes, 0, decodedBytes.size)
-            imageView.setImageBitmap(bitmap)
-        } else {
-            imageView.setImageResource(R.drawable.sample_disrupter) // Default-Bild
-        }
 
         // Schließt die Activity beim Tippen auf das Bild
         imageView.setOnClickListener {
@@ -58,6 +53,61 @@ class DisrupterActivity : AppCompatActivity() {
         tvNoInterest.setOnClickListener {
             // Hier kannst du die Funktionalität für "Kein Interesse" hinzufügen
             finish() // Schließt die Activity
+        }
+
+        // TextViews für "Später erinnern" und "Kein Interesse"
+        val tvTitle = findViewById<TextView>(R.id.header_text)
+        val tvSubtitle = findViewById<TextView>(R.id.subtitle_text)
+
+        val disrupterDataJson = intent.getStringExtra("disrupterDataJson")
+        val disrupterData = disrupterDataJson?.let {
+            Json.decodeFromString<Disrupter>(it)
+        } ?: run {
+            // Handle the case when disrupterDataJson is null, maybe log an error or use default data
+            null
+        }
+
+        if (disrupterData?.image != null) {
+            val decodedBytes = Base64.decode(disrupterData.image, Base64.DEFAULT)
+            val bitmap = BitmapFactory.decodeByteArray(decodedBytes, 0, decodedBytes.size)
+            imageView.setImageBitmap(bitmap)
+        } else {
+            imageView.setImageResource(R.drawable.sample_disrupter) // Default-Bild
+        }
+        if (disrupterData?.firstLink?.title != null) {
+            btnLink1.setText(disrupterData.firstLink.title)
+        } else {
+            btnLink1.setVisibility(View.INVISIBLE);
+        }
+        if (disrupterData?.secondLink?.title != null) {
+            btnLink2.setText(disrupterData.secondLink.title)
+        } else {
+            btnLink2.setVisibility(View.INVISIBLE);
+        }
+        if (disrupterData?.thirdLink?.title != null) {
+            btnLink3.setText(disrupterData.thirdLink.title)
+        } else {
+            btnLink3.setVisibility(View.INVISIBLE);
+        }
+        if (disrupterData?.forwardLink?.title != null) {
+            tvRemindLater.setText(disrupterData.forwardLink.title)
+        } else {
+            tvRemindLater.setVisibility(View.INVISIBLE);
+        }
+        if (disrupterData?.noInterestLink?.title != null) {
+            tvNoInterest.setText(disrupterData.noInterestLink.title)
+        } else {
+            tvNoInterest.setVisibility(View.INVISIBLE);
+        }
+        if (disrupterData?.headline != null) {
+            tvTitle.setText(Html.fromHtml(disrupterData.headline, Html.FROM_HTML_MODE_LEGACY))
+        } else {
+            tvTitle.setVisibility(View.INVISIBLE);
+        }
+        if (disrupterData?.text != null) {
+            tvSubtitle.setText(Html.fromHtml(disrupterData.text, Html.FROM_HTML_MODE_LEGACY))
+        } else {
+            tvSubtitle.setVisibility(View.INVISIBLE);
         }
     }
 }

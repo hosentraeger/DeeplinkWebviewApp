@@ -44,6 +44,8 @@ data class Disrupter(
     val richText: Boolean? = null,
     val aemAsset: Boolean? = null,
     val firstLink: Link? = null,
+    val secondLink: Link? = null,
+    val thirdLink: Link? = null,
     val forwardLink: Link? = null,
     val noInterestLink: Link? = null
 )

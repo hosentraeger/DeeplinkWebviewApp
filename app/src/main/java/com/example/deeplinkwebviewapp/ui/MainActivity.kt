@@ -28,7 +28,6 @@ import androidx.drawerlayout.widget.DrawerLayout
 import androidx.lifecycle.ViewModelProvider
 import com.example.deeplinkwebviewapp.R
 import com.google.android.material.navigation.NavigationView
-
 import com.google.firebase.FirebaseApp
 
 class MainActivity : AppCompatActivity() {
@@ -80,10 +79,10 @@ class MainActivity : AppCompatActivity() {
         viewModel.initializeDeviceData()
 
         // Beobachte die LiveData für die Imagedaten
-        viewModel.disrupterImageData.observe(this) { imageData ->
-            if (imageData != null) {
+        viewModel.disrupterData.observe(this) { disrupterData ->
+            if (disrupterData != null) {
                 val intent = Intent(this, DisrupterActivity::class.java)
-                intent.putExtra("imageData", imageData) // Base64-Bilddaten übergeben
+                intent.putExtra("disrupterDataJson", disrupterData)
                 startActivity(intent)
             }
         }

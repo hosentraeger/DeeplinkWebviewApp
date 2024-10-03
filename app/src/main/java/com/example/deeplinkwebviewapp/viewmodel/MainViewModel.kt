@@ -18,7 +18,10 @@ import com.example.deeplinkwebviewapp.service.Logger
 import com.example.deeplinkwebviewapp.service.MyHttpClient
 import com.example.deeplinkwebviewapp.service.SfcServiceFactory
 import com.google.firebase.messaging.FirebaseMessaging
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.encodeToString
 import java.util.UUID
+
 
 class MainViewModel(
     application: Application,
@@ -36,8 +39,8 @@ class MainViewModel(
 
     private val _fcmToken = MutableLiveData<String?>()
     val fcmToken: LiveData<String?> get() = _fcmToken
-    private val _disrupterImageData = MutableLiveData<String>()
-    val disrupterImageData: LiveData<String> get() = _disrupterImageData
+    private val _disrupterData = MutableLiveData<String?>()
+    val disrupterData: LiveData<String?> get() = _disrupterData
 
     // SfcService initialisieren
     private val sfcService = SfcServiceFactory.create(
@@ -50,14 +53,16 @@ class MainViewModel(
         sfcService.fetchVkaData(userId) { response: SfcIfResponse? ->
             response?.let {
                 try {
-                    val disrupter = response.services.firstOrNull()?.IF?.disrupter
-                    _disrupterImageData.postValue( disrupter?.image ?: "Default image or error message")
+                    val disrupterData = response.services.firstOrNull()?.IF?.disrupter
+                    val disrupterDataJson = Json.encodeToString(disrupterData)
+                    _disrupterData.postValue(disrupterDataJson)
                 } catch (e: Exception) {
                     Log.e(TAG, "Error processing SfcIfResponse: ${e.localizedMessage}")
-                    _disrupterImageData.value = "Error processing data"
+                    _disrupterData.postValue(null) // Bei Fehler null setzen
                 }
             } ?: run {
                 Log.e("MainViewModel", "Fehler bei der Anfrage")
+                _disrupterData.postValue(null) // Bei fehlgeschlagener Anfrage null setzen
             }
         }
     }

@@ -23,7 +23,6 @@ class SfcService(
         client.postSfcData(url, blz, productId, userName) { response ->
             response?.let {
                 try {
-//                    Log.d(TAG, "Response: $it") // Loggen der Response
                     val sfcIfResponse = Json.decodeFromString<SfcIfResponse>(it)
 
                     // Überprüfen, ob die Antwort den Status "NO_CONTENT" enthält
