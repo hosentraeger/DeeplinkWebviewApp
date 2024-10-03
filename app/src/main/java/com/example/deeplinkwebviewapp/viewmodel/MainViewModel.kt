@@ -141,4 +141,7 @@ class MainViewModel(
             }
         }
     }
+    fun getDeeplinksWebviewUrl(): String {
+        return sharedPreferences.getString("DeeplinkURL", "").toString()
+    }
 }

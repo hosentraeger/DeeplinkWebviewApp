@@ -22,12 +22,14 @@
         android:id="@+id/nav_function_webview"
         android:title="Webview">
         <menu>
-            <item
-                android:id="@+id/nav_function_deeplinks"
-                android:title="Deeplinks"/>
-            <item
-                android:id="@+id/nav_function_greensmilies"
-                android:title="Greensmilies"/>
+            <group android:checkableBehavior="single">
+                <item
+                    android:id="@+id/nav_function_deeplinks"
+                    android:title="Deeplinks"/>
+                <item
+                    android:id="@+id/nav_function_webview_greensmilies"
+                    android:title="Greensmilies"/>
+            </group>
         </menu>
     </item>
 
@@ -36,15 +38,17 @@
         android:id="@+id/nav_function_demo"
         android:title="Demo">
         <menu>
-            <item
-                android:id="@+id/nav_function_stoerer"
-                android:title="Störer" />
-            <item
-                android:id="@+id/nav_function_banner"
-                android:title="Banner" />
-            <item
-                android:id="@+id/nav_function_deeplink_hint"
-                android:title="Deeplink-Hinweis" /> <!-- Alternative: Deeplink-Info oder Deeplink-Alert -->
+            <group android:checkableBehavior="single">
+                <item
+                    android:id="@+id/nav_function_stoerer"
+                    android:title="Störer" />
+                <item
+                    android:id="@+id/nav_function_banner"
+                    android:title="Banner" />
+                <item
+                    android:id="@+id/nav_function_deeplink_alert"
+                    android:title="Deeplink-Hinweis" /> <!-- Alternative: Deeplink-Info oder Deeplink-Alert -->
+            </group>
         </menu>
     </item>
 

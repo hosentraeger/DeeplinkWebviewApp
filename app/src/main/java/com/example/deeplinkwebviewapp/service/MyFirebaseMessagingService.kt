@@ -4,16 +4,23 @@ import android.Manifest
 import android.app.PendingIntent
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import android.util.Log
+import android.widget.Toast
 import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
+import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import com.example.deeplinkwebviewapp.R
 import com.example.deeplinkwebviewapp.ui.MainActivity
 import com.google.firebase.messaging.FirebaseMessagingService
 import com.google.firebase.messaging.RemoteMessage
-
 import com.example.deeplinkwebviewapp.MyApplication
+import kotlinx.coroutines.DelicateCoroutinesApi
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
 
 class MyFirebaseMessagingService : FirebaseMessagingService() {
 
@@ -22,92 +29,88 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
     }
 
     override fun onMessageReceived(remoteMessage: RemoteMessage) {
-        // Log source of message
-        Log.d(TAG, "From: ${remoteMessage.from}")
+        val title = remoteMessage?.notification?.title
+        val body = remoteMessage?.notification?.body
+        val customKey1 = remoteMessage?.data?.get("customKey1")
+        val customKey2 = remoteMessage?.data?.get("customKey2")
+        Log.d(TAG, "Title: ${title}, Body: ${body}, customKey1: ${customKey1}, customKey2: ${customKey2}")
 
-        if (MyApplication.isAppInForeground) {
-            // App ist im Vordergrund, führe eine In-App-Aktion aus
-            Log.d(TAG, "App is in foreground, processing push in-app.")
-            // Hier deine In-App-Logik ausführen
-            remoteMessage.data.isNotEmpty().let {
-                Log.d(TAG, "Message data payload: ${remoteMessage.data}")
+        if ( customKey1.equals("IAM") ) {
+            showNotification(title, body, customKey1, customKey2, null )
+        }
 
-                // Extract custom keys
-                val customKey1 = remoteMessage.data["customKey1"]
-                val customKey2 = remoteMessage.data["customKey2"]
+        if ( customKey1.equals("IAMBANNER")){
+            // if iam banner
+            fetchImageAndShowNotification(title,body,customKey1,customKey2)
+        }
 
-                // If custom keys are present, perform the action
-                if (customKey1 != null && customKey2 != null) {
-                    handleCustomAction(customKey1, customKey2)
-                }
-            }
-        } else {        // Check if message contains a data payload
-            // Check if the message contains a notification payload
-            remoteMessage.notification?.let {
-                Log.d(TAG, "Message Notification Body: ${it.body}")
-                showNotification(it.title, it.body, remoteMessage.data["customKey1"], remoteMessage.data["customKey2"])
+        if ( customKey1.equals("BALANCE") ) {
+            if (MyApplication.isAppInForeground) {
+                // Sende die Daten per Broadcast an die MainActivity
+                val intent = Intent("push-notification-received")  // Benenne das Intent entsprechend
+                intent.putExtra("customKey1", customKey1)
+                intent.putExtra("customKey2", customKey2)
+                LocalBroadcastManager.getInstance(this).sendBroadcast(intent)
             }
         }
 
+        if ( customKey1.equals("BADGE") ) {
+        }
+
+        if ( customKey1.equals("REVIEW") ) {
+            showNotification(title, body, customKey1, customKey2, null )
+        }
+    }
+
+    @OptIn(DelicateCoroutinesApi::class)
+    private fun fetchImageAndShowNotification(title: String?, message: String?, customKey1: String?, customKey2: String?) {
+        // Hier kannst du eine Coroutine oder eine andere Methode verwenden,
+        // um das Bild asynchron abzurufen.
+        GlobalScope.launch(Dispatchers.IO) {
+            val imageBitmap = BitmapFactory.decodeResource(resources, R.drawable.sample_banner)
+            showNotification(title, message, customKey1, customKey2, imageBitmap)
+        }
+    }
+
+    private fun showNotification(title: String?, message: String?, customKey1: String?, customKey2: String?, imageBitmap: Bitmap?) {
+        val NOTIFICATION_ID = System.currentTimeMillis().toInt()
+        val CHANNEL_ID = getString(R.string.default_notification_channel_id)
+
+        val intent = Intent(this, MainActivity::class.java).apply {
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP
+            putExtra("customKey1", customKey1)
+            putExtra("customKey2", customKey2)
+        }
+        val pendingIntent = PendingIntent.getActivity(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
+
+        val notificationBuilder = NotificationCompat.Builder(this, CHANNEL_ID)
+            .setSmallIcon(R.drawable.ic_notification) // Setze hier dein Icon
+            .setContentTitle(title)
+            .setContentText(message)
+            .setPriority(NotificationCompat.PRIORITY_HIGH)
+            .setContentIntent(pendingIntent)
+            .setAutoCancel(true)
+
+        // Wenn das Bild vorhanden ist, setze es in die Benachrichtigung
+        if (imageBitmap != null) {
+            notificationBuilder.setStyle(NotificationCompat.BigPictureStyle()
+                .bigPicture(imageBitmap)
+                .bigLargeIcon(null as Bitmap?)) // Optional, um das große Icon zu entfernen
+        }
+
+        val notificationManager = NotificationManagerCompat.from(this)
+        if (ActivityCompat.checkSelfPermission(
+                this,
+                Manifest.permission.POST_NOTIFICATIONS
+            ) != PackageManager.PERMISSION_GRANTED
+        ) {
+            return
+        }
+        notificationManager.notify(NOTIFICATION_ID, notificationBuilder.build())
     }
 
     override fun onNewToken(token: String) {
         Log.d(TAG, "Refreshed token: $token")
         // TODO Handle token registration with server here
-    }
-
-    private fun handleCustomAction(customKey1: String, customKey2: String) {
-        // Handle the custom action based on customKey1 and customKey2
-        Log.d(
-            TAG,
-            "Handling custom action with customKey1: $customKey1 and customKey2: $customKey2"
-        )
-
-        // Example: Start MainActivity and pass the custom keys as extras
-        val intent = Intent(this, MainActivity::class.java).apply {
-            putExtra("customKey1", customKey1)
-            putExtra("customKey2", customKey2)
-            putExtra("showAlert", true)  // Füge diese Zeile hinzu
-            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP
-        }
-        startActivity(intent)
-    }
-
-    private fun showNotification(title: String?, message: String?, customKey1: String?, customKey2: String?) {
-        // Erstelle ein Intent, das die App öffnet, wenn die Benachrichtigung angeklickt wird
-        val intent = Intent(this, MainActivity::class.java).apply {
-            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP
-            putExtra("customKey1", customKey1)
-            putExtra("customKey2", customKey2)
-        }
-
-        val pendingIntent: PendingIntent = PendingIntent.getActivity(
-            this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-        )
-
-        // Baue und zeige die Benachrichtigung
-        val channelId = getString(R.string.default_notification_channel_id)
-        val builder = NotificationCompat.Builder(this, channelId)
-            .setSmallIcon(R.drawable.ic_launcher_foreground)
-            .setContentTitle(title ?: "New Notification")
-            .setContentText(message ?: "You have received a new message.")
-            .setPriority(NotificationCompat.PRIORITY_HIGH)
-            .setStyle(NotificationCompat.BigTextStyle()
-                .bigText(message ?: "You have received a new message."))
-            .setContentIntent(pendingIntent)
-            .setAutoCancel(true)
-            .setDefaults(NotificationCompat.DEFAULT_ALL)  // Enable sound, vibration, and lights
-
-        // Zeige die Benachrichtigung
-        with(NotificationManagerCompat.from(this)) {
-            if (ActivityCompat.checkSelfPermission(
-                    applicationContext,
-                    Manifest.permission.POST_NOTIFICATIONS
-                ) != PackageManager.PERMISSION_GRANTED
-            ) {
-                return
-            }
-            notify(0, builder.build())
-        }
     }
 }

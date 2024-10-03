@@ -16,7 +16,7 @@ data class IFData(
     val status: String? = null,
     val id: Int? = null,
     val version: Int? = null,
-    val overview: List<Overview>? = null,
+    val overview: List<OverviewBanner>? = null,
     val disrupter: Disrupter? = null,
     val logoutPageURL: String? = null,
     val confirmationBannerURL: String? = null,
@@ -26,7 +26,7 @@ data class IFData(
 )
 
 @Serializable
-data class Overview(
+data class OverviewBanner(
     val banner: String? = null,
     val imgAlt: String? = null,
     val url: String? = null,

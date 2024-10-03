@@ -17,6 +17,7 @@ import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
 import android.widget.EditText
+import android.widget.Toast
 import androidx.appcompat.app.ActionBarDrawerToggle
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
@@ -29,6 +30,12 @@ import androidx.lifecycle.ViewModelProvider
 import com.example.deeplinkwebviewapp.R
 import com.google.android.material.navigation.NavigationView
 import com.google.firebase.FirebaseApp
+import android.app.PendingIntent
+import android.content.BroadcastReceiver
+import android.content.IntentFilter
+import androidx.core.app.NotificationCompat
+import androidx.localbroadcastmanager.content.LocalBroadcastManager
+
 
 class MainActivity : AppCompatActivity() {
 
@@ -42,6 +49,14 @@ class MainActivity : AppCompatActivity() {
         private const val TAG = "MainActivity"
     }
 
+    private val messageReceiver: BroadcastReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context, intent: Intent) {
+            // Daten aus dem Intent holen
+            val customKey1 = intent.getStringExtra("customKey1")
+            val customKey2 = intent.getStringExtra("customKey2")
+            Toast.makeText(this@MainActivity, "Message received: $customKey1 - $customKey2", Toast.LENGTH_LONG).show()
+        }
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -130,38 +145,56 @@ class MainActivity : AppCompatActivity() {
                 Log.d(TAG, "Failed to retrieve token")
             }
         }
+        // Registriere den BroadcastReceiver
+        LocalBroadcastManager.getInstance(this).registerReceiver(
+            messageReceiver, IntentFilter("push-notification-received")
+        )
     }
 
     private fun handleNavigationItemSelected(menuItem: MenuItem): Boolean {
         val handled = when (menuItem.itemId) {
-            R.id.nav_function_deeplink_hint -> {
-                showAlertDialog() // Aktion für den Deeplink-Hinweis
+            R.id.nav_function_appstart -> {
                 true
             }
-            R.id.nav_function_greensmilies -> {
-                openWebView(getString(R.string.greensmilies_url)) // Aktion für Greensmilies
+            R.id.nav_function_rundruf -> {
                 true
             }
-            R.id.nav_function_einstellungen -> {
-                startActivity(Intent(this, SettingsActivity::class.java)) // Aktion für Einstellungen
+            R.id.nav_function_kontakt -> {
+                true
+            }
+            R.id.nav_function_angebote -> {
+                true
+            }
+            R.id.nav_function_deeplinks -> {
+                openWebView(viewModel.getDeeplinksWebviewUrl())
+                true
+            }
+            R.id.nav_function_webview_greensmilies -> {
+                openWebView(getString(R.string.greensmilies_url))
+                true
+            }
+            R.id.nav_function_stoerer -> {
+                // Rufe die DisrupterActivity mit den Standardwerten auf
+                val intent = Intent(this, DisrupterActivity::class.java)
+                startActivity(intent)
+                true
+            }
+            R.id.nav_function_deeplink_alert -> {
+                showDeeplinkAlertDialog()
                 true
             }
             R.id.nav_function_log -> {
                 startActivity(Intent(this, LogActivity::class.java)) // Aktion für Log
                 true
             }
+            R.id.nav_function_einstellungen -> {
+                startActivity(Intent(this, SettingsActivity::class.java)) // Aktion für Einstellungen
+                true
+            }
             R.id.nav_function_logout -> {
                 finishAffinity() // Beendet alle Aktivitäten der App
                 true
             }
-            R.id.nav_function_stoerer -> {
-                // Rufe die DisrupterActivity mit den Standardwerten auf
-                val intent = Intent(this, DisrupterActivity::class.java)
-
-                startActivity(intent)
-                true
-            }
-            // Hier können weitere Hauptmenüelemente hinzugefügt werden
             else -> false
         }
 
@@ -181,7 +214,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {
-        menuInflater.inflate(R.menu.drawer_menu, menu) // Inflate the menu
+        // menuInflater.inflate(R.menu.drawer_menu, menu) // Inflate the menu
         return true
     }
 
@@ -235,13 +268,9 @@ class MainActivity : AppCompatActivity() {
             for (key in extras.keySet()) {
                 Log.d(TAG, "Intent extra: $key = ${extras.get(key)}")
             }
-
             // Hier kannst du spezifische Schlüssel prüfen
-            if (extras.containsKey("your_custom_key")) {
+            if (extras.containsKey("customKey1")) {
                 Log.d(TAG, "Opened via Push Notification with your_custom_key")
-                handlePushNotification(intent)
-            } else {
-                Log.d(TAG, "Opened via Push Notification, but no 'from' key found")
                 handlePushNotification(intent)
             }
         } else {
@@ -253,25 +282,44 @@ class MainActivity : AppCompatActivity() {
     private fun handleDeeplink(intent: Intent?) {
         val data: Uri? = intent?.data
         if (data != null && data.path == "/_deeplink/showAlert") {
-            showAlertDialog() // Zeigt den Deeplink-Dialog
+            showDeeplinkAlertDialog() // Zeigt den Deeplink-Dialog
         }
     }
 
     // Push-Benachrichtigungs-Verarbeitung
     private fun handlePushNotification(intent: Intent?) {
-        // Hier kannst du die Logik für die Verarbeitung der Push-Benachrichtigung hinzufügen.
-        // Angenommen, die Benachrichtigung hat 'customKey1' und 'customKey2' als Payload
+
         val customKey1 = intent?.getStringExtra("customKey1")
         val customKey2 = intent?.getStringExtra("customKey2")
 
-        if ( customKey1 == "IAM" && customKey2 != null ) {
-            viewModel.loadVkaData(customKey2)
-        } else if (customKey1 != null || customKey2 != null) {
-            showPusNotificationAlertDialog(customKey1, customKey2) // Zeigt den Benachrichtigungsdialog
+        val handled = when (customKey1) {
+            "IAM" -> {
+                if (customKey2 != null) {
+                    viewModel.loadVkaData(customKey2)
+                }
+                true
+            }
+            "IAMBANNER" -> {
+                Toast.makeText(this, "Start aus IAM Banner, checke URL", Toast.LENGTH_SHORT).show()
+                true
+            }
+            "BALANCE" -> {
+                Toast.makeText(this, "Kontostand wird aktualisiert", Toast.LENGTH_SHORT).show()
+                true
+            }
+            "BADGE" -> {
+                Toast.makeText(this, "Badge-Counter wird aktualisiert", Toast.LENGTH_SHORT).show()
+                true
+            }
+            "REVIEW" -> {
+                Toast.makeText(this, "Bitte bewerte die App", Toast.LENGTH_SHORT).show()
+                true
+            }
+            else -> false
         }
     }
 
-    private fun showAlertDialog() {
+    private fun showDeeplinkAlertDialog() {
         AlertDialog.Builder(this)
             .setTitle("Hinweis")
             .setMessage("Dies ist ein wichtiger Hinweis!")
@@ -279,19 +327,16 @@ class MainActivity : AppCompatActivity() {
             .show()
     }
 
-    private fun showPusNotificationAlertDialog(customKey1: String?, customKey2: String?) {
-        AlertDialog.Builder(this)
-            .setTitle("Benachrichtigung erhalten")
-            .setMessage("Custom Key 1: $customKey1\nCustom Key 2: $customKey2")
-            .setPositiveButton("OK") { dialog, _ -> dialog.dismiss() }
-            .show()
-    }
-
     private fun openWebView(url: String) {
-        val intent = Intent(this, WebViewActivity::class.java).apply {
-            putExtra("EXTRA_URL", url)
+        if (url.isNotBlank()) { // Überprüfe, ob die URL nicht leer ist
+            val intent = Intent(this, WebViewActivity::class.java).apply {
+                putExtra("EXTRA_URL", url)
+            }
+            startActivity(intent)
+        } else {
+            // Optional: Eine Nachricht anzeigen oder eine andere Aktion ausführen
+            Toast.makeText(this, "Die URL ist leer.", Toast.LENGTH_SHORT).show()
         }
-        startActivity(intent)
     }
     private fun showLoginDialog() {
         val dialogView = layoutInflater.inflate(R.layout.dialog_login, null)
@@ -332,4 +377,9 @@ class MainActivity : AppCompatActivity() {
             .setPositiveButton("OK") { dialog, _ -> dialog.dismiss() }
             .show()
     }
-}
+    override fun onDestroy() {
+        super.onDestroy()
+
+        // Den BroadcastReceiver abmelden, um Speicherlecks zu vermeiden
+        LocalBroadcastManager.getInstance(this).unregisterReceiver(messageReceiver)
+    }}
