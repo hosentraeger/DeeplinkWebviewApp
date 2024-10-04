@@ -1,6 +1,9 @@
 package com.example.deeplinkwebviewapp.viewmodel
 
 import com.example.deeplinkwebviewapp.data.SfcIfResponse
+import com.example.deeplinkwebviewapp.service.SfcServiceFactory
+import com.example.deeplinkwebviewapp.data.SfmMobiResponse
+import com.example.deeplinkwebviewapp.service.SfmServiceFactory
 import android.app.Application
 import android.content.Context
 import android.content.SharedPreferences
@@ -16,7 +19,7 @@ import com.example.deeplinkwebviewapp.data.DeviceData
 import com.example.deeplinkwebviewapp.data.DeviceDataSingleton
 import com.example.deeplinkwebviewapp.service.Logger
 import com.example.deeplinkwebviewapp.service.MyHttpClient
-import com.example.deeplinkwebviewapp.service.SfcServiceFactory
+import com.example.deeplinkwebviewapp.service.SilentLoginAndAdvisorDataServiceFactory
 import com.google.firebase.messaging.FirebaseMessaging
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.encodeToString
@@ -36,6 +39,7 @@ class MainViewModel(
     private val editor = sharedPreferences.edit()
     val deviceData: DeviceData = DeviceDataSingleton.deviceData
     private lateinit var previousLogin: String
+    private var sfmMobiResponse: SfmMobiResponse? = null
 
     private val _fcmToken = MutableLiveData<String?>()
     val fcmToken: LiveData<String?> get() = _fcmToken
@@ -47,6 +51,17 @@ class MainViewModel(
         sharedPreferences.getString("BLZ", "").toString(),
         sharedPreferences.getString("SFStage", "").toString(),
         444 // TODO:
+    )
+
+    // SfcService initialisieren
+    private val sfmService = SfmServiceFactory.create(
+        sharedPreferences.getString("BLZ", "").toString(),
+        sharedPreferences.getString("SFStage", "").toString(),
+        444 // TODO:
+    )
+
+    // silentLoginService initialisieren
+    private val silentLoginService = SilentLoginAndAdvisorDataServiceFactory.create(
     )
 
     fun loadVkaData(userId: String) {
@@ -63,6 +78,46 @@ class MainViewModel(
             } ?: run {
                 Log.e("MainViewModel", "Fehler bei der Anfrage")
                 _disrupterData.postValue(null) // Bei fehlgeschlagener Anfrage null setzen
+            }
+        }
+    }
+
+    fun loadMobiData() {
+        sfmService.fetchMobiData() { response: SfmMobiResponse? ->
+            response?.let {
+                try {
+                    sfmMobiResponse = response
+                } catch (e: Exception) {
+                    Log.e(TAG, "Error processing SfcIfResponse: ${e.localizedMessage}")
+                }
+            } ?: run {
+                Log.e("MainViewModel", "Fehler bei der Anfrage")
+                sfmMobiResponse = null
+            }
+        }
+    }
+
+    fun getServletUrl ( ): String {
+        val bankServlet = sfmMobiResponse?.bankCodesSettings?.data?.values?.firstOrNull()?.servlet ?: "Kein Servlet gefunden"
+        println("Bank Servlet: $bankServlet")
+        return bankServlet
+    }
+
+    fun performSilentLogin ( targetUrl: String) {
+        val userId = sharedPreferences.getString("Username", "")
+        val onlineBankingPin = sharedPreferences.getString("PIN", "")
+        val blz = sharedPreferences.getString("BLZ", "")
+        if (blz != null && userId != null && onlineBankingPin != null ) {
+            silentLoginService.performSilentLogin(getServletUrl(), blz, userId, onlineBankingPin, targetUrl) { response: String? ->
+                response?.let {
+                    try {
+                        Log.d ( TAG, "response: $response")
+                    } catch (e: Exception) {
+                        Log.e(TAG, "Error processing silent login response: ${e.localizedMessage}")
+                    }
+                } ?: run {
+                    Log.e("MainViewModel", "Fehler bei der Anfrage")
+                }
             }
         }
     }
@@ -103,16 +158,7 @@ class MainViewModel(
         deviceData.last_login = previousLogin
     }
 
-    fun onNavItemSelected(itemId: Int): Boolean {
-        return when (itemId) {
-            R.id.nav_function_appstart -> {
-                sendDeviceData()
-                true
-            }
-            else -> false
-        }
-    }
-    private fun sendDeviceData() {
+    fun sendDeviceData() {
         val deviceData: DeviceData = DeviceDataSingleton.deviceData
         MyHttpClient.getInstance().postDeviceData(deviceData) { response ->
             if (response != null) {

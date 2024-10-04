@@ -30,10 +30,8 @@ import androidx.lifecycle.ViewModelProvider
 import com.example.deeplinkwebviewapp.R
 import com.google.android.material.navigation.NavigationView
 import com.google.firebase.FirebaseApp
-import android.app.PendingIntent
 import android.content.BroadcastReceiver
 import android.content.IntentFilter
-import androidx.core.app.NotificationCompat
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
 
 
@@ -154,6 +152,8 @@ class MainActivity : AppCompatActivity() {
     private fun handleNavigationItemSelected(menuItem: MenuItem): Boolean {
         val handled = when (menuItem.itemId) {
             R.id.nav_function_appstart -> {
+                viewModel.sendDeviceData()
+                viewModel.loadMobiData()
                 true
             }
             R.id.nav_function_rundruf -> {
@@ -163,6 +163,7 @@ class MainActivity : AppCompatActivity() {
                 true
             }
             R.id.nav_function_angebote -> {
+                viewModel.performSilentLogin("https://m164an08-421.if-etaps.de/de/home/privatkunden/girokonto.webview.html")
                 true
             }
             R.id.nav_function_deeplinks -> {

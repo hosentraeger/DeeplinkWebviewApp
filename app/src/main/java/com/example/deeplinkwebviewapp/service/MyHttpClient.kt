@@ -111,4 +111,86 @@ class MyHttpClient private constructor() {
             }
         }
     }
+    fun postSfmMobi(url: String, blz: String, productId: Int, callback: (String?) -> Unit) {
+        val body = """
+            {
+              "productId": $productId,
+              "build": "1.0.1",
+              "platformId": 1,
+              "blz": "$blz",
+              "device": "IOS_PHONE_HIGH",
+              "bankCodes": [
+                "$blz"
+              ]
+            }
+        """.trimIndent()
+
+        val requestBody = body.toRequestBody("application/json; charset=utf-8".toMediaType())
+
+        val request = Request.Builder()
+            .url(url)
+            .post(requestBody)
+            .build()
+
+        CoroutineScope(Dispatchers.IO).launch {
+            try {
+                val response = client.newCall(request).execute()
+                if (response.isSuccessful) {
+                    val responseBody = response.body?.string() ?: ""
+                    callback(responseBody) // Rückgabe der Antwort
+                } else {
+                    val errorBody = response.body?.string() ?: "Keine Antwort vom Server"
+                    Log.e("MyHttpClient", "Fehler: ${response.code}, Fehlerinhalt: $errorBody")
+                    callback(null) // Im Fehlerfall null zurückgeben
+                }
+            } catch (e: Exception) {
+                Log.e("MyHttpClient", "${e.message}")
+                callback(null) // Im Fehlerfall null zurückgeben
+            }
+        }
+    }
+
+    fun postSilentLogin(servletUrl: String, payload: String, callback: (String?) -> Unit) {
+        val requestBody = payload.toRequestBody("application/json".toMediaType())
+
+        // Einen separaten OkHttpClient erstellen, der Redirects nicht folgt
+        val clientNoRedirects = client.newBuilder()
+            .followRedirects(false)
+            .build()
+
+        // POST-Anfrage erstellen
+        val request = Request.Builder()
+            .url(servletUrl)
+            .header("User-Agent", "okhttp3")
+            .header("Accept", "*.*")
+            .header("Connection", "keep-alive")
+            .header("content-type", "application/json")
+            .header("Accept-Charset", "UTF-8")
+            .post(requestBody)
+            .build()
+
+        CoroutineScope(Dispatchers.IO).launch {
+            try {
+                val response = clientNoRedirects.newCall(request).execute()
+                if (response.isSuccessful || response.code == 302) { // Erfolg oder Redirect
+                    // Header mit Cookies extrahieren
+                    val cookies = response.headers("Set-Cookie")
+
+                    // JSESSIONID-Cookie suchen
+                    val jsessionId = cookies.find { it.startsWith("JSESSIONID=") }
+                        ?.split(";") // Cookie-Daten werden oft durch Semikolon getrennt
+                        ?.firstOrNull() // Den ersten Teil (JSESSIONID=xxxx) extrahieren
+                        ?.substringAfter("JSESSIONID=") // Den Wert der JSESSIONID extrahieren
+
+                    callback(jsessionId)
+                } else {
+                    Log.e("MyHttpClient", "Fehler: ${response.code}")
+                    callback(null)
+                }
+            } catch (e: Exception) {
+                Log.e("MyHttpClient", "Exception: ${e.message}")
+                callback(null)
+            }
+        }
+    }
 }

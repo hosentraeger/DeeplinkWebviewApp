@@ -78,7 +78,10 @@ dependencies {
     implementation("com.google.firebase:firebase-messaging-ktx:23.0.0")
 
     implementation("com.google.android.material:material:1.9.0")
-    
+
+    // silent login verschlüsselung
+    implementation("org.bouncycastle:bcprov-jdk15on:1.70") // Für Bouncy Castle (z. B. AES)
+
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
