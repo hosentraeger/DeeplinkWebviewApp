@@ -31,35 +31,65 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
     override fun onMessageReceived(remoteMessage: RemoteMessage) {
         val title = remoteMessage.notification?.title
         val body = remoteMessage.notification?.body
-        val customKey1 = remoteMessage.data?.get("customKey1")
-        val customKey2 = remoteMessage.data?.get("customKey2")
+        val customKey1 = remoteMessage.data.get("customKey1")
+        val customKey2 = remoteMessage.data.get("customKey2")
         Log.d(TAG, "Title: ${title}, Body: ${body}, customKey1: ${customKey1}, customKey2: ${customKey2}")
 
-        if ( customKey1.equals("IAM") ) {
-            showNotification(title, body, customKey1, customKey2, null )
-        }
-
-        if ( customKey1.equals("IAMBANNER")){
-            // if iam banner
-            fetchImageAndShowNotification(title,body,customKey1,customKey2)
-        }
-
-        if ( customKey1.equals("BALANCE") ) {
-            if (MyApplication.isAppInForeground) {
-                // Sende die Daten per Broadcast an die MainActivity
-                val intent = Intent("push-notification-received")  // Benenne das Intent entsprechend
-                intent.putExtra("customKey1", customKey1)
-                intent.putExtra("customKey2", customKey2)
-                LocalBroadcastManager.getInstance(this).sendBroadcast(intent)
+        when (customKey1) {
+            "IAM" -> showNotification(title, body, customKey1, customKey2, null)
+            "IAMBANNER" -> fetchImageAndShowNotification(title, body, customKey1, customKey2)
+            "MAILBOX" -> {
+                if (MyApplication.isAppInForeground) {
+                    broadcastNotificationIntent(remoteMessage)
+                }
+                // TODO now set badge
             }
-        }
 
-        if ( customKey1.equals("BADGE") ) {
-        }
+            "BALANCE" -> {
+                if (MyApplication.isAppInForeground) {
+                    broadcastNotificationIntent(remoteMessage)
+                } else {
+                    val iban = customKey2?.substringBefore(":")
+                    val balance = customKey2?.substringAfter(":")
+                    showNotification(
+                        title,
+                        body,
+                        "Neuer Kontostand",
+                        "Der neue Kontostand für ${iban} ist ${balance}",
+                        null
+                    )
+                }
+            }
+            "TRANSACTION" -> {
+            }
 
-        if ( customKey1.equals("REVIEW") ) {
-            showNotification(title, body, customKey1, customKey2, null )
+            "WEBVIEWWITHSILENTLOGIN" -> {
+                val url = customKey2
+            }
+
+            "REVIEW" -> showNotification(title, body, customKey1, customKey2, null)
+            "KILLSWITCH" -> {}
+            "UPDATE" -> {}
+            "SECURITY" -> {}
+            "FEATURE" -> {}
+            "RETROSPECT" -> {}
+            "INSTANTPAYMENT" -> {}
+            "GEO" -> {}
+            else -> showNotification(title, body, customKey1, customKey2, null)
         }
+    }
+
+    fun broadcastNotificationIntent(remoteMessage: RemoteMessage) {
+        val title = remoteMessage.notification?.title
+        val body = remoteMessage.notification?.body
+        val customKey1 = remoteMessage.data.get("customKey1")
+        val customKey2 = remoteMessage.data.get("customKey2")
+        val intent = Intent("PUSH-NOTIFICATION-RECEIVED")  // Benenne das Intent entsprechend
+        intent.putExtra("title", title)
+        intent.putExtra("body", body)
+        intent.putExtra("customKey1", customKey1)
+        intent.putExtra("customKey2", customKey2)
+        LocalBroadcastManager.getInstance(this).sendBroadcast(intent)
     }
 
     @OptIn(DelicateCoroutinesApi::class)

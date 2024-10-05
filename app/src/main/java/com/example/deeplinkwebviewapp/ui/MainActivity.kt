@@ -7,6 +7,7 @@ import com.example.deeplinkwebviewapp.viewmodel.SettingsViewModelFactory
 import android.Manifest
 import android.app.NotificationChannel
 import android.app.NotificationManager
+import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
@@ -32,10 +33,19 @@ import com.google.android.material.navigation.NavigationView
 import com.google.firebase.FirebaseApp
 import android.content.BroadcastReceiver
 import android.content.IntentFilter
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import androidx.lifecycle.lifecycleScope
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import com.example.deeplinkwebviewapp.service.SilentLoginAndAdvisorDataServiceFactory
 import androidx.activity.viewModels
+import androidx.core.app.NotificationCompat
+import androidx.core.app.NotificationManagerCompat
+import com.example.deeplinkwebviewapp.MyApplication
+import kotlinx.coroutines.DelicateCoroutinesApi
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
 
 class MainActivity : AppCompatActivity(), ChooseInstitionBottomSheet.OnChoiceSelectedListener {
 
@@ -47,46 +57,9 @@ class MainActivity : AppCompatActivity(), ChooseInstitionBottomSheet.OnChoiceSel
         val sharedPreferences = getSharedPreferences("MyPreferences", Context.MODE_PRIVATE)
         SettingsViewModelFactory(application, sharedPreferences)
     }
+
     companion object {
         private const val TAG = "MainActivity"
-    }
-
-    private val messageReceiver: BroadcastReceiver = object : BroadcastReceiver() {
-        override fun onReceive(context: Context, intent: Intent) {
-            // Daten aus dem Intent holen
-            val customKey1 = intent.getStringExtra("customKey1")
-            val customKey2 = intent.getStringExtra("customKey2")
-            Toast.makeText(this@MainActivity, "Message received: $customKey1 - $customKey2", Toast.LENGTH_LONG).show()
-            when ( customKey1 ) {
-                "mailbox" -> {
-                    val obv = customKey2?.substringBefore(":")
-                    val messageCount = customKey2?.substringAfter(":")
-                    true
-                }
-                "balance" -> {
-                    val iban = customKey2?.substringBefore(":")
-                    val balance = customKey2?.substringAfter(":")
-                    true
-                }
-                "transaction" -> {
-                    true
-                }
-                "webviewwithsilentlogin" -> {
-                    val url = customKey2
-                    true
-                }
-                "review" -> true
-                "killswitch" -> true
-                "update" -> true
-                "security" -> true
-                "feature" -> true
-                "retrospect" -> true
-                "instantpayment" -> true
-                "geo" -> true
-
-                else -> true
-            }
-        }
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -180,7 +153,7 @@ class MainActivity : AppCompatActivity(), ChooseInstitionBottomSheet.OnChoiceSel
             if (isLoaded) {
                 // Jetzt kannst du auf die Mobi-Daten zugreifen und sie verwenden
                 val mailboxUrl = viewModel.getMailboxUrl()
-                initializeSilentLoginAndAdvisorDataService ( )
+                initializeSilentLoginAndAdvisorDataService()
                 // Weiterverarbeitung
             } else {
                 // Fehlerbehandlung oder Fallback
@@ -195,48 +168,64 @@ class MainActivity : AppCompatActivity(), ChooseInstitionBottomSheet.OnChoiceSel
                 viewModel.loadMobiData()
                 true
             }
+
             R.id.nav_function_rundruf -> {
                 true
             }
+
             R.id.nav_function_kontakt -> {
                 // TEST
                 // handleGenericWebviewDeeplink("/_deeplink/webview?path=%2Fde%2Fhome%2Fproducts%2Fmopedversicherung.webview.html&blz=choice&fallback=IF&IF_SILENT_LOGIN=true&wstart=true&n=true")
                 true
             }
+
             R.id.nav_function_angebote -> {
                 openWebView(viewModel.getMailboxUrl(), true)
                 true
             }
+
             R.id.nav_function_deeplinks -> {
                 openWebView(viewModel.getDeeplinksWebviewUrl(), false)
                 true
             }
+
             R.id.nav_function_webview_greensmilies -> {
                 openWebView(getString(R.string.greensmilies_url), false)
                 true
             }
+
             R.id.nav_function_stoerer -> {
                 // Rufe die DisrupterActivity mit den Standardwerten auf
                 val intent = Intent(this, DisrupterActivity::class.java)
                 startActivity(intent)
                 true
             }
+
             R.id.nav_function_deeplink_alert -> {
                 showDeeplinkAlertDialog()
                 true
             }
+
             R.id.nav_function_log -> {
                 startActivity(Intent(this, LogActivity::class.java)) // Aktion für Log
                 true
             }
+
             R.id.nav_function_einstellungen -> {
-                startActivity(Intent(this, SettingsActivity::class.java)) // Aktion für Einstellungen
+                startActivity(
+                    Intent(
+                        this,
+                        SettingsActivity::class.java
+                    )
+                ) // Aktion für Einstellungen
                 true
             }
+
             R.id.nav_function_logout -> {
                 finishAffinity() // Beendet alle Aktivitäten der App
                 true
             }
+
             else -> false
         }
 
@@ -251,6 +240,7 @@ class MainActivity : AppCompatActivity(), ChooseInstitionBottomSheet.OnChoiceSel
                 toggle.onOptionsItemSelected(item)
                 true
             }
+
             else -> super.onOptionsItemSelected(item)
         }
     }
@@ -274,7 +264,11 @@ class MainActivity : AppCompatActivity(), ChooseInstitionBottomSheet.OnChoiceSel
         }
     }
 
-    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
+    override fun onRequestPermissionsResult(
+        requestCode: Int,
+        permissions: Array<out String>,
+        grantResults: IntArray
+    ) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
         if (requestCode == 101 && grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
             // Berechtigung erteilt
@@ -323,57 +317,91 @@ class MainActivity : AppCompatActivity(), ChooseInstitionBottomSheet.OnChoiceSel
     private fun handleDeeplink(intent: Intent?) {
         val deeplinkRootUri = getString(R.string.deeplink_root_uri)
         val data: Uri? = intent?.data
-        if (data != null ) {
+        if (data != null) {
             when {
                 data.path!!.startsWith("/_deeplink/webview") -> {
                     handleGenericWebviewDeeplink(intent?.data!!)
                     true
                 }
-                data.path!!.startsWith("/_deeplink/iam")  -> {
+
+                data.path!!.startsWith("/_deeplink/iam") -> {
                     true
                 }
+
                 data.path!!.startsWith("/_deeplink/showAlert") -> {
                     showDeeplinkAlertDialog()
                     true
                 }
+
                 data.path!!.startsWith("/_deeplink") -> {
                     showDeeplinkAlertDialog()
                     true
                 }
+
                 else -> false
             }
         }
     }
 
     private fun handlePushNotification(intent: Intent?) {
-
+        Log.d(TAG, "handlePushNotification")
+        // Daten aus dem Intent holen
+        val title = intent?.getStringExtra("title")
+        val body = intent?.getStringExtra("body")
         val customKey1 = intent?.getStringExtra("customKey1")
         val customKey2 = intent?.getStringExtra("customKey2")
-
-        val handled = when (customKey1) {
+        when (customKey1) {
             "IAM" -> {
                 if (customKey2 != null) {
                     viewModel.loadVkaData(customKey2)
+                } else {
+                    showNotification(title, body, customKey1, customKey2, null)
                 }
+            }
+
+            "IAMBANNER" -> fetchImageAndShowNotification(title, body, customKey1, customKey2)
+            "MAILBOX" -> {
+                val obv = customKey2?.substringBefore(":")
+                val messageCount = customKey2?.substringAfter(":")
                 true
             }
-            "IAMBANNER" -> {
-                Toast.makeText(this, "Start aus IAM Banner, checke URL", Toast.LENGTH_SHORT).show()
-                true
-            }
+
             "BALANCE" -> {
-                Toast.makeText(this, "Kontostand wird aktualisiert", Toast.LENGTH_SHORT).show()
-                true
+                val iban = customKey2?.substringBefore(":")
+                val balance = customKey2?.substringAfter(":")
+                if (MyApplication.isAppInForeground) {
+                    Toast.makeText(
+                        this,
+                        "Der neue Kontostand für ${iban} ist ${balance}",
+                        Toast.LENGTH_SHORT
+                    ).show()
+                } else {
+                    showNotification(title, body, "Neuer Kontostand", "Der neue Kontostand für ${iban} ist ${balance}", null)
+                }
             }
-            "BADGE" -> {
-                Toast.makeText(this, "Badge-Counter wird aktualisiert", Toast.LENGTH_SHORT).show()
-                true
+
+            "TRANSACTION" -> {
             }
-            "REVIEW" -> {
-                Toast.makeText(this, "Bitte bewerte die App", Toast.LENGTH_SHORT).show()
-                true
+
+            "WEBVIEWWITHSILENTLOGIN" -> {
+                val url = customKey2
             }
-            else -> false
+
+            "REVIEW" -> showNotification(title, body, customKey1, customKey2, null)
+            "KILLSWITCH" -> {}
+            "UPDATE" -> {}
+            "SECURITY" -> {}
+            "FEATURE" -> {}
+            "RETROSPECT" -> {}
+            "INSTANTPAYMENT" -> {}
+            "GEO" -> {}
+            else -> {
+                Toast.makeText(
+                    this@MainActivity,
+                    "Message received: $customKey1 - $customKey2",
+                    Toast.LENGTH_LONG
+                ).show()
+            }
         }
     }
 
@@ -452,7 +480,10 @@ class MainActivity : AppCompatActivity(), ChooseInstitionBottomSheet.OnChoiceSel
                 lifecycleScope = lifecycleScope // Verwende den Activity-LifecycleScope
             )
         } else {
-            Log.d(TAG, "Error: Missing parameters for SilentLoginAndAdvisorDataService initialization.")
+            Log.d(
+                TAG,
+                "Error: Missing parameters for SilentLoginAndAdvisorDataService initialization."
+            )
         }
     }
 
@@ -465,19 +496,20 @@ class MainActivity : AppCompatActivity(), ChooseInstitionBottomSheet.OnChoiceSel
         for (paramName in queryParameterNames) {
             val paramValue = deeplinkUri.getQueryParameter(paramName)
             println("Parameter: $paramName, Wert: $paramValue")
-            when ( paramName ) {
+            when (paramName) {
                 "path" -> {
                     val decodedPath = Uri.decode(paramValue) // Dekodieren des Wertes
                     uriBuilder.appendEncodedPath(decodedPath.trim('/'))
                 }
-                "fallback"-> {}
-                "blz"-> blz = paramValue
-                "IF_SILENT_LOGIN" -> isSilentLogin = (paramValue=="true")
+
+                "fallback" -> {}
+                "blz" -> blz = paramValue
+                "IF_SILENT_LOGIN" -> isSilentLogin = (paramValue == "true")
                 else -> uriBuilder.appendQueryParameter(paramName, paramValue)
             }
         }
         val targetUri = uriBuilder.build().toString()
-        if (blz=="choice") {
+        if (blz == "choice") {
             val myblz = settingsViewModel.getBLZ()
             val items = arrayOf("25050180", "10020030", "94059549", "${myblz}")
             val bottomSheet = ChooseInstitionBottomSheet(items, targetUri, isSilentLogin)
@@ -486,14 +518,103 @@ class MainActivity : AppCompatActivity(), ChooseInstitionBottomSheet.OnChoiceSel
             onChoiceSelected(blz, targetUri, isSilentLogin)
         }
     }
+
     // Implementierung der Schnittstelle
     override fun onChoiceSelected(blz: String?, targetUri: String, isSilentLogin: Boolean) {
         // Hier kannst du die Auswahl verarbeiten
-        if (blz == null || blz==settingsViewModel.getBLZ()) {
+        if (blz == null || blz == settingsViewModel.getBLZ()) {
             Log.d(TAG, "starting webview with uri ${targetUri}")
             openWebView(targetUri, isSilentLogin)
         } else {
             Toast.makeText(this@MainActivity, "ungültige BLZ ${blz}", Toast.LENGTH_LONG).show()
         }
+    }
+
+    // hier werden die silent notifications verarbeitet
+    private val messageReceiver: BroadcastReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context, intent: Intent) {
+            handlePushNotification(intent)
+        }
+    }
+
+    @OptIn(DelicateCoroutinesApi::class)
+    private fun fetchImageAndShowNotification(
+        title: String?,
+        message: String?,
+        customKey1: String?,
+        customKey2: String?
+    ) {
+        // Hier kannst du eine Coroutine oder eine andere Methode verwenden,
+        // um das Bild asynchron abzurufen.
+        GlobalScope.launch(Dispatchers.IO) {
+            val imageBitmap = BitmapFactory.decodeResource(resources, R.drawable.sample_banner)
+            showNotification(title, message, customKey1, customKey2, imageBitmap)
+        }
+    }
+
+    private fun showNotification(
+        title: String?,
+        message: String?,
+        customKey1: String?,
+        customKey2: String?,
+        imageBitmap: Bitmap?
+    ) {
+        val NOTIFICATION_ID = System.currentTimeMillis().toInt()
+        val CHANNEL_ID = getString(R.string.default_notification_channel_id)
+
+        val intent = Intent(this, MainActivity::class.java).apply {
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP
+            putExtra("customKey1", customKey1)
+            putExtra("customKey2", customKey2)
+        }
+        val pendingIntent = PendingIntent.getActivity(
+            this,
+            0,
+            intent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+
+        val notificationBuilder = NotificationCompat.Builder(this, CHANNEL_ID)
+            .setSmallIcon(R.drawable.ic_notification) // Setze hier dein Icon
+            .setContentTitle(title)
+            .setContentText(message)
+            .setPriority(NotificationCompat.PRIORITY_HIGH)
+            .setContentIntent(pendingIntent)
+            .setAutoCancel(true)
+
+        // Wenn das Bild vorhanden ist, setze es in die Benachrichtigung
+        if (imageBitmap != null) {
+            notificationBuilder.setStyle(
+                NotificationCompat.BigPictureStyle()
+                    .bigPicture(imageBitmap)
+                    .bigLargeIcon(null as Bitmap?)
+            ) // Optional, um das große Icon zu entfernen
+        }
+
+        val notificationManager = NotificationManagerCompat.from(this)
+        if (ActivityCompat.checkSelfPermission(
+                this,
+                Manifest.permission.POST_NOTIFICATIONS
+            ) != PackageManager.PERMISSION_GRANTED
+        ) {
+            return
+        }
+        notificationManager.notify(NOTIFICATION_ID, notificationBuilder.build())
+    }
+
+    override fun onResume() {
+        super.onResume()
+
+        val intentFilter = IntentFilter("PUSH-NOTIFICATION-RECEIVED")
+
+        // Registrierung mit LocalBroadcastManager
+        LocalBroadcastManager.getInstance(this).registerReceiver(messageReceiver, intentFilter)
+    }
+
+    override fun onPause() {
+        super.onPause()
+
+        // Deregistrierung mit LocalBroadcastManager
+        LocalBroadcastManager.getInstance(this).unregisterReceiver(messageReceiver)
     }
 }
