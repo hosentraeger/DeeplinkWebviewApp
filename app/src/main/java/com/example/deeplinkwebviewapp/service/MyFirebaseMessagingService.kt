@@ -29,10 +29,10 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
     }
 
     override fun onMessageReceived(remoteMessage: RemoteMessage) {
-        val title = remoteMessage?.notification?.title
-        val body = remoteMessage?.notification?.body
-        val customKey1 = remoteMessage?.data?.get("customKey1")
-        val customKey2 = remoteMessage?.data?.get("customKey2")
+        val title = remoteMessage.notification?.title
+        val body = remoteMessage.notification?.body
+        val customKey1 = remoteMessage.data?.get("customKey1")
+        val customKey2 = remoteMessage.data?.get("customKey2")
         Log.d(TAG, "Title: ${title}, Body: ${body}, customKey1: ${customKey1}, customKey2: ${customKey2}")
 
         if ( customKey1.equals("IAM") ) {

@@ -3,6 +3,7 @@ package com.example.deeplinkwebviewapp
 import android.app.Activity
 import android.app.Application
 import android.os.Bundle
+import com.example.deeplinkwebviewapp.service.MyHttpClient
 
 class MyApplication : Application() {
 
@@ -12,6 +13,8 @@ class MyApplication : Application() {
 
     override fun onCreate() {
         super.onCreate()
+        // MyHttpClient mit User-Agent initialisieren
+        MyHttpClient.initialize(getString(R.string.user_agent_string))
 
         // Registriere ActivityLifecycleCallbacks, um den App-Status zu verfolgen
         registerActivityLifecycleCallbacks(object : ActivityLifecycleCallbacks {

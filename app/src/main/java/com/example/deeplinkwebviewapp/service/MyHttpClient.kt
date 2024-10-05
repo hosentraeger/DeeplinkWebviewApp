@@ -1,6 +1,8 @@
 package com.example.deeplinkwebviewapp.service
 
+import android.content.Context
 import android.util.Log
+import com.example.deeplinkwebviewapp.R
 import com.example.deeplinkwebviewapp.data.DeviceData
 import com.google.gson.Gson
 import okhttp3.MediaType.Companion.toMediaType
@@ -12,8 +14,9 @@ import okhttp3.logging.HttpLoggingInterceptor
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
-class MyHttpClient private constructor() {
+class MyHttpClient private constructor(private val userAgent: String) {
 
     private val client: OkHttpClient
     private val gson = Gson()
@@ -35,8 +38,15 @@ class MyHttpClient private constructor() {
         private var INSTANCE: MyHttpClient? = null
 
         fun getInstance(): MyHttpClient {
-            return INSTANCE ?: synchronized(this) {
-                INSTANCE ?: MyHttpClient().also { INSTANCE = it }
+            return INSTANCE ?: throw IllegalStateException("MyHttpClient is not initialized, call initialize() first.")
+        }
+        fun initialize(userAgent: String) {
+            if (INSTANCE == null) {
+                synchronized(this) {
+                    if (INSTANCE == null) {
+                        INSTANCE = MyHttpClient(userAgent)
+                    }
+                }
             }
         }
     }
@@ -150,14 +160,14 @@ class MyHttpClient private constructor() {
         }
     }
 
-    fun postSilentLogin(servletUrl: String, payload: String, callback: (String?) -> Unit) {
+    suspend fun postSilentLogin(servletUrl: String, payload: String): String? {
         val requestBody = payload.toRequestBody("application/json".toMediaType())
 
         // Einen separaten OkHttpClient erstellen, der Redirects nicht folgt
         val clientNoRedirects = client.newBuilder()
             .followRedirects(false)
             .build()
-
+        val userAgentString = "" // context.getString(R.string.user_agent_string)
         // POST-Anfrage erstellen
         val request = Request.Builder()
             .url(servletUrl)
@@ -165,11 +175,12 @@ class MyHttpClient private constructor() {
             .header("Accept", "*.*")
             .header("Connection", "keep-alive")
             .header("content-type", "application/json")
+            .header("User-Agent", userAgentString)
             .header("Accept-Charset", "UTF-8")
             .post(requestBody)
             .build()
 
-        CoroutineScope(Dispatchers.IO).launch {
+        return withContext(Dispatchers.IO) {
             try {
                 val response = clientNoRedirects.newCall(request).execute()
                 if (response.isSuccessful || response.code == 302) { // Erfolg oder Redirect
@@ -182,14 +193,14 @@ class MyHttpClient private constructor() {
                         ?.firstOrNull() // Den ersten Teil (JSESSIONID=xxxx) extrahieren
                         ?.substringAfter("JSESSIONID=") // Den Wert der JSESSIONID extrahieren
 
-                    callback(jsessionId)
+                    jsessionId
                 } else {
                     Log.e("MyHttpClient", "Fehler: ${response.code}")
-                    callback(null)
+                    null
                 }
             } catch (e: Exception) {
                 Log.e("MyHttpClient", "Exception: ${e.message}")
-                callback(null)
+                null
             }
         }
     }

@@ -3,29 +3,47 @@ package com.example.deeplinkwebviewapp.ui
 import android.content.ActivityNotFoundException
 import android.content.Intent
 import android.net.Uri
-import android.content.Intent.ACTION_VIEW
-import android.content.Intent.CATEGORY_BROWSABLE
-import android.content.Intent.FLAG_ACTIVITY_NEW_TASK
-import android.content.Intent.FLAG_ACTIVITY_REQUIRE_NON_BROWSER
 import android.os.Bundle
 import android.webkit.WebResourceRequest
 import android.webkit.WebSettings
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import android.widget.Toast
+import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.lifecycleScope
 import com.example.deeplinkwebviewapp.R
+import com.example.deeplinkwebviewapp.service.WebViewService
+import kotlinx.coroutines.launch
 
 class WebViewActivity : AppCompatActivity() {
+
+    private lateinit var webViewService: WebViewService // WebViewService deklarieren
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_web_view)
+
+        WebView.setWebContentsDebuggingEnabled(true) // Debugging aktivieren
+
+        // WebView und Service initialisieren
         val webView: WebView = findViewById(R.id.webView)
         webView.settings.javaScriptEnabled = true
         webView.settings.domStorageEnabled = true
         webView.settings.cacheMode = WebSettings.LOAD_NO_CACHE // Cache nicht verwenden
-        WebView.setWebContentsDebuggingEnabled(true)
+        webView.settings.userAgentString = getString(R.string.user_agent_string_webview)
+
+        webViewClientSetup(webView) // WebViewClient einrichten
+
+        val url = intent.getStringExtra("EXTRA_URL")
+        val isSilentLogin = intent.getBooleanExtra("IF_SILENT_LOGIN", false) // IF_SILENT_LOGIN aus Intent auslesen
+
+        if (url != null) {
+            loadUrlWithSession(webView, url, isSilentLogin) // URL mit Session-ID laden
+        }
+    }
+
+    private fun webViewClientSetup(webView: WebView) {
         webView.webViewClient = object : WebViewClient() {
             override fun onReceivedError(
                 view: WebView?,
@@ -35,28 +53,30 @@ class WebViewActivity : AppCompatActivity() {
             ) {
                 Toast.makeText(applicationContext, "Error: $description", Toast.LENGTH_SHORT).show()
             }
-            override fun shouldOverrideUrlLoading(view: WebView, request: WebResourceRequest):Boolean {
+            override fun shouldOverrideUrlLoading(view: WebView, request: WebResourceRequest): Boolean {
                 val url = request.url.toString()
                 try {
-                    val intent = Intent(ACTION_VIEW, Uri.parse(url)).apply {
-                        // The URL should either launch directly in a non-browser app (if it's
-                        // the default), or in the disambiguation dialog.
-                        addCategory(CATEGORY_BROWSABLE)
-                        flags = FLAG_ACTIVITY_NEW_TASK or FLAG_ACTIVITY_REQUIRE_NON_BROWSER
+                    val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url)).apply {
+                        addCategory(Intent.CATEGORY_BROWSABLE)
+                        flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_REQUIRE_NON_BROWSER
                     }
                     startActivity(intent)
                 } catch (e: ActivityNotFoundException) {
-                    // Only browser apps are available, or a browser is the default.
-                    // So you can open the URL directly in your app, for example in a
                     view.loadUrl(url)
                 }
-
                 return true
             }
         }
-        val url = intent.getStringExtra("EXTRA_URL")
-        if (url != null) {
-            webView.loadUrl(url)
+    }
+
+    private fun loadUrlWithSession(webView: WebView, url: String, isSilentLogin: Boolean) {
+        webViewService = WebViewService() // Instanz des WebViewService erstellen
+        lifecycleScope.launch {
+            if (isSilentLogin) {
+                webViewService.loadUrlWithSession(webView, url) // URL mit Session-ID laden
+            } else {
+                webView.loadUrl(url) // URL ohne Session-ID laden
+            }
         }
     }
 }

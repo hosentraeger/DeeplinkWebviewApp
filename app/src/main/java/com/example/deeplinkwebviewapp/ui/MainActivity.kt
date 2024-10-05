@@ -32,17 +32,21 @@ import com.google.android.material.navigation.NavigationView
 import com.google.firebase.FirebaseApp
 import android.content.BroadcastReceiver
 import android.content.IntentFilter
+import androidx.lifecycle.lifecycleScope
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
+import com.example.deeplinkwebviewapp.service.SilentLoginAndAdvisorDataServiceFactory
+import androidx.activity.viewModels
 
-
-class MainActivity : AppCompatActivity() {
+class MainActivity : AppCompatActivity(), ChooseInstitionBottomSheet.OnChoiceSelectedListener {
 
     private lateinit var drawerLayout: DrawerLayout
     private lateinit var navView: NavigationView
     private lateinit var toggle: ActionBarDrawerToggle
     private lateinit var viewModel: MainViewModel
-    private lateinit var settingsViewModel: SettingsViewModel
-
+    private val settingsViewModel: SettingsViewModel by viewModels {
+        val sharedPreferences = getSharedPreferences("MyPreferences", Context.MODE_PRIVATE)
+        SettingsViewModelFactory(application, sharedPreferences)
+    }
     companion object {
         private const val TAG = "MainActivity"
     }
@@ -53,6 +57,35 @@ class MainActivity : AppCompatActivity() {
             val customKey1 = intent.getStringExtra("customKey1")
             val customKey2 = intent.getStringExtra("customKey2")
             Toast.makeText(this@MainActivity, "Message received: $customKey1 - $customKey2", Toast.LENGTH_LONG).show()
+            when ( customKey1 ) {
+                "mailbox" -> {
+                    val obv = customKey2?.substringBefore(":")
+                    val messageCount = customKey2?.substringAfter(":")
+                    true
+                }
+                "balance" -> {
+                    val iban = customKey2?.substringBefore(":")
+                    val balance = customKey2?.substringAfter(":")
+                    true
+                }
+                "transaction" -> {
+                    true
+                }
+                "webviewwithsilentlogin" -> {
+                    val url = customKey2
+                    true
+                }
+                "review" -> true
+                "killswitch" -> true
+                "update" -> true
+                "security" -> true
+                "feature" -> true
+                "retrospect" -> true
+                "instantpayment" -> true
+                "geo" -> true
+
+                else -> true
+            }
         }
     }
 
@@ -81,7 +114,7 @@ class MainActivity : AppCompatActivity() {
             )
         }
 
-        val sharedPreferences = getSharedPreferences("MyPreferences", Context.MODE_PRIVATE)
+        val sharedPreferences = getSharedPreferences("MyPreferences", MODE_PRIVATE)
         val factory = MainViewModelFactory(application, sharedPreferences)
         viewModel = ViewModelProvider(this, factory).get(MainViewModel::class.java)
 
@@ -100,8 +133,8 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-        val settingsFactory = SettingsViewModelFactory(application, sharedPreferences)
-        settingsViewModel = ViewModelProvider(this, settingsFactory).get(SettingsViewModel::class.java)
+        // val settingsFactory = SettingsViewModelFactory(application, sharedPreferences)
+        // settingsViewModel = ViewModelProvider(this, settingsFactory).get(SettingsViewModel::class.java)
 
         drawerLayout = findViewById(R.id.drawer_layout)
         navView = findViewById(R.id.nav_view)
@@ -126,10 +159,6 @@ class MainActivity : AppCompatActivity() {
             handleNavigationItemSelected(menuItem)
         }
 
-        intent?.let {
-            handleIntent(it)
-        }
-
         // Abrufen des FCM Tokens
         viewModel.fetchFcmToken()
 
@@ -147,6 +176,16 @@ class MainActivity : AppCompatActivity() {
         LocalBroadcastManager.getInstance(this).registerReceiver(
             messageReceiver, IntentFilter("push-notification-received")
         )
+        viewModel.mobiDataLoaded.observe(this) { isLoaded ->
+            if (isLoaded) {
+                // Jetzt kannst du auf die Mobi-Daten zugreifen und sie verwenden
+                val mailboxUrl = viewModel.getMailboxUrl()
+                initializeSilentLoginAndAdvisorDataService ( )
+                // Weiterverarbeitung
+            } else {
+                // Fehlerbehandlung oder Fallback
+            }
+        }
     }
 
     private fun handleNavigationItemSelected(menuItem: MenuItem): Boolean {
@@ -160,18 +199,20 @@ class MainActivity : AppCompatActivity() {
                 true
             }
             R.id.nav_function_kontakt -> {
+                // TEST
+                // handleGenericWebviewDeeplink("/_deeplink/webview?path=%2Fde%2Fhome%2Fproducts%2Fmopedversicherung.webview.html&blz=choice&fallback=IF&IF_SILENT_LOGIN=true&wstart=true&n=true")
                 true
             }
             R.id.nav_function_angebote -> {
-                viewModel.performSilentLogin("https://m164an08-421.if-etaps.de/de/home/privatkunden/girokonto.webview.html")
+                openWebView(viewModel.getMailboxUrl(), true)
                 true
             }
             R.id.nav_function_deeplinks -> {
-                openWebView(viewModel.getDeeplinksWebviewUrl())
+                openWebView(viewModel.getDeeplinksWebviewUrl(), false)
                 true
             }
             R.id.nav_function_webview_greensmilies -> {
-                openWebView(getString(R.string.greensmilies_url))
+                openWebView(getString(R.string.greensmilies_url), false)
                 true
             }
             R.id.nav_function_stoerer -> {
@@ -252,7 +293,7 @@ class MainActivity : AppCompatActivity() {
             }
             // Register the channel with the system
             val notificationManager: NotificationManager =
-                getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+                getSystemService(NOTIFICATION_SERVICE) as NotificationManager
             notificationManager.createNotificationChannel(channel)
         }
     }
@@ -279,15 +320,31 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    // Deeplink-Verarbeitung
     private fun handleDeeplink(intent: Intent?) {
+        val deeplinkRootUri = getString(R.string.deeplink_root_uri)
         val data: Uri? = intent?.data
-        if (data != null && data.path == "/_deeplink/showAlert") {
-            showDeeplinkAlertDialog() // Zeigt den Deeplink-Dialog
+        if (data != null ) {
+            when {
+                data.path!!.startsWith("/_deeplink/webview") -> {
+                    handleGenericWebviewDeeplink(intent?.data!!)
+                    true
+                }
+                data.path!!.startsWith("/_deeplink/iam")  -> {
+                    true
+                }
+                data.path!!.startsWith("/_deeplink/showAlert") -> {
+                    showDeeplinkAlertDialog()
+                    true
+                }
+                data.path!!.startsWith("/_deeplink") -> {
+                    showDeeplinkAlertDialog()
+                    true
+                }
+                else -> false
+            }
         }
     }
 
-    // Push-Benachrichtigungs-Verarbeitung
     private fun handlePushNotification(intent: Intent?) {
 
         val customKey1 = intent?.getStringExtra("customKey1")
@@ -328,10 +385,11 @@ class MainActivity : AppCompatActivity() {
             .show()
     }
 
-    private fun openWebView(url: String) {
+    private fun openWebView(url: String, isSilentLogin: Boolean) {
         if (url.isNotBlank()) { // Überprüfe, ob die URL nicht leer ist
             val intent = Intent(this, WebViewActivity::class.java).apply {
                 putExtra("EXTRA_URL", url)
+                putExtra("IF_SILENT_LOGIN", isSilentLogin)
             }
             startActivity(intent)
         } else {
@@ -339,6 +397,7 @@ class MainActivity : AppCompatActivity() {
             Toast.makeText(this, "Die URL ist leer.", Toast.LENGTH_SHORT).show()
         }
     }
+
     private fun showLoginDialog() {
         val dialogView = layoutInflater.inflate(R.layout.dialog_login, null)
         val passwordInput = dialogView.findViewById<EditText>(R.id.password_input)
@@ -350,15 +409,9 @@ class MainActivity : AppCompatActivity() {
                 val inputPassword = passwordInput.text.toString()
                 val correctPassword = getString(R.string.app_password)
 
-                if (inputPassword == correctPassword) {
-                    // Login erfolgreich
-                    dialog.dismiss()
-                    // Starte die Hauptaktivität oder setze den Status auf eingeloggt
-                    proceedToMainApp()
-                } else {
-                    // Falsches Passwort
-                    showErrorDialog()
-                }
+                dialog.dismiss()
+                // Starte die Hauptaktivität oder setze den Status auf eingeloggt
+                proceedToMainApp()
             }
             .setNegativeButton("Abbrechen") { dialog, _ ->
                 dialog.dismiss()
@@ -369,18 +422,78 @@ class MainActivity : AppCompatActivity() {
     private fun proceedToMainApp() {
         // Logik zum Starten der App nach erfolgreichem Login
         Log.d("MainActivity", "Login erfolgreich!")
+        viewModel.sendDeviceData()
+        viewModel.loadMobiData()
+        intent?.let {
+            handleIntent(it)
+        }
     }
 
-    private fun showErrorDialog() {
-        AlertDialog.Builder(this)
-            .setTitle("Fehler")
-            .setMessage("Falsches Passwort")
-            .setPositiveButton("OK") { dialog, _ -> dialog.dismiss() }
-            .show()
-    }
     override fun onDestroy() {
         super.onDestroy()
 
         // Den BroadcastReceiver abmelden, um Speicherlecks zu vermeiden
         LocalBroadcastManager.getInstance(this).unregisterReceiver(messageReceiver)
-    }}
+    }
+
+    private fun initializeSilentLoginAndAdvisorDataService() {
+        val servletUrl = viewModel.getServletUrl()
+        val blz = settingsViewModel.getBLZ()
+        val loginName = settingsViewModel.getUsername()
+        val onlineBankingPin = settingsViewModel.getPIN()
+
+        if (servletUrl.isNotEmpty() && blz.isNotEmpty() && loginName.isNotEmpty() && onlineBankingPin.isNotEmpty()) {
+            // Initialisiere die Factory
+            SilentLoginAndAdvisorDataServiceFactory.initialize(
+                servletUrl = servletUrl,
+                blz = blz,
+                loginName = loginName,
+                onlineBankingPin = onlineBankingPin,
+                lifecycleScope = lifecycleScope // Verwende den Activity-LifecycleScope
+            )
+        } else {
+            Log.d(TAG, "Error: Missing parameters for SilentLoginAndAdvisorDataService initialization.")
+        }
+    }
+
+    fun handleGenericWebviewDeeplink(deeplinkUri: Uri) {
+        var isSilentLogin = false
+        var blz: String? = null
+
+        val uriBuilder = Uri.parse("https://" + viewModel.getHostname()).buildUpon()
+        val queryParameterNames = deeplinkUri.queryParameterNames
+        for (paramName in queryParameterNames) {
+            val paramValue = deeplinkUri.getQueryParameter(paramName)
+            println("Parameter: $paramName, Wert: $paramValue")
+            when ( paramName ) {
+                "path" -> {
+                    val decodedPath = Uri.decode(paramValue) // Dekodieren des Wertes
+                    uriBuilder.appendEncodedPath(decodedPath.trim('/'))
+                }
+                "fallback"-> {}
+                "blz"-> blz = paramValue
+                "IF_SILENT_LOGIN" -> isSilentLogin = (paramValue=="true")
+                else -> uriBuilder.appendQueryParameter(paramName, paramValue)
+            }
+        }
+        val targetUri = uriBuilder.build().toString()
+        if (blz=="choice") {
+            val myblz = settingsViewModel.getBLZ()
+            val items = arrayOf("25050180", "10020030", "94059549", "${myblz}")
+            val bottomSheet = ChooseInstitionBottomSheet(items, targetUri, isSilentLogin)
+            bottomSheet.show(supportFragmentManager, bottomSheet.tag)
+        } else {
+            onChoiceSelected(blz, targetUri, isSilentLogin)
+        }
+    }
+    // Implementierung der Schnittstelle
+    override fun onChoiceSelected(blz: String?, targetUri: String, isSilentLogin: Boolean) {
+        // Hier kannst du die Auswahl verarbeiten
+        if (blz == null || blz==settingsViewModel.getBLZ()) {
+            Log.d(TAG, "starting webview with uri ${targetUri}")
+            openWebView(targetUri, isSilentLogin)
+        } else {
+            Toast.makeText(this@MainActivity, "ungültige BLZ ${blz}", Toast.LENGTH_LONG).show()
+        }
+    }
+}

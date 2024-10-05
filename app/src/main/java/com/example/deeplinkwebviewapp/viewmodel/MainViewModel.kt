@@ -7,6 +7,7 @@ import com.example.deeplinkwebviewapp.service.SfmServiceFactory
 import android.app.Application
 import android.content.Context
 import android.content.SharedPreferences
+import android.net.Uri
 import android.util.Log
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
@@ -19,7 +20,7 @@ import com.example.deeplinkwebviewapp.data.DeviceData
 import com.example.deeplinkwebviewapp.data.DeviceDataSingleton
 import com.example.deeplinkwebviewapp.service.Logger
 import com.example.deeplinkwebviewapp.service.MyHttpClient
-import com.example.deeplinkwebviewapp.service.SilentLoginAndAdvisorDataServiceFactory
+import com.example.deeplinkwebviewapp.service.SilentLoginAndAdvisorDataService
 import com.google.firebase.messaging.FirebaseMessaging
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.encodeToString
@@ -34,6 +35,8 @@ class MainViewModel(
     companion object {
         private const val TAG = "MainViewModel"
     }
+    private val _mobiDataLoaded = MutableLiveData<Boolean>()
+    val mobiDataLoaded: LiveData<Boolean> = _mobiDataLoaded
 
     private val context: Context = application.applicationContext
     private val editor = sharedPreferences.edit()
@@ -60,9 +63,8 @@ class MainViewModel(
         444 // TODO:
     )
 
-    // silentLoginService initialisieren
-    private val silentLoginService = SilentLoginAndAdvisorDataServiceFactory.create(
-    )
+    private var silentLoginService: SilentLoginAndAdvisorDataService? = null
+
 
     fun loadVkaData(userId: String) {
         sfcService.fetchVkaData(userId) { response: SfcIfResponse? ->
@@ -87,12 +89,15 @@ class MainViewModel(
             response?.let {
                 try {
                     sfmMobiResponse = response
+                    _mobiDataLoaded.postValue(true)  // Signalisiere, dass die Daten geladen sind
+                    Log.d(TAG, "SfmMobData loaded")
                 } catch (e: Exception) {
-                    Log.e(TAG, "Error processing SfcIfResponse: ${e.localizedMessage}")
+                    Log.e(TAG, "Error processing SfmMobiResponse: ${e.localizedMessage}")
+                    _mobiDataLoaded.postValue(false)
                 }
             } ?: run {
                 Log.e("MainViewModel", "Fehler bei der Anfrage")
-                sfmMobiResponse = null
+                _mobiDataLoaded.postValue(false)
             }
         }
     }
@@ -103,23 +108,15 @@ class MainViewModel(
         return bankServlet
     }
 
-    fun performSilentLogin ( targetUrl: String) {
-        val userId = sharedPreferences.getString("Username", "")
-        val onlineBankingPin = sharedPreferences.getString("PIN", "")
-        val blz = sharedPreferences.getString("BLZ", "")
-        if (blz != null && userId != null && onlineBankingPin != null ) {
-            silentLoginService.performSilentLogin(getServletUrl(), blz, userId, onlineBankingPin, targetUrl) { response: String? ->
-                response?.let {
-                    try {
-                        Log.d ( TAG, "response: $response")
-                    } catch (e: Exception) {
-                        Log.e(TAG, "Error processing silent login response: ${e.localizedMessage}")
-                    }
-                } ?: run {
-                    Log.e("MainViewModel", "Fehler bei der Anfrage")
-                }
-            }
-        }
+    fun getMailboxUrl ( ): String {
+        val mailBoxUrl = sfmMobiResponse?.bankCodesSettings?.data?.values?.firstOrNull()?.postbox ?: "Kein Servlet gefunden"
+        println("mailBoxUrl: $mailBoxUrl")
+        return mailBoxUrl
+    }
+
+    fun getHostname() : String? {
+        val uri = Uri.parse ( getServletUrl ( ) )
+        return uri.host
     }
 
     private fun getCurrentTimestamp(): String {

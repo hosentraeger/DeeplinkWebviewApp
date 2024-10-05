@@ -78,6 +78,7 @@ dependencies {
     implementation("com.google.firebase:firebase-messaging-ktx:23.0.0")
 
     implementation("com.google.android.material:material:1.9.0")
+    implementation("androidx.fragment:fragment:1.6.1") // Füge diese Zeile hinzu
 
     // silent login verschlüsselung
     implementation("org.bouncycastle:bcprov-jdk15on:1.70") // Für Bouncy Castle (z. B. AES)
