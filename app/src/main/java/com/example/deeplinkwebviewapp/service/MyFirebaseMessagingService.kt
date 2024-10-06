@@ -2,6 +2,7 @@ package com.example.deeplinkwebviewapp.service
 
 import android.Manifest
 import android.app.PendingIntent
+import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
@@ -17,6 +18,7 @@ import com.example.deeplinkwebviewapp.ui.MainActivity
 import com.google.firebase.messaging.FirebaseMessagingService
 import com.google.firebase.messaging.RemoteMessage
 import com.example.deeplinkwebviewapp.MyApplication
+import com.example.deeplinkwebviewapp.data.BankEntry
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
@@ -39,10 +41,18 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
             "IAM" -> showNotification(title, body, customKey1, customKey2, null)
             "IAMBANNER" -> fetchImageAndShowNotification(title, body, customKey1, customKey2)
             "MAILBOX" -> {
+                val sharedPreferences = getSharedPreferences("MyPreferences", Context.MODE_PRIVATE)
+                val obv = customKey2?.substringBefore(":")?.let { BankEntry(it) }
+                val blz = sharedPreferences.getString("BLZ", "") ?: ""
+                val username = sharedPreferences.getString("Username", "") ?: ""
+                val myMainObv = BankEntry(blz, username)
+                if ( obv == myMainObv ) {
+                    val badgeCount = customKey2.substringAfter(":").toInt()
+                    handleMailboxBadge(badgeCount)
+                }
                 if (MyApplication.isAppInForeground) {
                     broadcastNotificationIntent(remoteMessage)
                 }
-                // TODO now set badge
             }
 
             "BALANCE" -> {
@@ -64,7 +74,7 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
             }
 
             "WEBVIEWWITHSILENTLOGIN" -> {
-                val url = customKey2
+                // val url = customKey2
             }
 
             "REVIEW" -> showNotification(title, body, customKey1, customKey2, null)
@@ -77,6 +87,39 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
             "GEO" -> {}
             else -> showNotification(title, body, customKey1, customKey2, null)
         }
+    }
+
+    fun handleMailboxBadge(badgeCount: Int) {
+        val channelId = getString(R.string.system_notification_channel_id)
+
+        val notificationId = 1
+
+        val notification = NotificationCompat.Builder(this, channelId)
+            .setSmallIcon(R.drawable.ic_notification) // Kleines Icon festlegen
+            .setContentTitle("Neue Nachricht")
+            .setContentText("Du hast neue Nachrichten.")
+            .setSilent(true)
+            .setCategory(NotificationCompat.CATEGORY_SERVICE)
+            .setNumber(badgeCount) // Setzt die Anzahl für das Badge
+            .setPriority(NotificationCompat.PRIORITY_LOW)
+            .build()
+
+// Zeige die Benachrichtigung an
+        if (ActivityCompat.checkSelfPermission(
+                this,
+                Manifest.permission.POST_NOTIFICATIONS
+            ) != PackageManager.PERMISSION_GRANTED
+        ) {
+            // TODO: Consider calling
+            //    ActivityCompat#requestPermissions
+            // here to request the missing permissions, and then overriding
+            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
+            //                                          int[] grantResults)
+            // to handle the case where the user grants the permission. See the documentation
+            // for ActivityCompat#requestPermissions for more details.
+            return
+        }
+        NotificationManagerCompat.from(this).notify(notificationId, notification)
     }
 
     fun broadcastNotificationIntent(remoteMessage: RemoteMessage) {

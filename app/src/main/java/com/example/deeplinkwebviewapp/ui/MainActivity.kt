@@ -12,7 +12,6 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.Uri
-import android.os.Build
 import android.os.Bundle
 import android.util.Log
 import android.view.Menu
@@ -29,7 +28,6 @@ import androidx.core.view.GravityCompat
 import androidx.drawerlayout.widget.DrawerLayout
 import androidx.lifecycle.ViewModelProvider
 import com.example.deeplinkwebviewapp.R
-import com.google.android.material.navigation.NavigationView
 import com.google.firebase.FirebaseApp
 import android.content.BroadcastReceiver
 import android.content.IntentFilter
@@ -47,6 +45,7 @@ import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
+import com.google.android.material.navigation.NavigationView
 
 class MainActivity : AppCompatActivity(), ChooseInstitionBottomSheet.OnChoiceSelectedListener {
 
@@ -66,6 +65,7 @@ class MainActivity : AppCompatActivity(), ChooseInstitionBottomSheet.OnChoiceSel
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         createNotificationChannel()
+        createSystemNotificationChannel()
 
         // Firebase initialisieren
         FirebaseApp.initializeApp(this)
@@ -94,11 +94,12 @@ class MainActivity : AppCompatActivity(), ChooseInstitionBottomSheet.OnChoiceSel
         // Device-Daten initialisieren
         viewModel.initializeDeviceData()
 
-        // val settingsFactory = SettingsViewModelFactory(application, sharedPreferences)
-        // settingsViewModel = ViewModelProvider(this, settingsFactory).get(SettingsViewModel::class.java)
-
         drawerLayout = findViewById(R.id.drawer_layout)
         navView = findViewById(R.id.nav_view)
+
+        // val badge = navView.getOrCreateBadge(R.id.nav_function_angebote)
+        // badge.number = 5 // Setze die Badge-Zahl
+
 
         // Toolbar und NavigationView einrichten
         val toolbar: Toolbar = findViewById(R.id.toolbar)
@@ -254,20 +255,34 @@ class MainActivity : AppCompatActivity(), ChooseInstitionBottomSheet.OnChoiceSel
     }
 
     private fun createNotificationChannel() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val channelId = getString(R.string.default_notification_channel_id)
-            val channelName = getString(R.string.default_notification_channel_name)
-            val channelDescriptionText =
-                getString(R.string.default_notification_channel_description)
-            val importance = NotificationManager.IMPORTANCE_HIGH
-            val channel = NotificationChannel(channelId, channelName, importance).apply {
-                description = channelDescriptionText
-            }
-            // Register the channel with the system
-            val notificationManager: NotificationManager =
-                getSystemService(NOTIFICATION_SERVICE) as NotificationManager
-            notificationManager.createNotificationChannel(channel)
+        val channelId = getString(R.string.default_notification_channel_id)
+        val channelName = getString(R.string.default_notification_channel_name)
+        val channelDescriptionText =
+            getString(R.string.default_notification_channel_description)
+        val importance = NotificationManager.IMPORTANCE_HIGH
+        val channel = NotificationChannel(channelId, channelName, importance).apply {
+            description = channelDescriptionText
         }
+        // Register the channel with the system
+        val notificationManager: NotificationManager =
+            getSystemService(NOTIFICATION_SERVICE) as NotificationManager
+        notificationManager.createNotificationChannel(channel)
+    }
+
+    private fun createSystemNotificationChannel() {
+        val channelId = getString(R.string.system_notification_channel_id)
+        val channelName = getString(R.string.system_notification_channel_name)
+        val channelDescriptionText =
+            getString(R.string.system_notification_channel_description)
+        val importance = NotificationManager.IMPORTANCE_MIN
+        val channel = NotificationChannel(channelId, channelName, importance).apply {
+            description = channelDescriptionText
+            setShowBadge(true) // Badge-Anzeige aktivieren
+        }
+        // Register the channel with the system
+        val notificationManager: NotificationManager =
+            getSystemService(NOTIFICATION_SERVICE) as NotificationManager
+        notificationManager.createNotificationChannel(channel)
     }
 
     private fun handleIntent(intent: Intent) {
@@ -280,7 +295,7 @@ class MainActivity : AppCompatActivity(), ChooseInstitionBottomSheet.OnChoiceSel
         } else if (extras != null) {
             // Ausgabe aller erhaltenen Extras
             for (key in extras.keySet()) {
-                Log.d(TAG, "Intent extra: $key = ${extras.get(key)}")
+                Log.d(TAG, "Intent extra: $key = ${extras.getString(key)}")
             }
             // Hier kannst du spezifische Schlüssel prüfen
             if (extras.containsKey("customKey1")) {
@@ -293,30 +308,25 @@ class MainActivity : AppCompatActivity(), ChooseInstitionBottomSheet.OnChoiceSel
     }
 
     private fun handleDeeplink(intent: Intent?) {
-        val deeplinkRootUri = getString(R.string.deeplink_root_uri)
+        // val deeplinkRootUri = getString(R.string.deeplink_root_uri)
         val data: Uri? = intent?.data
         if (data != null) {
             when {
                 data.path!!.startsWith("/_deeplink/webview") -> {
-                    handleGenericWebviewDeeplink(intent?.data!!)
-                    true
+                    handleGenericWebviewDeeplink(intent.data!!)
                 }
 
                 data.path!!.startsWith("/_deeplink/iam") -> {
-                    handleIamWebviewDeeplink(intent?.data!!)
+                    handleIamWebviewDeeplink(intent.data!!)
                 }
 
                 data.path!!.startsWith("/_deeplink/showAlert") -> {
                     showDeeplinkAlertDialog()
-                    true
                 }
 
                 data.path!!.startsWith("/_deeplink") -> {
                     showDeeplinkAlertDialog()
-                    true
                 }
-
-                else -> false
             }
         }
     }
@@ -339,9 +349,12 @@ class MainActivity : AppCompatActivity(), ChooseInstitionBottomSheet.OnChoiceSel
 
             "IAMBANNER" -> fetchImageAndShowNotification(title, body, customKey1, customKey2)
             "MAILBOX" -> {
-                val obv = customKey2?.substringBefore(":")
-                val messageCount = customKey2?.substringAfter(":")
-                true
+                val obv = customKey2?.substringBefore(":")?.let { BankEntry(it) }
+                val myMainObv = settingsViewModel.getMainObv()
+                if ( obv == myMainObv ) {
+                    val badgeCount = customKey2.substringAfter(":").toInt()
+                    handleMailboxBadge(badgeCount)
+                }
             }
 
             "BALANCE" -> {
@@ -362,7 +375,7 @@ class MainActivity : AppCompatActivity(), ChooseInstitionBottomSheet.OnChoiceSel
             }
 
             "WEBVIEWWITHSILENTLOGIN" -> {
-                val url = customKey2
+                // val url = customKey2
             }
 
             "REVIEW" -> showNotification(title, body, customKey1, customKey2, null)
@@ -406,14 +419,14 @@ class MainActivity : AppCompatActivity(), ChooseInstitionBottomSheet.OnChoiceSel
 
     private fun showLoginDialog() {
         val dialogView = layoutInflater.inflate(R.layout.dialog_login, null)
-        val passwordInput = dialogView.findViewById<EditText>(R.id.password_input)
+        // val passwordInput = dialogView.findViewById<EditText>(R.id.password_input)
 
         AlertDialog.Builder(this)
             .setTitle("App-Login")
             .setView(dialogView)
             .setPositiveButton("Login") { dialog, _ ->
-                val inputPassword = passwordInput.text.toString()
-                val correctPassword = getString(R.string.app_password)
+                // val inputPassword = passwordInput.text.toString()
+                // val correctPassword = getString(R.string.app_password)
 
                 dialog.dismiss()
                 // Starte die Hauptaktivität oder setze den Status auf eingeloggt
@@ -437,7 +450,7 @@ class MainActivity : AppCompatActivity(), ChooseInstitionBottomSheet.OnChoiceSel
         viewModel.mobiDataLoaded.observe(this) { isLoaded ->
             if (isLoaded) {
                 // Jetzt kannst du auf die Mobi-Daten zugreifen und sie verwenden
-                val mailboxUrl = viewModel.getMailboxUrl()
+                // val mailboxUrl = viewModel.getMailboxUrl()
                 initializeSilentLoginAndAdvisorDataService()
                 intent?.let {
                     handleIntent(it)
@@ -530,15 +543,19 @@ class MainActivity : AppCompatActivity(), ChooseInstitionBottomSheet.OnChoiceSel
 
     fun handleIamWebviewDeeplink(deeplinkUri: Uri) {
         val contentId = deeplinkUri.getQueryParameter("contentId")
-        val eventId = deeplinkUri.getQueryParameter("eventId")
+        // val eventId = deeplinkUri.getQueryParameter("eventId")
         if (contentId != null) {
             viewModel.loadVkaData(contentId)
         }
     }
 
+    fun handleMailboxBadge(badgeCount: Int ) {
+        Log.d(TAG, "handleMailboxBadge, badgeCount: ${badgeCount}")
+    }
+
     // Implementierung der Schnittstelle
-    override fun onChoiceSelected(selectedEntry: BankEntry?, targetUri: String, isSilentLogin: Boolean) {
-        if (selectedEntry?.blz != null ) {
+    override fun onChoiceSelected(choice: BankEntry?, targetUri: String, isSilentLogin: Boolean) {
+        if (choice?.blz != null ) {
             Log.d(TAG, "starting webview with uri ${targetUri}")
             openWebView(targetUri, isSilentLogin)
         } else {

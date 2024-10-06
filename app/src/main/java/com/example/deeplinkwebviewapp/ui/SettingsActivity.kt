@@ -1,13 +1,20 @@
 package com.example.deeplinkwebviewapp.ui
 
+import android.app.NotificationManager
 import android.content.Context
-import com.example.deeplinkwebviewapp.viewmodel.SettingsViewModel
-import com.example.deeplinkwebviewapp.viewmodel.SettingsViewModelFactory
 import android.os.Bundle
-import android.widget.*
+import android.widget.ArrayAdapter
+import android.widget.Button
+import android.widget.EditText
+import android.widget.Spinner
+import android.widget.TextView
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.ViewModelProvider
 import com.example.deeplinkwebviewapp.R
+import com.example.deeplinkwebviewapp.viewmodel.SettingsViewModel
+import com.example.deeplinkwebviewapp.viewmodel.SettingsViewModelFactory
+
 
 class SettingsActivity : AppCompatActivity() {
 
@@ -73,6 +80,10 @@ class SettingsActivity : AppCompatActivity() {
         val appPosition = appAdapter.getPosition(app)
         appSpinner.setSelection(appPosition)
 
+        val clearBadgeButton: Button = findViewById(R.id.buttonClearBadge)
+        clearBadgeButton.setOnClickListener {
+            resetBadgeCounterOfPushMessages()
+        }
         // Button zum Speichern der Einstellungen
         val saveButton: Button = findViewById(R.id.buttonSave)
         saveButton.setOnClickListener {
@@ -99,6 +110,11 @@ class SettingsActivity : AppCompatActivity() {
         // FCM Token anzeigen
         fcmTokenTextView.text = settingsViewModel.deviceData.push_id
         deviceIdTextView.text = settingsViewModel.deviceData.device_id
-        servletUrlTextView.text = "<servlet url>"
+        servletUrlTextView.text = getString(R.string.servlet_url)
     }
+    private fun resetBadgeCounterOfPushMessages() {
+        val notificationManager = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
+        notificationManager.cancelAll()
+    }
+
 }

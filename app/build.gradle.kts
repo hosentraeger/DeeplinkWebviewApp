@@ -58,13 +58,13 @@ dependencies {
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
     implementation(platform(libs.androidx.compose.bom))
-    implementation(libs.androidx.ui)
-    implementation(libs.androidx.ui.graphics)
-    implementation(libs.androidx.ui.tooling.preview)
+//    implementation(libs.androidx.ui)
+//   implementation(libs.androidx.ui.graphics)
+//    implementation(libs.androidx.ui.tooling.preview)
     implementation(libs.androidx.material3)
 
-    implementation("androidx.appcompat:appcompat:1.6.1")  // AppCompat hinzufügen
-    implementation("androidx.constraintlayout:constraintlayout:2.1.4")  // ConstraintLayout für Layout
+    implementation(libs.androidx.appcompat)  // AppCompat hinzufügen
+    implementation(libs.androidx.constraintlayout)  // ConstraintLayout für Layout
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.3")
 
     // OkHttp
@@ -77,8 +77,8 @@ dependencies {
     implementation("com.google.firebase:firebase-analytics")
     implementation("com.google.firebase:firebase-messaging-ktx:23.0.0")
 
-    implementation("com.google.android.material:material:1.9.0")
-    implementation("androidx.fragment:fragment:1.6.1") // Füge diese Zeile hinzu
+    implementation("com.google.android.material:material:1.12.0")
+//    implementation("androidx.fragment:fragment:1.8.4")
 
     // silent login verschlüsselung
     implementation("org.bouncycastle:bcprov-jdk15on:1.70") // Für Bouncy Castle (z. B. AES)

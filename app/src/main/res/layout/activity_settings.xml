@@ -185,5 +185,12 @@
             android:text="ServletURL: "
             android:layout_marginTop="16dp"/>
 
+        <Button
+            android:id="@+id/buttonClearBadge"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Badge zurücksetzen" />
+
+
     </LinearLayout>
 </ScrollView>
