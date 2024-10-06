@@ -81,7 +81,7 @@ dependencies {
 //    implementation("androidx.fragment:fragment:1.8.4")
 
     // silent login verschlüsselung
-    implementation("org.bouncycastle:bcprov-jdk15on:1.70") // Für Bouncy Castle (z. B. AES)
+    implementation(libs.bcprov.jdk15on) // Für Bouncy Castle (z. B. AES)
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)

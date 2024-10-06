@@ -1,6 +1,7 @@
 [versions]
 agp = "8.6.1"
 appcompat = "1.7.0"
+bcprovJdk15on = "1.70"
 constraintlayout = "2.1.4"
 kotlin = "1.9.0"
 coreKtx = "1.13.1"
@@ -15,6 +16,7 @@ composeBom = "2024.04.01"
 androidx-appcompat = { module = "androidx.appcompat:appcompat", version.ref = "appcompat" }
 androidx-constraintlayout = { module = "androidx.constraintlayout:constraintlayout", version.ref = "constraintlayout" }
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
+bcprov-jdk15on = { module = "org.bouncycastle:bcprov-jdk15on", version.ref = "bcprovJdk15on" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }
 androidx-junit = { group = "androidx.test.ext", name = "junit", version.ref = "junitVersion" }
 androidx-espresso-core = { group = "androidx.test.espresso", name = "espresso-core", version.ref = "espressoCore" }
