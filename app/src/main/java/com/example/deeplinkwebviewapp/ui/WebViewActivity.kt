@@ -9,7 +9,6 @@ import android.webkit.WebSettings
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import android.widget.Toast
-import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import com.example.deeplinkwebviewapp.R
@@ -55,10 +54,40 @@ class WebViewActivity : AppCompatActivity() {
             }
             override fun shouldOverrideUrlLoading(view: WebView, request: WebResourceRequest): Boolean {
                 val url = request.url.toString()
+
+                // Überprüfen, ob die URL zu deiner eigenen App gehört
+                if (url.startsWith("https://www.fsiebecke.de/_deeplink")) {
+                    // Intent für deine eigene App
+                    val intent = Intent(this@WebViewActivity, MainActivity::class.java).apply {
+                        action = Intent.ACTION_VIEW
+                        data = Uri.parse(url) // Setze die URL als Data des Intents
+                        flags = Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP // Klarstellen, dass MainActivity an den Vordergrund kommt
+                    }
+                    startActivity(intent)
+                    return true
+                }
+
+                // Für externe Links oder andere Apps
                 try {
                     val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url)).apply {
                         addCategory(Intent.CATEGORY_BROWSABLE)
-                        flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_REQUIRE_NON_BROWSER
+                        flags = Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_REQUIRE_NON_BROWSER
+                    }
+                    startActivity(intent)
+                } catch (e: ActivityNotFoundException) {
+                    view.loadUrl(url)
+                }
+
+                return true
+            }
+/*
+            override fun shouldOverrideUrlLoading(view: WebView, request: WebResourceRequest): Boolean {
+                val url = request.url.toString()
+                try {
+                    val intent = Intent(this@WebViewActivity, MainActivity::class.java).apply {
+                        action = Intent.ACTION_VIEW
+                        data = Uri.parse(url) // Setze die URL als Data des Intents
+                        flags = Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP // Klarstellen, dass MainActivity an den Vordergrund kommt
                     }
                     startActivity(intent)
                 } catch (e: ActivityNotFoundException) {
@@ -66,6 +95,8 @@ class WebViewActivity : AppCompatActivity() {
                 }
                 return true
             }
+
+ */
         }
     }
 

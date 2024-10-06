@@ -9,6 +9,7 @@ import android.content.SharedPreferences
 import androidx.lifecycle.AndroidViewModel
 
 import androidx.lifecycle.viewModelScope
+import com.example.deeplinkwebviewapp.data.BankEntry
 import kotlinx.coroutines.launch
 
 class SettingsViewModel(application: Application, private val sharedPreferences: SharedPreferences) : AndroidViewModel(application) {
@@ -17,6 +18,23 @@ class SettingsViewModel(application: Application, private val sharedPreferences:
 
     fun getBLZ(): String {
         return sharedPreferences.getString("BLZ", "") ?: ""
+    }
+
+    fun getMainObv(): BankEntry {
+        return BankEntry(getBLZ(),getUsername())
+    }
+
+    fun getObvs(): List<BankEntry> {
+        return listOf(
+            BankEntry("25050180" , "mickymouse"),
+            BankEntry("94059421" , "Lasttest_drno"),
+            BankEntry("94059549" , "GandalfTheGrey"),
+            BankEntry("94050310" , "DarthVader")
+        ).plus(getMainObv())
+    }
+
+    fun getBlzs(): List<String> {
+        return getObvs().map { it.blz }
     }
 
     fun getUsername(): String {

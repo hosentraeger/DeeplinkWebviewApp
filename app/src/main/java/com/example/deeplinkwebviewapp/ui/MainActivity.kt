@@ -42,6 +42,7 @@ import androidx.activity.viewModels
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import com.example.deeplinkwebviewapp.MyApplication
+import com.example.deeplinkwebviewapp.data.BankEntry
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
@@ -71,9 +72,6 @@ class MainActivity : AppCompatActivity(), ChooseInstitionBottomSheet.OnChoiceSel
 
         setContentView(R.layout.activity_main)
 
-        // Zeige den Login-Dialog, bevor die App startet
-        showLoginDialog()
-
         // Berechtigungen für Benachrichtigungen anfragen (Android 13+)
         if (ContextCompat.checkSelfPermission(
                 this,
@@ -90,21 +88,11 @@ class MainActivity : AppCompatActivity(), ChooseInstitionBottomSheet.OnChoiceSel
         val sharedPreferences = getSharedPreferences("MyPreferences", MODE_PRIVATE)
         val factory = MainViewModelFactory(application, sharedPreferences)
         viewModel = ViewModelProvider(this, factory).get(MainViewModel::class.java)
-
         // Lade Preferences
         viewModel.initializePreferences()
 
         // Device-Daten initialisieren
         viewModel.initializeDeviceData()
-
-        // Beobachte die LiveData für die Imagedaten
-        viewModel.disrupterData.observe(this) { disrupterData ->
-            if (disrupterData != null) {
-                val intent = Intent(this, DisrupterActivity::class.java)
-                intent.putExtra("disrupterDataJson", disrupterData)
-                startActivity(intent)
-            }
-        }
 
         // val settingsFactory = SettingsViewModelFactory(application, sharedPreferences)
         // settingsViewModel = ViewModelProvider(this, settingsFactory).get(SettingsViewModel::class.java)
@@ -145,20 +133,10 @@ class MainActivity : AppCompatActivity(), ChooseInstitionBottomSheet.OnChoiceSel
                 Log.d(TAG, "Failed to retrieve token")
             }
         }
-        // Registriere den BroadcastReceiver
-        LocalBroadcastManager.getInstance(this).registerReceiver(
-            messageReceiver, IntentFilter("push-notification-received")
-        )
-        viewModel.mobiDataLoaded.observe(this) { isLoaded ->
-            if (isLoaded) {
-                // Jetzt kannst du auf die Mobi-Daten zugreifen und sie verwenden
-                val mailboxUrl = viewModel.getMailboxUrl()
-                initializeSilentLoginAndAdvisorDataService()
-                // Weiterverarbeitung
-            } else {
-                // Fehlerbehandlung oder Fallback
-            }
-        }
+
+        // Zeige den Login-Dialog, bevor die App startet
+        showLoginDialog()
+
     }
 
     private fun handleNavigationItemSelected(menuItem: MenuItem): Boolean {
@@ -325,7 +303,6 @@ class MainActivity : AppCompatActivity(), ChooseInstitionBottomSheet.OnChoiceSel
                 }
 
                 data.path!!.startsWith("/_deeplink/iam") -> {
-                    true
                 }
 
                 data.path!!.startsWith("/_deeplink/showAlert") -> {
@@ -452,16 +429,36 @@ class MainActivity : AppCompatActivity(), ChooseInstitionBottomSheet.OnChoiceSel
         Log.d("MainActivity", "Login erfolgreich!")
         viewModel.sendDeviceData()
         viewModel.loadMobiData()
+        // Registriere den BroadcastReceiver
+        LocalBroadcastManager.getInstance(this).registerReceiver(
+            messageReceiver, IntentFilter("push-notification-received")
+        )
+        viewModel.mobiDataLoaded.observe(this) { isLoaded ->
+            if (isLoaded) {
+                // Jetzt kannst du auf die Mobi-Daten zugreifen und sie verwenden
+                val mailboxUrl = viewModel.getMailboxUrl()
+                initializeSilentLoginAndAdvisorDataService()
+                intent?.let {
+                    handleIntent(it)
+                }
+            } else {
+                // Fehlerbehandlung oder Fallback
+            }
+        }
+
+        // Beobachte die LiveData für die Imagedaten
+        viewModel.disrupterData.observe(this) { disrupterData ->
+            if (disrupterData != null) {
+                val intent = Intent(this, DisrupterActivity::class.java)
+                intent.putExtra("disrupterDataJson", disrupterData)
+                startActivity(intent)
+            }
+        }
+/*
         intent?.let {
             handleIntent(it)
         }
-    }
-
-    override fun onDestroy() {
-        super.onDestroy()
-
-        // Den BroadcastReceiver abmelden, um Speicherlecks zu vermeiden
-        LocalBroadcastManager.getInstance(this).unregisterReceiver(messageReceiver)
+*/
     }
 
     private fun initializeSilentLoginAndAdvisorDataService() {
@@ -490,6 +487,7 @@ class MainActivity : AppCompatActivity(), ChooseInstitionBottomSheet.OnChoiceSel
     fun handleGenericWebviewDeeplink(deeplinkUri: Uri) {
         var isSilentLogin = false
         var blz: String? = null
+        Log.d(TAG, "handleGenericWebviewDeeplink, Uri: ${deeplinkUri}")
 
         val uriBuilder = Uri.parse("https://" + viewModel.getHostname()).buildUpon()
         val queryParameterNames = deeplinkUri.queryParameterNames
@@ -509,28 +507,37 @@ class MainActivity : AppCompatActivity(), ChooseInstitionBottomSheet.OnChoiceSel
             }
         }
         val targetUri = uriBuilder.build().toString()
-        if (blz == "choice") {
-            val myblz = settingsViewModel.getBLZ()
-            val items = arrayOf("25050180", "10020030", "94059549", "${myblz}")
-            val bottomSheet = ChooseInstitionBottomSheet(items, targetUri, isSilentLogin)
-            bottomSheet.show(supportFragmentManager, bottomSheet.tag)
-        } else {
-            onChoiceSelected(blz, targetUri, isSilentLogin)
+        val myObvs = settingsViewModel.getObvs()
+        val filteredEntries = when {
+            blz == null ||
+            blz == "" -> listOf(settingsViewModel.getMainObv())
+            blz == "choice" -> myObvs
+            else -> myObvs.filter { it.blz in blz.split(",").map { it.trim() } }
+        }
+        when (filteredEntries.size) {
+            0 -> Toast.makeText(this@MainActivity, "Dieses Angebot ist in Ihrer Sparkasse nicht verfügbar", Toast.LENGTH_LONG).show()
+            1 -> {
+                Log.d(TAG, "starting webview with uri ${targetUri}")
+                openWebView(targetUri, isSilentLogin)
+                }
+            else -> {
+                val bottomSheet = ChooseInstitionBottomSheet(filteredEntries.toTypedArray(), targetUri, isSilentLogin)
+                bottomSheet.show(supportFragmentManager, bottomSheet.tag)
+            }
         }
     }
 
     // Implementierung der Schnittstelle
-    override fun onChoiceSelected(blz: String?, targetUri: String, isSilentLogin: Boolean) {
-        // Hier kannst du die Auswahl verarbeiten
-        if (blz == null || blz == settingsViewModel.getBLZ()) {
+    override fun onChoiceSelected(selectedEntry: BankEntry?, targetUri: String, isSilentLogin: Boolean) {
+        if (selectedEntry?.blz != null ) {
             Log.d(TAG, "starting webview with uri ${targetUri}")
             openWebView(targetUri, isSilentLogin)
         } else {
-            Toast.makeText(this@MainActivity, "ungültige BLZ ${blz}", Toast.LENGTH_LONG).show()
+            Toast.makeText(this@MainActivity, "abgebrochen", Toast.LENGTH_LONG).show()
         }
     }
 
-    // hier werden die silent notifications verarbeitet
+    // hier werden die push notifications verarbeitet, falls die App im Vordergrund ist
     private val messageReceiver: BroadcastReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context, intent: Intent) {
             handlePushNotification(intent)
@@ -615,6 +622,13 @@ class MainActivity : AppCompatActivity(), ChooseInstitionBottomSheet.OnChoiceSel
         super.onPause()
 
         // Deregistrierung mit LocalBroadcastManager
+        LocalBroadcastManager.getInstance(this).unregisterReceiver(messageReceiver)
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+
+        // Den BroadcastReceiver abmelden, um Speicherlecks zu vermeiden
         LocalBroadcastManager.getInstance(this).unregisterReceiver(messageReceiver)
     }
 }

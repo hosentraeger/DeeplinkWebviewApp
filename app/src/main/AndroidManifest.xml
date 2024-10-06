@@ -29,6 +29,7 @@
             android:theme="@style/Theme.DeeplinkWebviewApp" />
         <activity
             android:name="com.example.deeplinkwebviewapp.ui.WebViewActivity"
+            android:launchMode="singleTop"
             android:exported="false"
             android:label="@string/title_activity_web_view"
             android:theme="@style/Theme.DeeplinkWebviewApp" />

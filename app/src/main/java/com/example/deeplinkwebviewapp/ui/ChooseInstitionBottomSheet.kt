@@ -9,11 +9,12 @@ import android.widget.ArrayAdapter
 import android.widget.ListView
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import com.example.deeplinkwebviewapp.R
+import com.example.deeplinkwebviewapp.data.BankEntry
 
-class ChooseInstitionBottomSheet(private val items: Array<String>, private val targetUri: String, private val isSilentLogin: Boolean ) : BottomSheetDialogFragment() {
+class ChooseInstitionBottomSheet(private val items: Array<BankEntry>, private val targetUri: String, private val isSilentLogin: Boolean ) : BottomSheetDialogFragment() {
 
     interface OnChoiceSelectedListener {
-        fun onChoiceSelected(choice: String?, targetUri: String, isSilentLogin: Boolean)
+        fun onChoiceSelected(choice: BankEntry?, targetUri: String, isSilentLogin: Boolean)
     }
 
     private lateinit var listener: OnChoiceSelectedListener
@@ -38,8 +39,8 @@ class ChooseInstitionBottomSheet(private val items: Array<String>, private val t
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-
-        val adapter = ArrayAdapter(requireContext(), android.R.layout.simple_list_item_1, items)
+        val stringItems = items.map { "${it.blz}.${it.username}" }
+        val adapter = ArrayAdapter(requireContext(), android.R.layout.simple_list_item_1, stringItems)
 
         val listView = view.findViewById<ListView>(R.id.listView)
         listView.adapter = adapter
