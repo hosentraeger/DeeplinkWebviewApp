@@ -47,6 +47,9 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import com.google.android.material.navigation.NavigationView
+import com.google.android.material.badge.BadgeDrawable
+import com.google.android.material.badge.BadgeUtils
+import com.google.android.material.badge.ExperimentalBadgeUtils
 
 class MainActivity : AppCompatActivity(), ChooseInstitionBottomSheet.OnChoiceSelectedListener {
 
@@ -63,6 +66,7 @@ class MainActivity : AppCompatActivity(), ChooseInstitionBottomSheet.OnChoiceSel
         private const val TAG = "MainActivity"
     }
 
+    @androidx.annotation.OptIn(ExperimentalBadgeUtils::class)
     @RequiresApi(Build.VERSION_CODES.TIRAMISU)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -101,7 +105,15 @@ class MainActivity : AppCompatActivity(), ChooseInstitionBottomSheet.OnChoiceSel
 
         // val badge = navView.getOrCreateBadge(R.id.nav_function_angebote)
         // badge.number = 5 // Setze die Badge-Zahl
-
+        // alternative implementierung ->
+        val badge = BadgeDrawable.create(this)
+        badge.number = 5 // Beispiel, Badge-Nummer einstellen
+        badge.isVisible = true
+        val menuItem = navView.menu.findItem(R.id.nav_function_angebote)
+        menuItem.actionView?.let { actionView ->
+            BadgeUtils.attachBadgeDrawable(badge, actionView)
+        }
+        // <- alternative implementierung
 
         // Toolbar und NavigationView einrichten
         val toolbar: Toolbar = findViewById(R.id.toolbar)

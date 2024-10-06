@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 
-<menu xmlns:android="http://schemas.android.com/apk/res/android">
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
     <item
         android:id="@+id/nav_function_appstart"
         android:title="App-Start"/>
@@ -15,7 +16,8 @@
 
     <item
         android:id="@+id/nav_function_angebote"
-        android:title="Angebote"/>
+        android:title="Angebote"
+        app:showAsAction="ifRoom|withText" />
 
     <!-- Menüpunkt "Webview" mit Unterpunkten "Deeplinks" und "Greensmilies" -->
     <item
