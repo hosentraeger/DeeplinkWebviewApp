@@ -16,9 +16,9 @@ composeBom = "2024.09.03"
 loggingInterceptor = "4.10.0"
 material = "1.12.0"
 okhttp = "4.10.0"
-firebase-bom = "33.3.0"
-firebase-messaging-ktx = "23.0.0"
-firebase-analytics = "21.2.0"
+firebase-bom = "33.4.0"
+firebase-messaging-ktx = "24.0.2"
+firebase-analytics = "22.1.2"
 
 [libraries]
 androidx-appcompat = { module = "androidx.appcompat:appcompat", version.ref = "appcompat" }
