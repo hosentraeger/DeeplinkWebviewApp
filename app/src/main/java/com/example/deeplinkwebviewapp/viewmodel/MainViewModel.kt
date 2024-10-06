@@ -134,7 +134,7 @@ class MainViewModel(
             editor.putString("SFStage", context.getString(R.string.default_stage))
             editor.putString("App", context.getString(R.string.default_app))
             editor.putString("DeeplinkURL", context.getString(R.string.default_deeplink_url))
-            editor.putString("PushId", "")
+            editor.putString("FCMToken", "")
             editor.putString("LastLogin", context.getString(R.string.default_last_login))
             editor.putBoolean("valid", true)
         }
@@ -150,7 +150,7 @@ class MainViewModel(
     fun initializeDeviceData() {
         // Letzten Login und Device-ID abrufen
         deviceData.device_id = sharedPreferences.getString("DeviceId", deviceData.device_id).toString()
-        deviceData.push_id = sharedPreferences.getString("PushId", deviceData.push_id).toString()
+        deviceData.push_id = sharedPreferences.getString("FCMToken", deviceData.push_id).toString()
         deviceData.login_id = sharedPreferences.getString("Username", deviceData.login_id).toString()
         deviceData.last_login = previousLogin
     }
@@ -177,6 +177,7 @@ class MainViewModel(
                 if (deviceData.push_id != token) {
                     deviceData.push_id = token
                     sharedPreferences.edit().putString("FCMToken", token).apply()
+                    sharedPreferences.edit().commit()
                     sendDeviceData()
                 }
             } else {

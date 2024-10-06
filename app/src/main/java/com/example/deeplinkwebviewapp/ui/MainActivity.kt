@@ -303,6 +303,7 @@ class MainActivity : AppCompatActivity(), ChooseInstitionBottomSheet.OnChoiceSel
                 }
 
                 data.path!!.startsWith("/_deeplink/iam") -> {
+                    handleIamWebviewDeeplink(intent?.data!!)
                 }
 
                 data.path!!.startsWith("/_deeplink/showAlert") -> {
@@ -524,6 +525,14 @@ class MainActivity : AppCompatActivity(), ChooseInstitionBottomSheet.OnChoiceSel
                 val bottomSheet = ChooseInstitionBottomSheet(filteredEntries.toTypedArray(), targetUri, isSilentLogin)
                 bottomSheet.show(supportFragmentManager, bottomSheet.tag)
             }
+        }
+    }
+
+    fun handleIamWebviewDeeplink(deeplinkUri: Uri) {
+        val contentId = deeplinkUri.getQueryParameter("contentId")
+        val eventId = deeplinkUri.getQueryParameter("eventId")
+        if (contentId != null) {
+            viewModel.loadVkaData(contentId)
         }
     }
 
