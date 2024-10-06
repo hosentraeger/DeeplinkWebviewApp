@@ -62,7 +62,7 @@ dependencies {
 
     implementation(libs.androidx.appcompat)  // AppCompat hinzufügen
     implementation(libs.androidx.constraintlayout)  // ConstraintLayout für Layout
-    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.3")
+    implementation(libs.kotlinx.serialization.json)
 
     // OkHttp
     implementation(libs.okhttp)
@@ -70,7 +70,7 @@ dependencies {
     implementation(libs.gson)
 
     // Import the Firebase BoM
-    implementation(libs.firebase.bom)
+    implementation(platform(libs.firebase.bom))
     implementation(libs.firebase.analytics)
     implementation(libs.firebase.messaging.ktx)
 
