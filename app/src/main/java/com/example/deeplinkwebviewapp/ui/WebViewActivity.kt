@@ -81,23 +81,6 @@ class WebViewActivity : AppCompatActivity() {
 
                 return true
             }
-/*
-            override fun shouldOverrideUrlLoading(view: WebView, request: WebResourceRequest): Boolean {
-                val url = request.url.toString()
-                try {
-                    val intent = Intent(this@WebViewActivity, MainActivity::class.java).apply {
-                        action = Intent.ACTION_VIEW
-                        data = Uri.parse(url) // Setze die URL als Data des Intents
-                        flags = Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP // Klarstellen, dass MainActivity an den Vordergrund kommt
-                    }
-                    startActivity(intent)
-                } catch (e: ActivityNotFoundException) {
-                    view.loadUrl(url)
-                }
-                return true
-            }
-
- */
         }
     }
 
@@ -107,7 +90,8 @@ class WebViewActivity : AppCompatActivity() {
             if (isSilentLogin) {
                 webViewService.loadUrlWithSession(webView, url) // URL mit Session-ID laden
             } else {
-                webView.loadUrl(url) // URL ohne Session-ID laden
+                // webView.loadUrl(url) // URL ohne Session-ID laden
+                webView.loadUrl("https://m164an08-421.if-etaps.de/de/home/privatkunden/versicherungen/mopedversicherung-sv.webview.html")
             }
         }
     }

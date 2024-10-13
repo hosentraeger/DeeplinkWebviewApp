@@ -1,16 +1,21 @@
 package com.example.deeplinkwebviewapp.data
 import kotlinx.serialization.Serializable
+import android.os.Parcelable
+import kotlinx.parcelize.Parcelize
 
+@Parcelize
 @Serializable
 data class SfcIfResponse(
     val services: List<Service>
-)
+) : Parcelable
 
+@Parcelize
 @Serializable
 data class Service(
     val IF: IFData? = null
-)
+) : Parcelable
 
+@Parcelize
 @Serializable
 data class IFData(
     val status: String? = null,
@@ -23,8 +28,9 @@ data class IFData(
     val eventId: String? = null,
     val persNr: String? = null,
     val mkaId: String? = null
-)
+) : Parcelable
 
+@Parcelize
 @Serializable
 data class OverviewBanner(
     val banner: String? = null,
@@ -32,8 +38,9 @@ data class OverviewBanner(
     val url: String? = null,
     val openOutsideApp: Boolean? = null,
     val aemAsset: Boolean? = null
-)
+) : Parcelable
 
+@Parcelize
 @Serializable
 data class Disrupter(
     val image: String? = null,
@@ -48,8 +55,9 @@ data class Disrupter(
     val thirdLink: Link? = null,
     val forwardLink: Link? = null,
     val noInterestLink: Link? = null
-)
+) : Parcelable
 
+@Parcelize
 @Serializable
 data class Link(
     val title: String? = null,
@@ -57,4 +65,4 @@ data class Link(
     val openOutsideApp: Boolean? = null,
     val highlighted: Boolean? = null,
     val altText: String? = null
-)
+) : Parcelable

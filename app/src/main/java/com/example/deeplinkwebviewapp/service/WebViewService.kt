@@ -35,4 +35,5 @@ class WebViewService {
     fun loadUrl(webView: WebView, url: String) {
         webView.loadUrl(url)
     }
+
 }

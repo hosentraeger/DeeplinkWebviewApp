@@ -7,7 +7,6 @@ import com.example.deeplinkwebviewapp.viewmodel.SettingsViewModelFactory
 import android.Manifest
 import android.app.NotificationChannel
 import android.app.NotificationManager
-import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
@@ -30,26 +29,22 @@ import com.example.deeplinkwebviewapp.R
 import com.google.firebase.FirebaseApp
 import android.content.BroadcastReceiver
 import android.content.IntentFilter
-import android.graphics.Bitmap
-import android.graphics.BitmapFactory
 import android.os.Build
 import androidx.lifecycle.lifecycleScope
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import com.example.deeplinkwebviewapp.service.SilentLoginAndAdvisorDataServiceFactory
 import androidx.activity.viewModels
 import androidx.annotation.RequiresApi
-import androidx.core.app.NotificationCompat
-import androidx.core.app.NotificationManagerCompat
-import com.example.deeplinkwebviewapp.MyApplication
 import com.example.deeplinkwebviewapp.data.BankEntry
-import kotlinx.coroutines.DelicateCoroutinesApi
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.launch
+import com.example.deeplinkwebviewapp.data.IamPayload
+import com.example.deeplinkwebviewapp.data.PushNotificationPayload
 import com.google.android.material.navigation.NavigationView
 import com.google.android.material.badge.BadgeDrawable
 import com.google.android.material.badge.BadgeUtils
 import com.google.android.material.badge.ExperimentalBadgeUtils
+import com.example.deeplinkwebviewapp.service.Logger
+import com.google.gson.Gson
+
 
 class MainActivity : AppCompatActivity(), ChooseInstitionBottomSheet.OnChoiceSelectedListener {
 
@@ -57,6 +52,7 @@ class MainActivity : AppCompatActivity(), ChooseInstitionBottomSheet.OnChoiceSel
     private lateinit var navView: NavigationView
     private lateinit var toggle: ActionBarDrawerToggle
     private lateinit var viewModel: MainViewModel
+    private val gson = Gson()
     private val settingsViewModel: SettingsViewModel by viewModels {
         val sharedPreferences = getSharedPreferences("MyPreferences", Context.MODE_PRIVATE)
         SettingsViewModelFactory(application, sharedPreferences)
@@ -131,8 +127,8 @@ class MainActivity : AppCompatActivity(), ChooseInstitionBottomSheet.OnChoiceSel
         toggle.syncState()
 
         // NavigationItemSelectedListener
-        navView.setNavigationItemSelectedListener { menuItem ->
-            handleNavigationItemSelected(menuItem)
+        navView.setNavigationItemSelectedListener { myMenuItem ->
+            handleNavigationItemSelected(myMenuItem)
         }
 
         // Abrufen des FCM Tokens
@@ -200,17 +196,12 @@ class MainActivity : AppCompatActivity(), ChooseInstitionBottomSheet.OnChoiceSel
             }
 
             R.id.nav_function_log -> {
-                startActivity(Intent(this, LogActivity::class.java)) // Aktion für Log
+                showLog()
                 true
             }
 
             R.id.nav_function_einstellungen -> {
-                startActivity(
-                    Intent(
-                        this,
-                        SettingsActivity::class.java
-                    )
-                ) // Aktion für Einstellungen
+                showSettings()
                 true
             }
 
@@ -312,8 +303,8 @@ class MainActivity : AppCompatActivity(), ChooseInstitionBottomSheet.OnChoiceSel
                 Log.d(TAG, "Intent extra: $key = ${extras.getString(key)}")
             }
             // Hier kannst du spezifische Schlüssel prüfen
-            if (extras.containsKey("customKey1")) {
-                Log.d(TAG, "Opened via Push Notification with your_custom_key")
+            if (extras.containsKey("pushNotificationPayload")) {
+                Log.d(TAG, "Opened via Push Notification with pushNotificationPayload")
                 handlePushNotification(intent)
             }
         } else {
@@ -338,8 +329,17 @@ class MainActivity : AppCompatActivity(), ChooseInstitionBottomSheet.OnChoiceSel
                     showDeeplinkAlertDialog()
                 }
 
+                data.path!!.startsWith("/_deeplink/settings") -> {
+                    showSettings()
+                }
+
+                data.path!!.startsWith("/_deeplink/log") -> {
+                    showLog()
+                }
+
                 data.path!!.startsWith("/_deeplink") -> {
-                    showDeeplinkAlertDialog()
+                    // just start the app
+                    Logger.log("plain deeplink ${data.path}")
                 }
             }
         }
@@ -348,29 +348,21 @@ class MainActivity : AppCompatActivity(), ChooseInstitionBottomSheet.OnChoiceSel
     private fun handlePushNotification(intent: Intent?) {
         Log.d(TAG, "handlePushNotification")
         // Daten aus dem Intent holen
+        val pushNotificationPayload: PushNotificationPayload? = intent?.extras?.getParcelable("pushNotificationPayload")
         val title = intent?.getStringExtra("title")
         val body = intent?.getStringExtra("body")
-        val customKey1 = intent?.getStringExtra("customKey1")
-        val customKey2 = intent?.getStringExtra("customKey2")
-        when (customKey1) {
-            "IAM" -> {
-                if (customKey2 != null) {
-                    viewModel.loadVkaData(customKey2)
-                } else {
-                    showNotification(title, body, customKey1, customKey2, null)
-                }
-            }
 
-            "IAMBANNER" -> fetchImageAndShowNotification(title, body, customKey1, customKey2)
-            "MAILBOX" -> {
-                val obv = customKey2?.substringBefore(":")?.let { BankEntry(it) }
-                val myMainObv = settingsViewModel.getMainObv()
-                if ( obv == myMainObv ) {
-                    val badgeCount = customKey2.substringAfter(":").toInt()
-                    handleMailboxBadge(badgeCount)
-                }
+        if (pushNotificationPayload?.iam != null) {
+            viewModel.loadVkaData(pushNotificationPayload)
+        }
+        if (pushNotificationPayload?.mailbox != null) {
+            val userName = pushNotificationPayload.obv
+            val blz = pushNotificationPayload.blz
+            val myMainObv = settingsViewModel.getMainObv()
+            if ((blz == null || myMainObv.blz == blz)&&(userName == null || myMainObv.username == userName))
+                handleMailboxBadge(pushNotificationPayload.mailbox.count)
             }
-
+/*
             "BALANCE" -> {
                 val iban = customKey2?.substringBefore(":")
                 val balance = customKey2?.substringAfter(":")
@@ -408,6 +400,25 @@ class MainActivity : AppCompatActivity(), ChooseInstitionBottomSheet.OnChoiceSel
                 ).show()
             }
         }
+ */
+    }
+
+    private fun showSettings() {
+        startActivity(
+            Intent(
+                this,
+                SettingsActivity::class.java
+            )
+        ) // Aktion für Einstellungen
+    }
+
+    private fun showLog() {
+        startActivity(
+            Intent(
+                this,
+                LogActivity::class.java
+            )
+        ) // Aktion für Log
     }
 
     private fun showDeeplinkAlertDialog() {
@@ -475,11 +486,24 @@ class MainActivity : AppCompatActivity(), ChooseInstitionBottomSheet.OnChoiceSel
         }
 
         // Beobachte die LiveData für die Imagedaten
-        viewModel.disrupterData.observe(this) { disrupterData ->
-            if (disrupterData != null) {
-                val intent = Intent(this, DisrupterActivity::class.java)
-                intent.putExtra("disrupterDataJson", disrupterData)
-                startActivity(intent)
+        viewModel.pushNotificationPayload.observe(this) { pushNotificationPayload ->
+            if (pushNotificationPayload != null) {
+                if (pushNotificationPayload.iam?.showDisrupter == true) {
+                    val intent = Intent(this, DisrupterActivity::class.java)
+                    startActivity(intent)
+                } else {
+
+                    val targetUri = when ( pushNotificationPayload.iam?.uri ) {
+                        null -> ""
+                        "@Link1" -> "Link1"
+                        "@Link2" -> "Link2"
+                        "@Link3" -> "Link3"
+                        else -> pushNotificationPayload.iam?.uri
+                    }
+                    Toast.makeText(
+                        this@MainActivity,
+                        "weiter zu ${targetUri}", Toast.LENGTH_LONG).show()
+                }
             }
         }
 /*
@@ -559,7 +583,9 @@ class MainActivity : AppCompatActivity(), ChooseInstitionBottomSheet.OnChoiceSel
         val contentId = deeplinkUri.getQueryParameter("contentId")
         // val eventId = deeplinkUri.getQueryParameter("eventId")
         if (contentId != null) {
-            viewModel.loadVkaData(contentId)
+            val iamPayload: IamPayload = IamPayload(contentId = contentId)
+            var pushNotificationPayload: PushNotificationPayload = PushNotificationPayload(iam = iamPayload)
+            viewModel.loadVkaData(pushNotificationPayload)
         }
     }
 
@@ -583,7 +609,7 @@ class MainActivity : AppCompatActivity(), ChooseInstitionBottomSheet.OnChoiceSel
             handlePushNotification(intent)
         }
     }
-
+/*
     @OptIn(DelicateCoroutinesApi::class)
     private fun fetchImageAndShowNotification(
         title: String?,
@@ -602,12 +628,11 @@ class MainActivity : AppCompatActivity(), ChooseInstitionBottomSheet.OnChoiceSel
     private fun showNotification(
         title: String?,
         message: String?,
-        customKey1: String?,
-        customKey2: String?,
+        pushNotificationPayload: PushNotificationPayload,
         imageBitmap: Bitmap?
     ) {
-        val NOTIFICATION_ID = System.currentTimeMillis().toInt()
-        val CHANNEL_ID = getString(R.string.default_notification_channel_id)
+        val notificationId = System.currentTimeMillis().toInt()
+        val channelId = getString(R.string.default_notification_channel_id)
 
         val intent = Intent(this, MainActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP
@@ -621,7 +646,7 @@ class MainActivity : AppCompatActivity(), ChooseInstitionBottomSheet.OnChoiceSel
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
 
-        val notificationBuilder = NotificationCompat.Builder(this, CHANNEL_ID)
+        val notificationBuilder = NotificationCompat.Builder(this, channelId)
             .setSmallIcon(R.drawable.ic_notification) // Setze hier dein Icon
             .setContentTitle(title)
             .setContentText(message)
@@ -646,9 +671,9 @@ class MainActivity : AppCompatActivity(), ChooseInstitionBottomSheet.OnChoiceSel
         ) {
             return
         }
-        notificationManager.notify(NOTIFICATION_ID, notificationBuilder.build())
+        notificationManager.notify(notificationId, notificationBuilder.build())
     }
-
+ */
     override fun onResume() {
         super.onResume()
 

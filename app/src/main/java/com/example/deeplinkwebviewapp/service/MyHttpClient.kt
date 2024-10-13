@@ -34,6 +34,7 @@ class MyHttpClient private constructor(private val userAgent: String) {
     }
 
     companion object {
+        private const val TAG = "MyHttpClient"
         @Volatile
         private var INSTANCE: MyHttpClient? = null
 
@@ -201,6 +202,32 @@ class MyHttpClient private constructor(private val userAgent: String) {
             } catch (e: Exception) {
                 Log.e("MyHttpClient", "Exception: ${e.message}")
                 null
+            }
+        }
+    }
+    fun getRedirectLocation(url: String, callback: (String?) -> Unit) {
+        // OkHttpClient erstellen, der Redirects nicht automatisch folgt
+        val clientNoRedirects = client.newBuilder()
+            .followRedirects(false) // Keine automatischen Umleitungen
+            .build()
+
+        val request = Request.Builder()
+            .url(url)
+            .build()
+
+        CoroutineScope(Dispatchers.IO).launch {
+            try {
+                val response = clientNoRedirects.newCall(request).execute()
+                if (response.code == 303) { // HTTP 303 See Other
+                    val location = response.header("Location") // Neue Location-URL erhalten
+                    callback(location)
+                } else {
+                    Log.e(TAG, "Kein Redirect: ${response.code}")
+                    callback(null)
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "Exception: ${e.message}")
+                callback(null)
             }
         }
     }

@@ -18,7 +18,7 @@ class SfcService(
 
     private val client = MyHttpClient.getInstance()
 
-    fun fetchVkaData(userName: String, callback: (SfcIfResponse?) -> Unit) {
+    fun fetchVkaData(userName: String, callback: (String?) -> Unit) {
         val url = buildUrl(stage, INTERFACE_VERSION)
         client.postSfcData(url, blz, productId, userName) { response ->
             response?.let {
@@ -30,7 +30,8 @@ class SfcService(
                         Log.e(TAG, "Keine Inhalte verfügbar (NO_CONTENT)")
                         callback(null) // Rückgabe von null oder ein spezifisches Ergebnis im Fehlerfall
                     } else {
-                        callback(sfcIfResponse) // Rückgabe der deserialisierten SfcIfResponse
+//                        callback(sfcIfResponse) // Rückgabe der deserialisierten SfcIfResponse
+                        callback(response)
                     }
                 } catch (e: Exception) {
                     Log.e(TAG, "Fehler bei der Deserialisierung: ${e.message}")

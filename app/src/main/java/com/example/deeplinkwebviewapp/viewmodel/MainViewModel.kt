@@ -18,6 +18,7 @@ import java.util.Locale
 import com.example.deeplinkwebviewapp.R
 import com.example.deeplinkwebviewapp.data.DeviceData
 import com.example.deeplinkwebviewapp.data.DeviceDataSingleton
+import com.example.deeplinkwebviewapp.data.PushNotificationPayload
 import com.example.deeplinkwebviewapp.service.Logger
 import com.example.deeplinkwebviewapp.service.MyHttpClient
 import com.example.deeplinkwebviewapp.service.SilentLoginAndAdvisorDataService
@@ -46,8 +47,8 @@ class MainViewModel(
 
     private val _fcmToken = MutableLiveData<String?>()
     val fcmToken: LiveData<String?> get() = _fcmToken
-    private val _disrupterData = MutableLiveData<String?>()
-    val disrupterData: LiveData<String?> get() = _disrupterData
+    private val _pushNotificationPayload = MutableLiveData<PushNotificationPayload?>()
+    val pushNotificationPayload: LiveData<PushNotificationPayload?> get() = _pushNotificationPayload
 
     // SfcService initialisieren
     private val sfcService = SfcServiceFactory.create(
@@ -66,20 +67,27 @@ class MainViewModel(
     private var silentLoginService: SilentLoginAndAdvisorDataService? = null
 
 
-    fun loadVkaData(userId: String) {
-        sfcService.fetchVkaData(userId) { response: SfcIfResponse? ->
-            response?.let {
-                try {
-                    val disrupterData = response.services.firstOrNull()?.IF?.disrupter
-                    val disrupterDataJson = Json.encodeToString(disrupterData)
-                    _disrupterData.postValue(disrupterDataJson)
-                } catch (e: Exception) {
-                    Log.e(TAG, "Error processing SfcIfResponse: ${e.localizedMessage}")
-                    _disrupterData.postValue(null) // Bei Fehler null setzen
+    fun loadVkaData(pushNotificationPayload: PushNotificationPayload) {
+        pushNotificationPayload.iam?.let {
+            sfcService.fetchVkaData(it.contentId) { response: String? ->
+                response?.let {
+                    val sharedPreferences = context.getSharedPreferences(
+                        "MyPreferences",
+                        Context.MODE_PRIVATE)
+                    val editor = sharedPreferences.edit()
+                    editor.putString("vkaData", response)
+                    editor.apply()  // apply() speichert asynchron
+
+                    try {
+                        _pushNotificationPayload.postValue(pushNotificationPayload)
+                    } catch (e: Exception) {
+                        Log.e(TAG, "Error processing SfcIfResponse: ${e.localizedMessage}")
+                        _pushNotificationPayload.postValue(null) // Bei Fehler null setzen
+                    }
+                } ?: run {
+                    Log.e("MainViewModel", "Fehler bei der Anfrage")
+                    _pushNotificationPayload.postValue(null) // Bei fehlgeschlagener Anfrage null setzen
                 }
-            } ?: run {
-                Log.e("MainViewModel", "Fehler bei der Anfrage")
-                _disrupterData.postValue(null) // Bei fehlgeschlagener Anfrage null setzen
             }
         }
     }
