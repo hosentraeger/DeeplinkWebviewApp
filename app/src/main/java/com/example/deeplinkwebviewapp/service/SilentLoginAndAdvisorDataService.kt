@@ -30,27 +30,26 @@ class SilentLoginAndAdvisorDataService (
     private val client = MyHttpClient.getInstance()
     private val gson = Gson()
 
-    private var sessionId: String? = null
+    private var cookies: List<String>? = null
     private var sessionValidUntil: Long = 0 // Zeitstempel, bis wann die Session gültig ist
 
     // Überprüfen, ob die Session noch gültig ist
     fun isSessionValid(): Boolean {
-        return sessionId != null && System.currentTimeMillis() < sessionValidUntil
+        return cookies != null && System.currentTimeMillis() < sessionValidUntil
     }
 
-    // Funktion, um ggf. einen neuen SilentLogin durchzuführen
-    fun getSessionId(onSessionReceived: (String?) -> Unit, onError: (Throwable) -> Unit) {
+    fun getSessionCookies(onSessionReceived: (List<String>?) -> Unit, onError: (Throwable) -> Unit) {
         if (isSessionValid()) {
-            onSessionReceived(sessionId)
+            onSessionReceived(cookies)
             return
         }
 
         // Falls keine gültige SessionID vorhanden ist, SilentLogin durchführen
         lifecycleScope.launch {
             try {
-                sessionId = performSilentLogin()
+                cookies = performSilentLogin()
                 sessionValidUntil = System.currentTimeMillis() + (60 * 60 * 1000) // Gültigkeit z.B. für 1 Stunde
-                onSessionReceived(sessionId)
+                onSessionReceived(cookies)
             } catch (e: Exception) {
                 onError(e) // Fehlerfall
             }
@@ -58,7 +57,7 @@ class SilentLoginAndAdvisorDataService (
     }
 
     // Suspended function für SilentLogin
-    private suspend fun performSilentLogin(): String? {
+    private suspend fun performSilentLogin(): List<String>? {
         val timestamp = getCurrentTimestamp()
         val applicationId = "88442A28"
         val targetUrl = "https://www.sparkasse.de/"

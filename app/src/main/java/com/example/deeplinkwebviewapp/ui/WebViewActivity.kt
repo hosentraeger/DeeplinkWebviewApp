@@ -4,8 +4,10 @@ import android.content.ActivityNotFoundException
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
+import android.util.Log
 import android.webkit.WebResourceError
 import android.webkit.WebResourceRequest
+import android.webkit.WebResourceResponse
 import android.webkit.WebSettings
 import android.webkit.WebView
 import android.webkit.WebViewClient
@@ -36,9 +38,9 @@ class WebViewActivity : AppCompatActivity() {
         webViewClientSetup(webView) // WebViewClient einrichten
 
         val url = intent.getStringExtra("EXTRA_URL")
-        val isSilentLogin = intent.getBooleanExtra("IF_SILENT_LOGIN", false) // IF_SILENT_LOGIN aus Intent auslesen
 
         if (url != null) {
+            val isSilentLogin = Uri.parse(url).getQueryParameter("IF_SILENT_LOGIN")?.toBoolean() ?: false
             loadUrlWithSession(webView, url, isSilentLogin) // URL mit Session-ID laden
         }
     }
@@ -52,11 +54,20 @@ class WebViewActivity : AppCompatActivity() {
             ) {
                 Toast.makeText(applicationContext, "Error: ${error.description}", Toast.LENGTH_SHORT).show()
             }
+            override fun shouldInterceptRequest(view: WebView?, request: WebResourceRequest?): WebResourceResponse? {
+                val url = request?.url.toString()
+                val headers = request?.requestHeaders
 
+//                Log.d("MyWebView", "Request: $url")
+//                Log.d("MyWebView", "Headers: $headers")
+                return super.shouldInterceptRequest(view, request)
+            }
+            override fun onPageFinished(view: WebView?, url: String?) {
+//                Log.d("MyWebView", "Page finished: $url")
+                super.onPageFinished(view, url)
+            }
             override fun shouldOverrideUrlLoading(view: WebView, request: WebResourceRequest): Boolean {
                 val url = request.url.toString()
-
-                // Überprüfen, ob die URL zu deiner eigenen App gehört
                 if (url.startsWith("https://www.fsiebecke.de/_deeplink")) {
                     // Intent für deine eigene App
                     val intent = Intent(this@WebViewActivity, MainActivity::class.java).apply {
@@ -90,8 +101,8 @@ class WebViewActivity : AppCompatActivity() {
             if (isSilentLogin) {
                 webViewService.loadUrlWithSession(webView, url) // URL mit Session-ID laden
             } else {
-                // webView.loadUrl(url) // URL ohne Session-ID laden
-                webView.loadUrl("https://m164an08-421.if-etaps.de/de/home/privatkunden/versicherungen/mopedversicherung-sv.webview.html")
+                webView.loadUrl(url) // URL ohne Session-ID laden
+                // webView.loadUrl("https://m164an08-421.if-etaps.de/de/home/privatkunden/versicherungen/mopedversicherung-sv.webview.html")
             }
         }
     }

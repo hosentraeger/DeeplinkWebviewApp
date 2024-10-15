@@ -4,6 +4,7 @@ import android.util.Log
 import android.webkit.WebView
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import android.webkit.CookieManager
 
 class WebViewService {
     companion object {
@@ -13,15 +14,21 @@ class WebViewService {
     suspend fun loadUrlWithSession(webView: WebView, url: String) = withContext(Dispatchers.Main) {
         val service = SilentLoginAndAdvisorDataServiceFactory.getService()
         // Versuche, die Session-ID abzurufen
-        service.getSessionId(
-            onSessionReceived = { sessionId ->
-                if (sessionId != null) {
-                    Log.d(TAG, "got sessionId $sessionId")
-                    // Wenn die Session-ID erfolgreich abgerufen wurde, lade die URL mit den Headern
-                    val headers = mapOf("'JSESSIONID" to sessionId)
-                    webView.loadUrl(url, headers)
+        service.getSessionCookies(
+            onSessionReceived = { cookies ->
+                if (cookies != null) {
+                    // Cookie-String erstellen
+                    val cookieString = cookies.joinToString("; ") { it }
+                    // Cookie in WebView setzen
+                    val cookieManager = CookieManager.getInstance()
+                    cookieManager.setAcceptCookie(true)
+                    CookieManager.getInstance().removeAllCookies(null)
+                    cookieManager.setCookie(url, cookieString)
+                    cookieManager.flush()
+                    // URL mit Cookies laden
+                    webView.loadUrl(url)
                 } else {
-                    // Fehlerbehandlung, wenn die Session-ID leer ist
+                    // Fehlerbehandlung
                     Log.d(TAG, "sessionId is null")
                 }
             },

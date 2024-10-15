@@ -161,7 +161,7 @@ class MyHttpClient private constructor(private val userAgent: String) {
         }
     }
 
-    suspend fun postSilentLogin(servletUrl: String, payload: String): String? {
+    suspend fun postSilentLogin(servletUrl: String, payload: String): List<String>? {
         val requestBody = payload.toRequestBody("application/json".toMediaType())
 
         // Einen separaten OkHttpClient erstellen, der Redirects nicht folgt
@@ -187,7 +187,8 @@ class MyHttpClient private constructor(private val userAgent: String) {
                 if (response.isSuccessful || response.code == 302) { // Erfolg oder Redirect
                     // Header mit Cookies extrahieren
                     val cookies = response.headers("Set-Cookie")
-
+                    cookies
+/*
                     // JSESSIONID-Cookie suchen
                     val jsessionId = cookies.find { it.startsWith("JSESSIONID=") }
                         ?.split(";") // Cookie-Daten werden oft durch Semikolon getrennt
@@ -195,6 +196,7 @@ class MyHttpClient private constructor(private val userAgent: String) {
                         ?.substringAfter("JSESSIONID=") // Den Wert der JSESSIONID extrahieren
 
                     jsessionId
+*/
                 } else {
                     Log.e("MyHttpClient", "Fehler: ${response.code}")
                     null

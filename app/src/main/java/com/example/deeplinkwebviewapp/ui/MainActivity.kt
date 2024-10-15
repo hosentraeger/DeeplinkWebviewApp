@@ -44,6 +44,7 @@ import com.google.android.material.badge.BadgeUtils
 import com.google.android.material.badge.ExperimentalBadgeUtils
 import com.example.deeplinkwebviewapp.service.Logger
 import com.google.gson.Gson
+import android.webkit.CookieManager
 
 
 class MainActivity : AppCompatActivity(), ChooseInstitionBottomSheet.OnChoiceSelectedListener {
@@ -147,7 +148,6 @@ class MainActivity : AppCompatActivity(), ChooseInstitionBottomSheet.OnChoiceSel
 
         // Zeige den Login-Dialog, bevor die App startet
         showLoginDialog()
-
     }
 
     private fun handleNavigationItemSelected(menuItem: MenuItem): Boolean {
