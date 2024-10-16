@@ -29,12 +29,12 @@ class WebViewService {
                     webView.loadUrl(url)
                 } else {
                     // Fehlerbehandlung
-                    Log.d(TAG, "sessionId is null")
+                    Log.e(TAG, "sessionId is null")
                 }
             },
             onError = { error ->
                 // Fehlerbehandlung für den Fall, dass beim Abrufen der Session-ID ein Fehler auftritt
-                Log.d ( TAG, "Error: Could not retrieve session ID: ${error.message}")
+                Log.e ( TAG, "Error: Could not retrieve session ID: ${error.message}")
             }
         )
     }

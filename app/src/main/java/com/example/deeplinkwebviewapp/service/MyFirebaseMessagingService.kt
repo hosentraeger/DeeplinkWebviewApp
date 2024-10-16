@@ -38,9 +38,21 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
 
     @OptIn(DelicateCoroutinesApi::class)
     override fun onMessageReceived(remoteMessage: RemoteMessage) {
-        val title = remoteMessage.notification?.title
-        val body = remoteMessage.notification?.body
-        Log.d(TAG, "onMessageReceived: ${remoteMessage.toString()}")
+        Log.d(TAG, "From: ${remoteMessage.from}")
+
+        // Log the message data payload
+        remoteMessage.data.let {
+            Log.d(TAG, "Message data payload: $it")
+        }
+
+        // Log the message notification payload (falls vorhanden)
+        remoteMessage.notification?.let {
+            Log.d(TAG, "Message Notification Title: ${it.title}")
+            Log.d(TAG, "Message Notification Body: ${it.body}")
+        }
+
+        // val title: String? = remoteMessage.notification?.title
+        // val body: String? = remoteMessage.notification?.body
         val pushPayloadStringB64 = remoteMessage.data["customKey1"] // Der Base64-codierte String
         if (pushPayloadStringB64 != null) {
             // Base64-Dekodierung
@@ -50,7 +62,8 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
                 // JSON-Deserialisierung
                 val pushNotificationPayload =
                     myJsonDecoder.decodeFromString<PushNotificationPayload>(pushPayloadString)
-
+                val title = pushNotificationPayload.title
+                val body = pushNotificationPayload.body
                 // Prüfen, ob IAM enthalten ist
                 if (pushNotificationPayload.iam != null) {
                     // Code ausführen, wenn IAM vorhanden ist

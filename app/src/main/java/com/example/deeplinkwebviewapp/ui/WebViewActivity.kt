@@ -19,6 +19,9 @@ import com.example.deeplinkwebviewapp.service.WebViewService
 import kotlinx.coroutines.launch
 
 class WebViewActivity : AppCompatActivity() {
+    companion object {
+        private const val TAG = "WebViewActivity"
+    }
 
     private lateinit var webViewService: WebViewService // WebViewService deklarieren
 
@@ -57,7 +60,7 @@ class WebViewActivity : AppCompatActivity() {
             override fun shouldInterceptRequest(view: WebView?, request: WebResourceRequest?): WebResourceResponse? {
                 val url = request?.url.toString()
                 val headers = request?.requestHeaders
-
+                // TODO hier prüfen, ob IF_SILENT_LOGIN dazu gekommen ist, ggf. Silent Login machen und Cookies einfügen
 //                Log.d("MyWebView", "Request: $url")
 //                Log.d("MyWebView", "Headers: $headers")
                 return super.shouldInterceptRequest(view, request)
@@ -87,6 +90,7 @@ class WebViewActivity : AppCompatActivity() {
                     }
                     startActivity(intent)
                 } catch (e: ActivityNotFoundException) {
+                    Log.d(TAG, "loading url ${url}")
                     view.loadUrl(url)
                 }
 

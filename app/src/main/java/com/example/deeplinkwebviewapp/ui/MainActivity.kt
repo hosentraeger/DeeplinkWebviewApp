@@ -299,9 +299,11 @@ class MainActivity : AppCompatActivity(), ChooseInstitionBottomSheet.OnChoiceSel
             handleDeeplink(intent)
         } else if (extras != null) {
             // Ausgabe aller erhaltenen Extras
+/*
             for (key in extras.keySet()) {
                 Log.d(TAG, "Intent extra: $key = ${extras.getString(key)}")
             }
+ */
             // Hier kannst du spezifische Schlüssel prüfen
             if (extras.containsKey("pushNotificationPayload")) {
                 Log.d(TAG, "Opened via Push Notification with pushNotificationPayload")

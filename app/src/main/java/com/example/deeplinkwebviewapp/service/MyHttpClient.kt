@@ -29,7 +29,7 @@ class MyHttpClient private constructor(private val userAgent: String) {
 
         // OkHttpClient mit dem Interceptor erstellen
         client = OkHttpClient.Builder()
-            .addInterceptor(loggingInterceptor)
+//            .addInterceptor(loggingInterceptor)
             .build()
     }
 

@@ -9,6 +9,8 @@ import kotlinx.serialization.Serializable
 data class PushNotificationPayload(
     val blz: String? = null,
     val obv: String? = null,
+    val title: String? = null,
+    val body: String? = null,
     val webview: WebviewPayload? = null,
     val iam: IamPayload? = null,
     val mailbox: MailboxPayload? = null,

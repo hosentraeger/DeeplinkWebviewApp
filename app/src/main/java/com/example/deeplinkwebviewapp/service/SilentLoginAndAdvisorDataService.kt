@@ -72,15 +72,10 @@ class SilentLoginAndAdvisorDataService (
         )
 
         val plaintext = gson.toJson(requestPayload)
-        Log.d(TAG, "plaintext: $plaintext")
         val b64text = Base64.encodeToString(plaintext.toByteArray(Charsets.UTF_8), Base64.NO_WRAP)
-        Log.d(TAG, "b64text: $b64text")
         val digest = encryptionKey?.let { signData(b64text, it) }
-        Log.d(TAG, "digest: $digest")
         val signature = digest?.let { b64ToB64Url(it) }
-        Log.d(TAG, "signature: $signature")
         val payload = """{"signature":"$b64text.$signature"}"""
-        Log.d(TAG, "payload: $payload")
 
         // POST-Anfrage mit MyHttpClient
         return client.postSilentLogin(servletUrl, payload) ?: throw Exception("SilentLogin failed")
