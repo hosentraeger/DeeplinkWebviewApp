@@ -19,6 +19,10 @@ import com.google.firebase.messaging.RemoteMessage
 import com.example.deeplinkwebviewapp.MyApplication
 import com.example.deeplinkwebviewapp.data.BankEntry
 import com.example.deeplinkwebviewapp.data.PushNotificationPayload
+import com.example.deeplinkwebviewapp.data.SfcIfResponse
+import com.example.deeplinkwebviewapp.data.SfmMobiResponse
+import com.example.deeplinkwebviewapp.viewmodel.MainViewModel
+import com.example.deeplinkwebviewapp.viewmodel.MainViewModel.Companion
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
@@ -68,14 +72,45 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
                     Log.d(TAG, "IAM detected: ${pushNotificationPayload.iam}")
                     if (pushNotificationPayload.iam.notificationImage != null) {
                         // TODO vka-daten laden, Image entnehmen
-                        GlobalScope.launch(Dispatchers.IO) {
-                            val imageBitmap =
-                                BitmapFactory.decodeResource(resources, R.drawable.sample_banner)
-                                showNotification(
-                                    title,
-                                    body,
-                                    pushNotificationPayload,
-                                    imageBitmap)
+
+                        val sharedPreferences = getSharedPreferences(
+                            "MyPreferences",
+                            Context.MODE_PRIVATE)
+                        val blz = sharedPreferences.getString("BLZ", "").toString()
+                        val stage = sharedPreferences.getString("SFStage", "").toString()
+                        val productId = 444
+
+                        val sfcService = SfcServiceFactory.create(
+                            blz,
+                            stage,
+                            productId
+                        )
+
+                        sfcService.fetchVkaData(pushNotificationPayload.iam.contentId) { response: String? ->
+                            response?.let {
+                                try {
+                                    var sfcIfResponse: SfcIfResponse? = Json.decodeFromString(response)
+                                    Log.d(TAG, "SfcIfData loaded")
+                                    val disrupterData = sfcIfResponse?.services?.firstOrNull()?.IF?.disrupter
+                                    val imageBitmap:Bitmap = if (disrupterData?.image != null) {
+                                        val decodedBytes = android.util.Base64.decode(disrupterData.image, android.util.Base64.DEFAULT)
+                                        BitmapFactory.decodeByteArray(decodedBytes, 0, decodedBytes.size)
+                                    } else {
+                                        BitmapFactory.decodeResource(resources, R.drawable.sample_disrupter)
+                                    }
+                                    GlobalScope.launch(Dispatchers.IO) {
+                                        showNotification(
+                                            title,
+                                            body,
+                                            pushNotificationPayload,
+                                            imageBitmap)
+                                    }
+                                } catch (e: Exception) {
+                                    Log.e(TAG, "Error processing SfmMobiResponse: ${e.localizedMessage}")
+                                }
+                            } ?: run {
+                                Log.e(TAG, "Fehler bei der Anfrage")
+                            }
                         }
                     } else {
                         showNotification(
