@@ -1,8 +1,14 @@
 package com.example.deeplinkwebviewapp.service
 
+import android.net.Uri
 import com.example.deeplinkwebviewapp.data.SfcIfResponse
 import android.util.Log
+import com.example.deeplinkwebviewapp.data.AemBanner
+import com.example.deeplinkwebviewapp.data.AemPage
 import kotlinx.serialization.json.Json
+import okhttp3.OkHttpClient
+import okhttp3.Request
+import okhttp3.Response
 
 enum class STAGE { STAGE_RHEIN, STAGE_BETA, STAGE_PROD }
 
@@ -51,6 +57,40 @@ class SfcService(
             STAGE.STAGE_PROD -> "https://services.starfinanz.de/sfc_rest"
         }
         return "$baseUrl/$interfaceVersion/service/multi"
+    }
+
+    fun fetchAemBanner(url: String, callback: (AemBanner?) -> Unit) {
+        client.getPage(url) { response ->
+            response?.let {
+                try {
+                    val aemBanner = Json.decodeFromString<AemBanner>(it)
+                    callback(aemBanner)
+                } catch (e: Exception) {
+                    Log.e(TAG, "Fehler bei der Deserialisierung: ${e.message}")
+                    callback(null) // Rückgabe von null im Fehlerfall
+                }
+            } ?: run {
+                Log.e(TAG, "Fehler bei der Anfrage: Response war null")
+                callback(null)
+            }
+        }
+    }
+
+    fun fetchAemPage(url: String, callback: (AemPage?) -> Unit) {
+        client.getPage(url) { response ->
+            response?.let {
+                try {
+                    val aemPage = Json.decodeFromString<AemPage>(it)
+                    callback(aemPage)
+                } catch (e: Exception) {
+                    Log.e(TAG, "Fehler bei der Deserialisierung: ${e.message}")
+                    callback(null) // Rückgabe von null im Fehlerfall
+                }
+            } ?: run {
+                Log.e(TAG, "Fehler bei der Anfrage: Response war null")
+                callback(null)
+            }
+        }
     }
 }
 

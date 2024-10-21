@@ -17,12 +17,10 @@ import com.example.deeplinkwebviewapp.ui.MainActivity
 import com.google.firebase.messaging.FirebaseMessagingService
 import com.google.firebase.messaging.RemoteMessage
 import com.example.deeplinkwebviewapp.MyApplication
+import com.example.deeplinkwebviewapp.data.AemBanner
 import com.example.deeplinkwebviewapp.data.BankEntry
 import com.example.deeplinkwebviewapp.data.PushNotificationPayload
 import com.example.deeplinkwebviewapp.data.SfcIfResponse
-import com.example.deeplinkwebviewapp.data.SfmMobiResponse
-import com.example.deeplinkwebviewapp.viewmodel.MainViewModel
-import com.example.deeplinkwebviewapp.viewmodel.MainViewModel.Companion
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
@@ -55,11 +53,13 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
             Log.d(TAG, "Message Notification Body: ${it.body}")
         }
 
-        val pushPayloadStringB64 = remoteMessage.data["customKey1"] // Der Base64-codierte String
+        val pushPayloadStringB64 =
+            remoteMessage.data["customKey1"] // Der Base64-codierte String
         if (pushPayloadStringB64 != null) {
             // Base64-Dekodierung
             val decodedBytes = Base64.getDecoder().decode(pushPayloadStringB64)
-            val pushPayloadString = String(decodedBytes, Charsets.UTF_8) // ByteArray in String umwandeln
+            val pushPayloadString =
+                String(decodedBytes, Charsets.UTF_8) // ByteArray in String umwandeln
             try {
                 // JSON-Deserialisierung
                 val pushNotificationPayload =
@@ -71,11 +71,11 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
                     // Code ausführen, wenn IAM vorhanden ist
                     Log.d(TAG, "IAM detected: ${pushNotificationPayload.iam}")
                     if (pushNotificationPayload.iam.notificationImage != null) {
-                        // TODO vka-daten laden, Image entnehmen
-
                         val sharedPreferences = getSharedPreferences(
                             "MyPreferences",
-                            Context.MODE_PRIVATE)
+                            Context.MODE_PRIVATE
+                        )
+
                         val blz = sharedPreferences.getString("BLZ", "").toString()
                         val stage = sharedPreferences.getString("SFStage", "").toString()
                         val productId = 444
@@ -89,24 +89,63 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
                         sfcService.fetchVkaData(pushNotificationPayload.iam.contentId) { response: String? ->
                             response?.let {
                                 try {
-                                    var sfcIfResponse: SfcIfResponse? = Json.decodeFromString(response)
+                                    val sfcIfResponse: SfcIfResponse? =
+                                        Json.decodeFromString(response)
                                     Log.d(TAG, "SfcIfData loaded")
-                                    val disrupterData = sfcIfResponse?.services?.firstOrNull()?.IF?.disrupter
-                                    val imageBitmap:Bitmap = if (disrupterData?.image != null) {
-                                        val decodedBytes = android.util.Base64.decode(disrupterData.image, android.util.Base64.DEFAULT)
-                                        BitmapFactory.decodeByteArray(decodedBytes, 0, decodedBytes.size)
-                                    } else {
-                                        BitmapFactory.decodeResource(resources, R.drawable.sample_disrupter)
-                                    }
-                                    GlobalScope.launch(Dispatchers.IO) {
-                                        showNotification(
+                                    val ifData = sfcIfResponse?.services?.firstOrNull()?.IF
+
+                                    when (pushNotificationPayload.iam.notificationImage) {
+                                        "1" -> showNotificationWithImage(
                                             title,
                                             body,
                                             pushNotificationPayload,
-                                            imageBitmap)
+                                            ifData?.overview?.get(0)?.banner
+                                        )
+
+                                        "2" -> {
+                                            ifData?.confirmationBannerURL?.let { it1 ->
+                                                sfcService.fetchAemBanner(
+                                                    it1
+                                                ) { response: AemBanner? ->
+                                                    response?.let {
+                                                        showNotificationWithImage(
+                                                            title,
+                                                            body,
+                                                            pushNotificationPayload,
+                                                            response.banner
+                                                        )
+                                                    }
+                                                }
+                                            }
+                                        }
+
+                                        "3" -> showNotificationWithImage(
+                                            title,
+                                            body,
+                                            pushNotificationPayload,
+                                            ifData?.disrupter?.image
+                                        )
+
+                                        "4" -> {
+                                            ifData?.logoutPageURL?.let { it2 ->
+                                                sfcService.fetchAemPage(it2) { result ->
+                                                    showNotificationWithImage(
+                                                        title,
+                                                        body,
+                                                        pushNotificationPayload,
+                                                        result?.image
+                                                    )
+                                                }
+                                            }
+                                        }
+
+                                        else -> {}
                                     }
                                 } catch (e: Exception) {
-                                    Log.e(TAG, "Error processing SfmMobiResponse: ${e.localizedMessage}")
+                                    Log.e(
+                                        TAG,
+                                        "Error processing SfmMobiResponse: ${e.localizedMessage}"
+                                    )
                                 }
                             } ?: run {
                                 Log.e(TAG, "Fehler bei der Anfrage")
@@ -117,7 +156,8 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
                             title,
                             body,
                             pushNotificationPayload,
-                            null)
+                            null
+                        )
                     }
                 }
 
@@ -127,7 +167,8 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
                         title,
                         body,
                         pushNotificationPayload,
-                        null)
+                        null
+                    )
                 }
 
                 if (pushNotificationPayload.mailbox != null) {
@@ -139,7 +180,7 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
                     handleMailboxBadge(pushNotificationPayload)
                 }
 
-                if (pushNotificationPayload.balance != null ) {
+                if (pushNotificationPayload.balance != null) {
                     // wenn app im vordergrund, keine notification zeigen. das erledigt die app anders
                     if (MyApplication.isAppInForeground) {
                         broadcastNotificationIntent(title, body, pushNotificationPayload)
@@ -170,9 +211,21 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
                     Log.d(TAG, "PING detected: ${pushNotificationPayload.ping}")
                     // TODO: hier ein Pong durchführen
                 }
-            } catch (e: Exception ) {
+            } catch (e: Exception) {
                 Log.e(TAG, e.toString())
             }
+        }
+    }
+
+    fun showNotificationWithImage(title: String?, body: String?, pushNotificationPayload: PushNotificationPayload?, imageData: String?) {
+        val decodedBytes = android.util.Base64.decode(imageData, android.util.Base64.DEFAULT)
+        val imageBitmap:Bitmap? = decodedBytes?.let { it1 -> BitmapFactory.decodeByteArray(decodedBytes, 0, it1.size) }
+        GlobalScope.launch(Dispatchers.IO) {
+            showNotification(
+                title,
+                body,
+                pushNotificationPayload,
+                imageBitmap)
         }
     }
 

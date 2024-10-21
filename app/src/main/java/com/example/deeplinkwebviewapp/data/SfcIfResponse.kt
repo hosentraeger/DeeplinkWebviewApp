@@ -2,6 +2,7 @@ package com.example.deeplinkwebviewapp.data
 import kotlinx.serialization.Serializable
 import android.os.Parcelable
 import kotlinx.parcelize.Parcelize
+import kotlinx.serialization.SerialName
 
 @Parcelize
 @Serializable
@@ -21,10 +22,12 @@ data class IFData(
     val status: String? = null,
     val id: Int? = null,
     val version: Int? = null,
-    val overview: List<OverviewBanner>? = null,
-    val disrupter: Disrupter? = null,
+    val overview: List<AemBanner>? = null,
+    val disrupter: AemPage? = null,
     val logoutPageURL: String? = null,
+    val logoutPage: AemPage?= null,
     val confirmationBannerURL: String? = null,
+    val confirmationBanner: AemBanner? = null,
     val eventId: String? = null,
     val persNr: String? = null,
     val mkaId: String? = null
@@ -32,7 +35,7 @@ data class IFData(
 
 @Parcelize
 @Serializable
-data class OverviewBanner(
+data class AemBanner(
     val banner: String? = null,
     val imgAlt: String? = null,
     val url: String? = null,
@@ -42,7 +45,7 @@ data class OverviewBanner(
 
 @Parcelize
 @Serializable
-data class Disrupter(
+data class AemPage(
     val image: String? = null,
     val imgAlt: String? = null,
     val headline: String? = null,

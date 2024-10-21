@@ -80,6 +80,7 @@ class MyHttpClient private constructor(private val userAgent: String) {
             }
         }
     }
+
     // Neue Methode für SFC-Daten
     fun postSfcData(url: String, blz: String, productId: Int, userName: String, callback: (String?) -> Unit) {
         val body = """
@@ -219,6 +220,7 @@ class MyHttpClient private constructor(private val userAgent: String) {
             }
         }
     }
+
     fun getRedirectLocation(url: String, callback: (String?) -> Unit) {
         // OkHttpClient erstellen, der Redirects nicht automatisch folgt
         val clientNoRedirects = client.newBuilder()
@@ -237,6 +239,31 @@ class MyHttpClient private constructor(private val userAgent: String) {
                     callback(location)
                 } else {
                     Log.e(TAG, "Kein Redirect: ${response.code}")
+                    callback(null)
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "Exception: ${e.message}")
+                callback(null)
+            }
+        }
+    }
+
+    fun getPage(url: String, callback: (String?) -> Unit) {
+        val client = client.newBuilder()
+            .build()
+
+        val request = Request.Builder()
+            .url(url)
+            .build()
+
+        CoroutineScope(Dispatchers.IO).launch {
+            try {
+                val response = client.newCall(request).execute()
+                if (response.code == 200) {
+                    val responseBodyString: String? = response.body?.string()
+                    callback(responseBodyString)
+                } else {
+                    Log.e(TAG, "Response Code: ${response.code}")
                     callback(null)
                 }
             } catch (e: Exception) {
