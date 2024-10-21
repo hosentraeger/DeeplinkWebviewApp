@@ -3,7 +3,6 @@ package com.example.deeplinkwebviewapp.ui
 import android.content.Context
 import android.content.Intent
 import android.graphics.BitmapFactory
-import android.net.Uri
 import android.os.Bundle
 import android.text.Html
 import android.util.Base64
@@ -14,8 +13,6 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.example.deeplinkwebviewapp.R
-import com.example.deeplinkwebviewapp.data.Disrupter
-import com.example.deeplinkwebviewapp.data.PushNotificationPayload
 import com.example.deeplinkwebviewapp.data.SfcIfResponse
 import com.example.deeplinkwebviewapp.service.MyHttpClient
 import kotlinx.serialization.json.Json

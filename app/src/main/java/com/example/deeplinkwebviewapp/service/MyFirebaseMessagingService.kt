@@ -51,8 +51,6 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
             Log.d(TAG, "Message Notification Body: ${it.body}")
         }
 
-        // val title: String? = remoteMessage.notification?.title
-        // val body: String? = remoteMessage.notification?.body
         val pushPayloadStringB64 = remoteMessage.data["customKey1"] // Der Base64-codierte String
         if (pushPayloadStringB64 != null) {
             // Base64-Dekodierung
@@ -68,7 +66,8 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
                 if (pushNotificationPayload.iam != null) {
                     // Code ausführen, wenn IAM vorhanden ist
                     Log.d(TAG, "IAM detected: ${pushNotificationPayload.iam}")
-                    if (pushNotificationPayload.iam.useBanner == true) {
+                    if (pushNotificationPayload.iam.notificationImage != null) {
+                        // TODO vka-daten laden, Image entnehmen
                         GlobalScope.launch(Dispatchers.IO) {
                             val imageBitmap =
                                 BitmapFactory.decodeResource(resources, R.drawable.sample_banner)
@@ -87,15 +86,17 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
                     }
                 }
 
-                // Prüfen, ob WEBVIEW enthalten ist
                 if (pushNotificationPayload.webview != null) {
-                    // Code ausführen, wenn WEBVIEW vorhanden ist
                     Log.d(TAG, "WEBVIEW detected: ${pushNotificationPayload.webview}")
-                    // Hier spezifische Logik für WEBVIEW hinzufügen
+                    showNotification(
+                        title,
+                        body,
+                        pushNotificationPayload,
+                        null)
                 }
-                // Prüfen, ob MAILBOX enthalten ist
+
                 if (pushNotificationPayload.mailbox != null) {
-                    // Code ausführen, wenn MAILBOX vorhanden ist
+                    // silent notification
                     Log.d(TAG, "MAILBOX detected: ${pushNotificationPayload.mailbox}")
                     if (MyApplication.isAppInForeground) {
                         broadcastNotificationIntent(title, body, pushNotificationPayload)
@@ -103,8 +104,8 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
                     handleMailboxBadge(pushNotificationPayload)
                 }
 
-                // Prüfen, ob BALANCE enthalten ist
                 if (pushNotificationPayload.balance != null ) {
+                    // wenn app im vordergrund, keine notification zeigen. das erledigt die app anders
                     if (MyApplication.isAppInForeground) {
                         broadcastNotificationIntent(title, body, pushNotificationPayload)
                     } else {
@@ -116,18 +117,23 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
                         )
                     }
                 }
-                // Prüfen, ob UPDATE enthalten ist
+
                 if (pushNotificationPayload.update != null) {
-                    // Code ausführen, wenn UPDATE vorhanden ist
                     Log.d(TAG, "UPDATE detected: ${pushNotificationPayload.update}")
-                    // Hier spezifische Logik für UPDATE hinzufügen
+                    // wenn app im vordergrund, ist keine benachrichtigung notwendig
+                    if (!MyApplication.isAppInForeground) {
+                        showNotification(
+                            title,
+                            body,
+                            pushNotificationPayload,
+                            null
+                        )
+                    }
                 }
 
-                // Prüfen, ob PING enthalten ist
                 if (pushNotificationPayload.ping != null) {
-                    // Code ausführen, wenn PING vorhanden ist
                     Log.d(TAG, "PING detected: ${pushNotificationPayload.ping}")
-                    // Hier spezifische Logik für PING hinzufügen
+                    // TODO: hier ein Pong durchführen
                 }
             } catch (e: Exception ) {
                 Log.e(TAG, e.toString())

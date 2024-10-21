@@ -58,11 +58,15 @@ class WebViewActivity : AppCompatActivity() {
                 Toast.makeText(applicationContext, "Error: ${error.description}", Toast.LENGTH_SHORT).show()
             }
             override fun shouldInterceptRequest(view: WebView?, request: WebResourceRequest?): WebResourceResponse? {
-                val url = request?.url.toString()
-                val headers = request?.requestHeaders
-                // TODO hier prüfen, ob IF_SILENT_LOGIN dazu gekommen ist, ggf. Silent Login machen und Cookies einfügen
+//                val url = request?.url.toString()
+//                val headers = request?.requestHeaders
 //                Log.d("MyWebView", "Request: $url")
 //                Log.d("MyWebView", "Headers: $headers")
+                // TODO hier prüfen, ob IF_SILENT_LOGIN dazu gekommen ist, ggf. Silent Login machen und Cookies einfügen
+                if (request?.url?.getBooleanQueryParameter("IF_SILENT_LOGIN", false) == true) {
+                    val jSessionId = request.requestHeaders?.get("Set-Cookie")?.split(";")?.firstOrNull()?.split("=")?.get(1)
+                    Log.d(TAG, "JSESSIONID: ${jSessionId}")
+                }
                 return super.shouldInterceptRequest(view, request)
             }
             override fun onPageFinished(view: WebView?, url: String?) {

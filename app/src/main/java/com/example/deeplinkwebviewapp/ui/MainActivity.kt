@@ -44,7 +44,12 @@ import com.google.android.material.badge.BadgeUtils
 import com.google.android.material.badge.ExperimentalBadgeUtils
 import com.example.deeplinkwebviewapp.service.Logger
 import com.google.gson.Gson
-import android.webkit.CookieManager
+import android.widget.EditText
+import com.example.deeplinkwebviewapp.service.MkaRoutingService
+import com.example.deeplinkwebviewapp.service.MyOkHttpClientFactory
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
 
 class MainActivity : AppCompatActivity(), ChooseInstitionBottomSheet.OnChoiceSelectedListener {
@@ -65,6 +70,7 @@ class MainActivity : AppCompatActivity(), ChooseInstitionBottomSheet.OnChoiceSel
 
     @androidx.annotation.OptIn(ExperimentalBadgeUtils::class)
     @RequiresApi(Build.VERSION_CODES.TIRAMISU)
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         createNotificationChannel()
@@ -148,6 +154,98 @@ class MainActivity : AppCompatActivity(), ChooseInstitionBottomSheet.OnChoiceSel
 
         // Zeige den Login-Dialog, bevor die App startet
         showLoginDialog()
+    }
+
+    private fun showLoginDialog() {
+        val dialogView = layoutInflater.inflate(R.layout.dialog_login, null)
+        val blzInput = dialogView.findViewById<EditText>(R.id.bankleitzahl_input)
+        val anmeldenameInput = dialogView.findViewById<EditText>(R.id.username_input)
+        val pinInput = dialogView.findViewById<EditText>(R.id.password_input)
+        val sharedPreferences = getSharedPreferences("MyPreferences", Context.MODE_PRIVATE)
+        val currentBlz = sharedPreferences.getString("BLZ", "").toString()
+        val currentAnmeldename = sharedPreferences.getString("Username", "").toString()
+        val currentPin = sharedPreferences.getString("PIN", "").toString()
+        blzInput.setText(currentBlz)
+        anmeldenameInput.setText(currentAnmeldename)
+        pinInput.setText(currentPin)
+
+        AlertDialog.Builder(this)
+            .setTitle("App-Login")
+            .setView(dialogView)
+            .setPositiveButton("Login") { dialog, _ ->
+                val inputBlz = blzInput.text.toString()
+                val inputAnmeldename = anmeldenameInput.text.toString()
+                val inputPin = pinInput.text.toString()
+                Log.d ( TAG, "blz: $inputBlz, name: $inputAnmeldename, pin: $inputPin")
+                dialog.dismiss()
+                // Starte die Hauptaktivität oder setze den Status auf eingeloggt
+                proceedToMainApp()
+            }
+            .setNegativeButton("Abbrechen") { dialog, _ ->
+                dialog.dismiss()
+            }
+            .show()
+    }
+
+    private fun proceedToMainApp() {
+        // Logik zum Starten der App nach erfolgreichem Login
+        Log.d("MainActivity", "Login erfolgreich!")
+        viewModel.sendDeviceData()
+        viewModel.loadMobiData()
+
+        val mkaRoutingService = MkaRoutingService ( MyOkHttpClientFactory().createClientWithCertificate(this))
+
+        CoroutineScope(Dispatchers.Main).launch {
+            val response = mkaRoutingService.getRoute("94059421")
+            Log.d(TAG, "route: ${response}")
+        }
+
+        // Registriere den BroadcastReceiver
+        LocalBroadcastManager.getInstance(this).registerReceiver(
+            messageReceiver, IntentFilter("push-notification-received")
+        )
+        viewModel.mobiDataLoaded.observe(this) { isLoaded ->
+            if (isLoaded) {
+                // Jetzt kannst du auf die Mobi-Daten zugreifen und sie verwenden
+                // val mailboxUrl = viewModel.getMailboxUrl()
+                initializeSilentLoginAndAdvisorDataService()
+                intent?.let {
+                    handleIntent(it)
+                }
+            } else {
+                // Fehlerbehandlung oder Fallback
+            }
+        }
+
+        // Beobachte die LiveData für die Imagedaten
+        viewModel.VkaDataLoaded.observe(this) { loaded ->
+            if (loaded == true) {
+                val intent = Intent(this, DisrupterActivity::class.java)
+                startActivity(intent)
+            } else {
+                    // val url = pushNotificationPayload.iam?.
+                    Toast.makeText(this@MainActivity, "wir gehen direkt zu link1, weil kein Störer gezeigt werden soll", Toast.LENGTH_LONG).show()
+            }
+/*
+                when (pushNotificationPayload.iam?.overlayImage) {
+                    "disrupterImage" -> {
+                        val intent = Intent(this, DisrupterActivity::class.java)
+                        intent.putExtra("image", pushNotificationPayload.iam?.overlayImage)
+                        startActivity(intent)
+                    }
+                    "logoutPageImage" -> {
+                        val intent = Intent(this, DisrupterActivity::class.java)
+                        intent.putExtra("image", pushNotificationPayload.iam?.overlayImage)
+                        startActivity(intent)
+                    }
+                    else -> {
+                        // val url = pushNotificationPayload.iam?.
+                        Toast.makeText(this@MainActivity, "wir gehen direkt zu link1, weil kein Störer gezeigt werden soll", Toast.LENGTH_LONG).show()
+                    }
+                }
+            }
+ */
+        }
     }
 
     private fun handleNavigationItemSelected(menuItem: MenuItem): Boolean {
@@ -298,13 +396,6 @@ class MainActivity : AppCompatActivity(), ChooseInstitionBottomSheet.OnChoiceSel
             Log.d(TAG, "Opened via Deep Link: $data")
             handleDeeplink(intent)
         } else if (extras != null) {
-            // Ausgabe aller erhaltenen Extras
-/*
-            for (key in extras.keySet()) {
-                Log.d(TAG, "Intent extra: $key = ${extras.getString(key)}")
-            }
- */
-            // Hier kannst du spezifische Schlüssel prüfen
             if (extras.containsKey("pushNotificationPayload")) {
                 Log.d(TAG, "Opened via Push Notification with pushNotificationPayload")
                 handlePushNotification(intent)
@@ -353,55 +444,47 @@ class MainActivity : AppCompatActivity(), ChooseInstitionBottomSheet.OnChoiceSel
         val pushNotificationPayload: PushNotificationPayload? = intent?.extras?.getParcelable("pushNotificationPayload")
         val title = intent?.getStringExtra("title")
         val body = intent?.getStringExtra("body")
-
+        // TODO hier Informationen aus dem intent holen, welches Image verwendet werden soll
+        // TODO könnte in die Sharedprefs geschrieben werden, die DisrupterActivity kann die Info von dort holen
+        // TODO gleiches gilt für die Info, welche URL verwendet werden soll
         if (pushNotificationPayload?.iam != null) {
             viewModel.loadVkaData(pushNotificationPayload)
         }
+
         if (pushNotificationPayload?.mailbox != null) {
             val userName = pushNotificationPayload.obv
             val blz = pushNotificationPayload.blz
             val myMainObv = settingsViewModel.getMainObv()
             if ((blz == null || myMainObv.blz == blz)&&(userName == null || myMainObv.username == userName))
-                handleMailboxBadge(pushNotificationPayload.mailbox.count)
-            }
-/*
-            "BALANCE" -> {
-                val iban = customKey2?.substringBefore(":")
-                val balance = customKey2?.substringAfter(":")
-                if (MyApplication.isAppInForeground) {
-                    Toast.makeText(
-                        this,
-                        "Der neue Kontostand für ${iban} ist ${balance}",
-                        Toast.LENGTH_SHORT
-                    ).show()
-                } else {
-                    showNotification(title, body, "Neuer Kontostand", "Der neue Kontostand für ${iban} ist ${balance}", null)
-                }
-            }
-
-            "TRANSACTION" -> {
-            }
-
-            "WEBVIEWWITHSILENTLOGIN" -> {
-                // val url = customKey2
-            }
-
-            "REVIEW" -> showNotification(title, body, customKey1, customKey2, null)
-            "KILLSWITCH" -> {}
-            "UPDATE" -> {}
-            "SECURITY" -> {}
-            "FEATURE" -> {}
-            "RETROSPECT" -> {}
-            "INSTANTPAYMENT" -> {}
-            "GEO" -> {}
-            else -> {
-                Toast.makeText(
-                    this@MainActivity,
-                    "Message received: $customKey1 - $customKey2",
-                    Toast.LENGTH_LONG
-                ).show()
-            }
+                handleMailboxBadge(pushNotificationPayload)
         }
+
+        if (pushNotificationPayload?.balance != null) {
+            handleBalanceNotification(pushNotificationPayload)
+        }
+
+        if (pushNotificationPayload?.webview != null) {
+            handleWebviewNotification(pushNotificationPayload)
+        }
+
+        if (pushNotificationPayload?.update != null) {
+            handleUpdateNotification(pushNotificationPayload)
+        }
+
+        if (pushNotificationPayload?.ping != null) {
+            Log.d(TAG, "push ping")
+        }
+/*
+        "TRANSACTION"
+        "WEBVIEWWITHSILENTLOGIN"
+        "REVIEW"
+        "KILLSWITCH"
+        "UPDATE"
+        "SECURITY"
+        "FEATURE"
+        "RETROSPECT"
+        "INSTANTPAYMENT"
+        "GEO"
  */
     }
 
@@ -442,77 +525,6 @@ class MainActivity : AppCompatActivity(), ChooseInstitionBottomSheet.OnChoiceSel
             // Optional: Eine Nachricht anzeigen oder eine andere Aktion ausführen
             Toast.makeText(this, "Die URL ist leer.", Toast.LENGTH_SHORT).show()
         }
-    }
-
-    private fun showLoginDialog() {
-        val dialogView = layoutInflater.inflate(R.layout.dialog_login, null)
-        // val passwordInput = dialogView.findViewById<EditText>(R.id.password_input)
-
-        AlertDialog.Builder(this)
-            .setTitle("App-Login")
-            .setView(dialogView)
-            .setPositiveButton("Login") { dialog, _ ->
-                // val inputPassword = passwordInput.text.toString()
-                // val correctPassword = getString(R.string.app_password)
-
-                dialog.dismiss()
-                // Starte die Hauptaktivität oder setze den Status auf eingeloggt
-                proceedToMainApp()
-            }
-            .setNegativeButton("Abbrechen") { dialog, _ ->
-                dialog.dismiss()
-            }
-            .show()
-    }
-
-    private fun proceedToMainApp() {
-        // Logik zum Starten der App nach erfolgreichem Login
-        Log.d("MainActivity", "Login erfolgreich!")
-        viewModel.sendDeviceData()
-        viewModel.loadMobiData()
-        // Registriere den BroadcastReceiver
-        LocalBroadcastManager.getInstance(this).registerReceiver(
-            messageReceiver, IntentFilter("push-notification-received")
-        )
-        viewModel.mobiDataLoaded.observe(this) { isLoaded ->
-            if (isLoaded) {
-                // Jetzt kannst du auf die Mobi-Daten zugreifen und sie verwenden
-                // val mailboxUrl = viewModel.getMailboxUrl()
-                initializeSilentLoginAndAdvisorDataService()
-                intent?.let {
-                    handleIntent(it)
-                }
-            } else {
-                // Fehlerbehandlung oder Fallback
-            }
-        }
-
-        // Beobachte die LiveData für die Imagedaten
-        viewModel.pushNotificationPayload.observe(this) { pushNotificationPayload ->
-            if (pushNotificationPayload != null) {
-                if (pushNotificationPayload.iam?.showDisrupter == true) {
-                    val intent = Intent(this, DisrupterActivity::class.java)
-                    startActivity(intent)
-                } else {
-
-                    val targetUri = when ( pushNotificationPayload.iam?.uri ) {
-                        null -> ""
-                        "@Link1" -> "Link1"
-                        "@Link2" -> "Link2"
-                        "@Link3" -> "Link3"
-                        else -> pushNotificationPayload.iam?.uri
-                    }
-                    Toast.makeText(
-                        this@MainActivity,
-                        "weiter zu ${targetUri}", Toast.LENGTH_LONG).show()
-                }
-            }
-        }
-/*
-        intent?.let {
-            handleIntent(it)
-        }
-*/
     }
 
     private fun initializeSilentLoginAndAdvisorDataService() {
@@ -585,14 +597,35 @@ class MainActivity : AppCompatActivity(), ChooseInstitionBottomSheet.OnChoiceSel
         val contentId = deeplinkUri.getQueryParameter("contentId")
         // val eventId = deeplinkUri.getQueryParameter("eventId")
         if (contentId != null) {
-            val iamPayload: IamPayload = IamPayload(contentId = contentId)
-            var pushNotificationPayload: PushNotificationPayload = PushNotificationPayload(iam = iamPayload)
+            // bau eine Struktur, als wäre eine push notification gekommen
+            val iamPayload = IamPayload(contentId = contentId)
+            var pushNotificationPayload = PushNotificationPayload(iam = iamPayload)
             viewModel.loadVkaData(pushNotificationPayload)
         }
     }
 
-    fun handleMailboxBadge(badgeCount: Int ) {
-        Log.d(TAG, "handleMailboxBadge, badgeCount: ${badgeCount}")
+    fun handleMailboxBadge(pushNotificationPayload: PushNotificationPayload ) {
+        val badgeCount: Int = pushNotificationPayload.mailbox?.count ?: 0
+        Log.d(TAG, "handleMailboxBadge, badgeCount: $badgeCount")
+    }
+
+    fun handleBalanceNotification(pushNotificationPayload: PushNotificationPayload ) {
+        val balance = pushNotificationPayload.balance?.balance
+        Toast.makeText(this@MainActivity, "Kontostand aktualisiert! ($balance)", Toast.LENGTH_LONG).show()
+    }
+
+    fun handleWebviewNotification(pushNotificationPayload: PushNotificationPayload){
+        val url = pushNotificationPayload.webview?.path
+        if (url != null && url != "") {
+            openWebView(url, false /* dummy parameter */)
+        }
+    }
+
+    fun handleUpdateNotification(pushNotificationPayload: PushNotificationPayload){
+        val version = pushNotificationPayload.update?.fromVersion
+        if (version != null && version != "") {
+            Toast.makeText(this@MainActivity, "mach ein Update!", Toast.LENGTH_LONG).show()
+        }
     }
 
     // Implementierung der Schnittstelle

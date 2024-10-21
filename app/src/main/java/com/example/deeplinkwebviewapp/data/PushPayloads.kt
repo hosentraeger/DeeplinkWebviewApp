@@ -29,10 +29,8 @@ data class WebviewPayload(
 @Serializable
 data class IamPayload(
     val contentId: String,
-    val eventId: String? = null,
-    val showDisrupter: Boolean? = false,
-    val useBanner: Boolean? = false,
-    val uri: String? = null,
+    val notificationImage: String? = null,
+    val overlayImage : String? = null,
     val expectFeedbackIfDisplayed: Boolean? = false,
     val expectFeedbackIfHit: Boolean? = false
 ) : Parcelable

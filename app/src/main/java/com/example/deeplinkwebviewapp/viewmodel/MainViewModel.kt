@@ -47,8 +47,8 @@ class MainViewModel(
 
     private val _fcmToken = MutableLiveData<String?>()
     val fcmToken: LiveData<String?> get() = _fcmToken
-    private val _pushNotificationPayload = MutableLiveData<PushNotificationPayload?>()
-    val pushNotificationPayload: LiveData<PushNotificationPayload?> get() = _pushNotificationPayload
+    private val _VkaDataLoaded = MutableLiveData<Boolean?>()
+    val VkaDataLoaded: LiveData<Boolean?> get() = _VkaDataLoaded
 
     // SfcService initialisieren
     private val sfcService = SfcServiceFactory.create(
@@ -66,7 +66,6 @@ class MainViewModel(
 
     private var silentLoginService: SilentLoginAndAdvisorDataService? = null
 
-
     fun loadVkaData(pushNotificationPayload: PushNotificationPayload) {
         pushNotificationPayload.iam?.let {
             sfcService.fetchVkaData(it.contentId) { response: String? ->
@@ -79,14 +78,14 @@ class MainViewModel(
                     editor.apply()  // apply() speichert asynchron
 
                     try {
-                        _pushNotificationPayload.postValue(pushNotificationPayload)
+                        _VkaDataLoaded.postValue(true)
                     } catch (e: Exception) {
                         Log.e(TAG, "Error processing SfcIfResponse: ${e.localizedMessage}")
-                        _pushNotificationPayload.postValue(null) // Bei Fehler null setzen
+                        _VkaDataLoaded.postValue(false) // Bei Fehler null setzen
                     }
                 } ?: run {
                     Log.e("MainViewModel", "Fehler bei der Anfrage")
-                    _pushNotificationPayload.postValue(null) // Bei fehlgeschlagener Anfrage null setzen
+                    _VkaDataLoaded.postValue(false) // Bei fehlgeschlagener Anfrage null setzen
                 }
             }
         }

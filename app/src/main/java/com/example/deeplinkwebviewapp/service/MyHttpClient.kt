@@ -1,8 +1,6 @@
 package com.example.deeplinkwebviewapp.service
 
-import android.content.Context
 import android.util.Log
-import com.example.deeplinkwebviewapp.R
 import com.example.deeplinkwebviewapp.data.DeviceData
 import com.google.gson.Gson
 import okhttp3.MediaType.Companion.toMediaType
@@ -15,6 +13,20 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import android.content.Context
+import com.example.deeplinkwebviewapp.R
+import java.io.ByteArrayInputStream
+import java.io.InputStream
+import java.security.KeyFactory
+import java.security.KeyStore
+import java.security.PrivateKey
+import java.security.cert.Certificate
+import java.security.cert.CertificateFactory
+import java.security.spec.PKCS8EncodedKeySpec
+import javax.net.ssl.KeyManagerFactory
+import javax.net.ssl.SSLContext
+import javax.net.ssl.TrustManagerFactory
+import javax.net.ssl.X509TrustManager
 
 class MyHttpClient private constructor(private val userAgent: String) {
 
@@ -232,5 +244,70 @@ class MyHttpClient private constructor(private val userAgent: String) {
                 callback(null)
             }
         }
+    }
+}
+
+class MyOkHttpClientFactory {
+    fun createClientWithCertificate(context: Context): OkHttpClient {
+        // Lade das Zertifikat und den privaten Schlüssel aus res/raw
+        val certInputStream: InputStream = context.resources.openRawResource(R.raw.mkp_apv_etaps) // Zertifikat
+        val rootCertInputStream: InputStream = context.resources.openRawResource(R.raw.quovadis_root_ca2) // Root-Zertifikat
+        val intermediateCertInputStream: InputStream = context.resources.openRawResource(R.raw.sfg_mkg_etaps) // Intermediate-Zertifikat
+        val keyInputStream: InputStream = context.resources.openRawResource(R.raw.mkp_apv_key) // Privater Schlüssel
+
+        // Erstelle ein CertificateFactory für das Zertifikat
+        val certificateFactory = CertificateFactory.getInstance("X.509")
+        val certificates = mutableListOf<Certificate>()
+
+        // Lade das Serverzertifikat
+        certificates.add(certificateFactory.generateCertificate(certInputStream))
+
+        // Lade das Root-Zertifikat
+        certificates.add(certificateFactory.generateCertificate(rootCertInputStream))
+
+        // Lade das Intermediate-Zertifikat
+        certificates.add(certificateFactory.generateCertificate(intermediateCertInputStream))
+
+        // Erstelle und initialisiere einen KeyStore für den privaten Schlüssel
+        val keyStore = KeyStore.getInstance("PKCS12")
+        keyStore.load(null, null)
+
+        // Füge die Zertifikate zum KeyStore hinzu
+        for (i in certificates.indices) {
+            keyStore.setCertificateEntry("cert$i", certificates[i])
+        }
+
+        // Lies den privaten Schlüssel und dekodiere ihn
+        val keyString = keyInputStream.bufferedReader().use { it.readText() }
+        val privateKeyString = keyString
+            .substringAfter("-----BEGIN PRIVATE KEY-----")
+            .substringBefore("-----END PRIVATE KEY-----")
+            .replace("\\s+".toRegex(), "") // Entferne alle Leerzeichen und Zeilenumbrüche
+
+        val keyBytes = android.util.Base64.decode(privateKeyString, android.util.Base64.DEFAULT)
+        val keySpec = PKCS8EncodedKeySpec(keyBytes)
+        val privateKey: PrivateKey = KeyFactory.getInstance("RSA").generatePrivate(keySpec)
+
+        // Füge den privaten Schlüssel zum KeyStore hinzu
+        val clientCertificateEntry = KeyStore.PrivateKeyEntry(privateKey, arrayOf(certificates[0])) // Hier nehmen wir an, dass das erste Zertifikat das Client-Zertifikat ist
+        keyStore.setEntry("client", clientCertificateEntry, KeyStore.PasswordProtection("your_keystore_password".toCharArray())) // Verwenden Sie ein sicheres Passwort
+
+        // Erstelle einen KeyManagerFactory und initialisiere ihn mit dem KeyStore
+        val keyManagerFactory = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm())
+        keyManagerFactory.init(keyStore, "your_keystore_password".toCharArray()) // Passwort für den KeyStore
+
+        // Erstelle einen TrustManagerFactory und initiiere ihn mit dem KeyStore
+        val trustManagerFactory = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm())
+        trustManagerFactory.init(keyStore)
+
+        // Erstelle einen SSLContext mit den KeyManagers und TrustManagers
+        val sslContext = SSLContext.getInstance("TLS")
+        sslContext.init(keyManagerFactory.keyManagers, trustManagerFactory.trustManagers, null)
+
+        // Erstelle und konfiguriere den OkHttpClient
+        return OkHttpClient.Builder()
+            .sslSocketFactory(sslContext.socketFactory, trustManagerFactory.trustManagers[0] as X509TrustManager)
+            .hostnameVerifier { _, _ -> true } // Für produktive Umgebungen sicherstellen
+            .build()
     }
 }

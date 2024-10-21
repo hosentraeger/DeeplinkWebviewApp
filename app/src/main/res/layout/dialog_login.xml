@@ -14,11 +14,23 @@
         android:textStyle="bold" />
 
     <EditText
-        android:id="@+id/password_input"
+        android:id="@+id/bankleitzahl_input"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:hint="Passwort"
-        android:inputType="textPassword"
-        android:layout_marginTop="16dp"/>
+        android:hint="Bankleitzahl"
+        android:inputType="number"  android:layout_marginTop="16dp" />
+
+    <EditText
+        android:id="@+id/username_input"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Anmeldename"
+        android:inputType="text"  android:layout_marginTop="8dp" />  <EditText
+    android:id="@+id/password_input"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:hint="Online-Banking-PIN"
+    android:inputType="textPassword"
+    android:layout_marginTop="8dp" />
 
 </LinearLayout>
