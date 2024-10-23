@@ -46,11 +46,13 @@ import com.example.deeplinkwebviewapp.service.Logger
 import com.google.gson.Gson
 import android.widget.EditText
 import com.example.deeplinkwebviewapp.data.SfcIfResponse
-import com.example.deeplinkwebviewapp.service.MkaRoutingService
+import com.example.deeplinkwebviewapp.service.MkaSession
 import com.example.deeplinkwebviewapp.service.MyOkHttpClientFactory
+import com.google.android.material.snackbar.Snackbar
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
 
 
@@ -175,13 +177,55 @@ class MainActivity : AppCompatActivity(), ChooseInstitionBottomSheet.OnChoiceSel
             .setTitle("App-Login")
             .setView(dialogView)
             .setPositiveButton("Login") { dialog, _ ->
-                val inputBlz = blzInput.text.toString()
-                val inputAnmeldename = anmeldenameInput.text.toString()
-                val inputPin = pinInput.text.toString()
-                Log.d ( TAG, "blz: $inputBlz, name: $inputAnmeldename, pin: $inputPin")
-                dialog.dismiss()
-                // Starte die Hauptaktivität oder setze den Status auf eingeloggt
-                proceedToMainApp()
+                val inputBlz = blzInput.text.toString().trim()
+                val inputAnmeldename = anmeldenameInput.text.toString().trim()
+                val inputPin = pinInput.text.toString().trim()
+
+                val snackbar = Snackbar.make(
+                    findViewById(android.R.id.content),
+                    "Einloggen...",
+                    Snackbar.LENGTH_INDEFINITE
+                ).apply {
+                    setAction("Abbrechen") {
+                        // Handle cancellation, if necessary
+                    }
+                    show()
+                }
+
+                lifecycleScope.launch {
+                    try {
+                        val mkaSession = MkaSession(
+                            this@MainActivity,
+                            "A1006C0B57AF9D44240CE6415",
+                            "06080",
+                            inputBlz
+                        )
+                        val response = withContext(Dispatchers.IO) {
+                            mkaSession.login(inputAnmeldename, inputPin)
+                        }
+
+                        snackbar.dismiss()
+
+                        if (response != false) {
+                            Toast.makeText(this@MainActivity, "Login erfolgreich", Toast.LENGTH_SHORT).show()
+                            proceedToMainApp()
+                        } else {
+                            Snackbar.make(
+                                findViewById(android.R.id.content),
+                                "Login fehlgeschlagen",
+                                Snackbar.LENGTH_SHORT
+                            ).show()
+                        }
+                    } catch (e: Exception) {
+                        snackbar.dismiss()
+                        Snackbar.make(
+                            findViewById(android.R.id.content),
+                            "Fehler: ${e.localizedMessage}",
+                            Snackbar.LENGTH_LONG
+                        ).show()
+                    }
+                    dialog.dismiss()
+                }
             }
             .setNegativeButton("Abbrechen") { dialog, _ ->
                 dialog.dismiss()
@@ -194,13 +238,6 @@ class MainActivity : AppCompatActivity(), ChooseInstitionBottomSheet.OnChoiceSel
         Log.d("MainActivity", "Login erfolgreich!")
         viewModel.sendDeviceData()
         viewModel.loadMobiData()
-
-        val mkaRoutingService = MkaRoutingService ( MyOkHttpClientFactory().createClientWithCertificate(this))
-
-        CoroutineScope(Dispatchers.Main).launch {
-            val response = mkaRoutingService.getRoute("94059421")
-            Log.d(TAG, "route: ${response}")
-        }
 
         // Registriere den BroadcastReceiver
         LocalBroadcastManager.getInstance(this).registerReceiver(
