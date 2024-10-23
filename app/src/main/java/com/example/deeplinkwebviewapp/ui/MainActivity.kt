@@ -45,11 +45,13 @@ import com.google.android.material.badge.ExperimentalBadgeUtils
 import com.example.deeplinkwebviewapp.service.Logger
 import com.google.gson.Gson
 import android.widget.EditText
+import com.example.deeplinkwebviewapp.data.SfcIfResponse
 import com.example.deeplinkwebviewapp.service.MkaRoutingService
 import com.example.deeplinkwebviewapp.service.MyOkHttpClientFactory
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.serialization.json.Json
 
 
 class MainActivity : AppCompatActivity(), ChooseInstitionBottomSheet.OnChoiceSelectedListener {
@@ -220,8 +222,19 @@ class MainActivity : AppCompatActivity(), ChooseInstitionBottomSheet.OnChoiceSel
         // Beobachte die LiveData für die Imagedaten
         viewModel.VkaDataLoaded.observe(this) { loaded ->
             if (loaded == true) {
-                val intent = Intent(this, DisrupterActivity::class.java)
-                startActivity(intent)
+                val sharedPreferences = getSharedPreferences("MyPreferences", Context.MODE_PRIVATE)
+                val jsonIamPayloadString = sharedPreferences.getString("iamPayload", "").toString()
+                val iamPayload = Json.decodeFromString<IamPayload>(jsonIamPayloadString)
+                val jsonVkaString = sharedPreferences.getString("vkaData", "").toString()
+                val sfcIfResponse = Json.decodeFromString<SfcIfResponse>(jsonVkaString)
+                if (iamPayload.overlayImage == "3" || iamPayload.overlayImage == "4") {
+                    val intent = Intent(this, DisrupterActivity::class.java)
+                    startActivity(intent)
+                } else {
+                    val url = sfcIfResponse?.services?.firstOrNull()?.IF?.disrupter?.firstLink?.url
+                    if ( url != null )
+                        openWebView(url, false)
+                }
             } else {
                     // val url = pushNotificationPayload.iam?.
                     Toast.makeText(this@MainActivity, "wir gehen direkt zu link1, weil kein Störer gezeigt werden soll", Toast.LENGTH_LONG).show()

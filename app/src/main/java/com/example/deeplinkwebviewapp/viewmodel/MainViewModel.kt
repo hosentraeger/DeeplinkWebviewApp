@@ -1,6 +1,5 @@
 package com.example.deeplinkwebviewapp.viewmodel
 
-import com.example.deeplinkwebviewapp.data.SfcIfResponse
 import com.example.deeplinkwebviewapp.service.SfcServiceFactory
 import com.example.deeplinkwebviewapp.data.SfmMobiResponse
 import com.example.deeplinkwebviewapp.service.SfmServiceFactory
@@ -16,15 +15,21 @@ import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
 import java.util.Locale
 import com.example.deeplinkwebviewapp.R
+import com.example.deeplinkwebviewapp.data.AemBanner
+import com.example.deeplinkwebviewapp.data.AemPage
 import com.example.deeplinkwebviewapp.data.DeviceData
 import com.example.deeplinkwebviewapp.data.DeviceDataSingleton
+import com.example.deeplinkwebviewapp.data.IFData
 import com.example.deeplinkwebviewapp.data.PushNotificationPayload
+import com.example.deeplinkwebviewapp.data.Service
+import com.example.deeplinkwebviewapp.data.SfcIfResponse
 import com.example.deeplinkwebviewapp.service.Logger
 import com.example.deeplinkwebviewapp.service.MyHttpClient
 import com.example.deeplinkwebviewapp.service.SilentLoginAndAdvisorDataService
 import com.google.firebase.messaging.FirebaseMessaging
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.encodeToString
+import kotlinx.serialization.modules.SerializersModule
 import java.util.UUID
 
 
@@ -70,18 +75,23 @@ class MainViewModel(
         pushNotificationPayload.iam?.let {
             sfcService.fetchVkaData(it.contentId) { response: String? ->
                 response?.let {
-                    val sharedPreferences = context.getSharedPreferences(
-                        "MyPreferences",
-                        Context.MODE_PRIVATE)
-                    val editor = sharedPreferences.edit()
-                    editor.putString("vkaData", response)
-                    editor.apply()  // apply() speichert asynchron
-
-                    try {
-                        _VkaDataLoaded.postValue(true)
-                    } catch (e: Exception) {
-                        Log.e(TAG, "Error processing SfcIfResponse: ${e.localizedMessage}")
-                        _VkaDataLoaded.postValue(false) // Bei Fehler null setzen
+                    val sfcIfResponse: SfcIfResponse? =
+                        Json.decodeFromString(response)
+                    val ifData = sfcIfResponse?.services?.firstOrNull()?.IF
+                    ifData?.logoutPageURL?.let { it1 ->
+                        sfcService.fetchAemPage(
+                            it1
+                        ) { response: AemPage? ->
+                            response?.let {
+                                val newIf = ifData.copy(logoutPage=response)
+                                val newSfcIfResponse = SfcIfResponse(
+                                    services = sfcIfResponse?.services.toMutableList().apply {
+                                        set(0, sfcIfResponse?.services[0].copy(IF = newIf))
+                                    }
+                                )
+                                saveIfDataToSharedPrefs(pushNotificationPayload,newSfcIfResponse)
+                            }
+                        }
                     }
                 } ?: run {
                     Log.e("MainViewModel", "Fehler bei der Anfrage")
@@ -89,6 +99,24 @@ class MainViewModel(
                 }
             }
         }
+    }
+
+    fun saveIfDataToSharedPrefs (pushNotificationPayload: PushNotificationPayload, vkaData: SfcIfResponse) {
+        val sharedPreferences = context.getSharedPreferences(
+            "MyPreferences",
+            Context.MODE_PRIVATE)
+        val editor = sharedPreferences.edit()
+        editor.putString("vkaData", Json.encodeToString(vkaData))
+        editor.putString("iamPayload", Json.encodeToString(pushNotificationPayload.iam))
+        editor.apply()  // apply() speichert asynchron
+
+        try {
+            _VkaDataLoaded.postValue(true)
+        } catch (e: Exception) {
+            Log.e(TAG, "Error processing SfcIfResponse: ${e.localizedMessage}")
+            _VkaDataLoaded.postValue(false) // Bei Fehler null setzen
+        }
+
     }
 
     fun loadMobiData() {

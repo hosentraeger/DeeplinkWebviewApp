@@ -13,6 +13,7 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.example.deeplinkwebviewapp.R
+import com.example.deeplinkwebviewapp.data.IamPayload
 import com.example.deeplinkwebviewapp.data.SfcIfResponse
 import com.example.deeplinkwebviewapp.service.MyHttpClient
 import kotlinx.serialization.json.Json
@@ -22,13 +23,22 @@ class DisrupterActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_disrupter)
 
-        val sfcIfResponse = loadSfcIfResponseFromPrefs(this)
+        val sharedPreferences = getSharedPreferences("MyPreferences", Context.MODE_PRIVATE)
+        val jsonIamPayloadString = sharedPreferences.getString("iamPayload", "").toString()
+        val iamPayload = Json.decodeFromString<IamPayload>(jsonIamPayloadString)
+        val jsonVkaString = sharedPreferences.getString("vkaData", "").toString()
+        val sfcIfResponse = Json.decodeFromString<SfcIfResponse>(jsonVkaString)
         val disrupterData = sfcIfResponse?.services?.firstOrNull()?.IF?.disrupter
+        val logoutPageData = sfcIfResponse?.services?.firstOrNull()?.IF?.logoutPage
 
         val imageView = findViewById<ImageView>(R.id.disrupterImageView)
 
-        if (disrupterData?.image != null) {
+        if (iamPayload.overlayImage=="3" && disrupterData?.image != null) {
             val decodedBytes = Base64.decode(disrupterData.image, Base64.DEFAULT)
+            val bitmap = BitmapFactory.decodeByteArray(decodedBytes, 0, decodedBytes.size)
+            imageView.setImageBitmap(bitmap)
+        } else if (iamPayload.overlayImage=="4" && logoutPageData?.image != null) {
+            val decodedBytes = Base64.decode(logoutPageData.image, Base64.DEFAULT)
             val bitmap = BitmapFactory.decodeByteArray(decodedBytes, 0, decodedBytes.size)
             imageView.setImageBitmap(bitmap)
         } else {
