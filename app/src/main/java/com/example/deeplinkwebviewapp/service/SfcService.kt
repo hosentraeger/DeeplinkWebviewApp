@@ -1,14 +1,10 @@
 package com.example.deeplinkwebviewapp.service
 
-import android.net.Uri
 import com.example.deeplinkwebviewapp.data.SfcIfResponse
 import android.util.Log
 import com.example.deeplinkwebviewapp.data.AemBanner
 import com.example.deeplinkwebviewapp.data.AemPage
 import kotlinx.serialization.json.Json
-import okhttp3.OkHttpClient
-import okhttp3.Request
-import okhttp3.Response
 
 enum class STAGE { STAGE_RHEIN, STAGE_BETA, STAGE_PROD }
 
@@ -30,13 +26,11 @@ class SfcService(
             response?.let {
                 try {
                     val sfcIfResponse = Json.decodeFromString<SfcIfResponse>(it)
-
                     // Überprüfen, ob die Antwort den Status "NO_CONTENT" enthält
                     if (sfcIfResponse.services.any { service -> service.IF?.status == "NO_CONTENT" }) {
                         Log.e(TAG, "Keine Inhalte verfügbar (NO_CONTENT)")
                         callback(null) // Rückgabe von null oder ein spezifisches Ergebnis im Fehlerfall
                     } else {
-//                        callback(sfcIfResponse) // Rückgabe der deserialisierten SfcIfResponse
                         callback(response)
                     }
                 } catch (e: Exception) {

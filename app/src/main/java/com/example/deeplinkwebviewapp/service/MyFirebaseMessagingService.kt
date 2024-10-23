@@ -138,8 +138,12 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
                                                 }
                                             }
                                         }
-
-                                        else -> {}
+                                        else -> showNotification(
+                                            title,
+                                            body,
+                                            pushNotificationPayload,
+                                            null
+                                        )
                                     }
                                 } catch (e: Exception) {
                                     Log.e(
