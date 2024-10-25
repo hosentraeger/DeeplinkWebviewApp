@@ -68,6 +68,7 @@ dependencies {
     // OkHttp
     implementation(libs.okhttp)
     implementation(libs.logging.interceptor)
+//    implementation(libs.okhttp.cookie)
     implementation(libs.gson)
 
     // Import the Firebase BoM

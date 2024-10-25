@@ -1,21 +1,23 @@
 package com.example.deeplinkwebviewapp.service
 
+import android.content.Context
 import android.util.Log
+import com.example.deeplinkwebviewapp.R
 import com.example.deeplinkwebviewapp.data.DeviceData
 import com.google.gson.Gson
-import okhttp3.MediaType.Companion.toMediaType
-import okhttp3.OkHttpClient
-import okhttp3.Request
-import okhttp3.Response
-import okhttp3.RequestBody.Companion.toRequestBody
-import okhttp3.logging.HttpLoggingInterceptor
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import android.content.Context
-import com.example.deeplinkwebviewapp.R
-import java.io.ByteArrayInputStream
+import okhttp3.Cookie
+import okhttp3.CookieJar
+import okhttp3.HttpUrl
+import okhttp3.MediaType.Companion.toMediaType
+import okhttp3.OkHttpClient
+import okhttp3.Request
+import okhttp3.RequestBody.Companion.toRequestBody
+import okhttp3.Response
+import okhttp3.logging.HttpLoggingInterceptor
 import java.io.InputStream
 import java.security.KeyFactory
 import java.security.KeyStore
@@ -27,6 +29,24 @@ import javax.net.ssl.KeyManagerFactory
 import javax.net.ssl.SSLContext
 import javax.net.ssl.TrustManagerFactory
 import javax.net.ssl.X509TrustManager
+
+class SimpleCookieJar : CookieJar {
+    private val cookieStore: MutableMap<String, List<Cookie>> = mutableMapOf()
+
+    override fun saveFromResponse(url: HttpUrl, cookies: List<Cookie>) {
+        val existingCookies = cookieStore[url.host]?.toMutableList() ?: mutableListOf()
+        existingCookies.addAll(cookies)
+        cookieStore[url.host] = existingCookies.distinctBy { it.name }
+    }
+
+    override fun loadForRequest(url: HttpUrl): List<Cookie> {
+        val cookies = cookieStore[url.host] ?: emptyList()
+        for ( cookie in cookies) {
+            Log.d("Cookiemanager", "loadForRequest ${url.toString()} -> $cookie.name")
+        }
+        return cookies
+    }
+}
 
 class MyHttpClient private constructor(private val userAgent: String) {
 
@@ -331,8 +351,17 @@ class MyOkHttpClientFactory {
         val sslContext = SSLContext.getInstance("TLS")
         sslContext.init(keyManagerFactory.keyManagers, trustManagerFactory.trustManagers, null)
 
+        // Logging-Interceptor erstellen
+        val loggingInterceptor = HttpLoggingInterceptor().apply {
+            level = HttpLoggingInterceptor.Level.BODY // Logging-Level anpassen
+        }
+
+        val cookieJar = SimpleCookieJar()
+
         // Erstelle und konfiguriere den OkHttpClient
         return OkHttpClient.Builder()
+            .cookieJar(cookieJar)
+            .addInterceptor(loggingInterceptor)
             .sslSocketFactory(sslContext.socketFactory, trustManagerFactory.trustManagers[0] as X509TrustManager)
             .hostnameVerifier { _, _ -> true } // Für produktive Umgebungen sicherstellen
             .build()

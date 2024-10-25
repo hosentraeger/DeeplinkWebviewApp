@@ -43,16 +43,14 @@ import com.google.android.material.badge.BadgeDrawable
 import com.google.android.material.badge.BadgeUtils
 import com.google.android.material.badge.ExperimentalBadgeUtils
 import com.example.deeplinkwebviewapp.service.Logger
-import com.google.gson.Gson
 import android.widget.EditText
 import com.example.deeplinkwebviewapp.data.SfcIfResponse
 import com.example.deeplinkwebviewapp.service.MkaSession
-import com.example.deeplinkwebviewapp.service.MyOkHttpClientFactory
 import com.google.android.material.snackbar.Snackbar
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 
 
@@ -62,11 +60,11 @@ class MainActivity : AppCompatActivity(), ChooseInstitionBottomSheet.OnChoiceSel
     private lateinit var navView: NavigationView
     private lateinit var toggle: ActionBarDrawerToggle
     private lateinit var viewModel: MainViewModel
-    private val gson = Gson()
     private val settingsViewModel: SettingsViewModel by viewModels {
         val sharedPreferences = getSharedPreferences("MyPreferences", Context.MODE_PRIVATE)
         SettingsViewModelFactory(application, sharedPreferences)
     }
+    private lateinit var mkaSession: MkaSession
 
     companion object {
         private const val TAG = "MainActivity"
@@ -169,6 +167,7 @@ class MainActivity : AppCompatActivity(), ChooseInstitionBottomSheet.OnChoiceSel
         val currentBlz = sharedPreferences.getString("BLZ", "").toString()
         val currentAnmeldename = sharedPreferences.getString("Username", "").toString()
         val currentPin = sharedPreferences.getString("PIN", "").toString()
+        val kundenSystemId = sharedPreferences.getString("kundenSystemId", "").toString()
         blzInput.setText(currentBlz)
         anmeldenameInput.setText(currentAnmeldename)
         pinInput.setText(currentPin)
@@ -194,20 +193,29 @@ class MainActivity : AppCompatActivity(), ChooseInstitionBottomSheet.OnChoiceSel
 
                 lifecycleScope.launch {
                     try {
-                        val mkaSession = MkaSession(
+                        mkaSession = MkaSession(
                             this@MainActivity,
                             "A1006C0B57AF9D44240CE6415",
                             "06080",
                             inputBlz
                         )
                         val response = withContext(Dispatchers.IO) {
-                            mkaSession.login(inputAnmeldename, inputPin)
+                            mkaSession.login(inputAnmeldename, inputPin, kundenSystemId, "923", "Alle Geräte")
                         }
 
                         snackbar.dismiss()
 
-                        if (response != false) {
-                            Toast.makeText(this@MainActivity, "Login erfolgreich", Toast.LENGTH_SHORT).show()
+                        if (response != null ) {
+                            for(mkaResponseEntry in response) {
+                                if (mkaResponseEntry.code == 3991) {
+                                    val kundenSystemId: String? =
+                                        mkaResponseEntry?.metadata?.hbciResponseList?.firstOrNull()
+
+                                    if (kundenSystemId != null) {
+                                        registerDevice(kundenSystemId)
+                                    }
+                                }
+                            }
                             proceedToMainApp()
                         } else {
                             Snackbar.make(
@@ -232,6 +240,61 @@ class MainActivity : AppCompatActivity(), ChooseInstitionBottomSheet.OnChoiceSel
             }
             .show()
     }
+
+    private fun registerDevice(kundenSystemId: String) {
+        // Dialog zur Bestätigung der Registrierung
+        AlertDialog.Builder(this)
+            .setTitle("Geräteregistrierung erforderlich")
+            .setMessage("Um fortzufahren, müssen Sie Ihr Gerät registrieren. Möchten Sie jetzt fortfahren?")
+            .setPositiveButton("OK") { _, _ ->
+                // Starte die Registrierung
+                lifecycleScope.launch(Dispatchers.IO) {
+                    val response = mkaSession.registerDevice(kundenSystemId, "923", "Alle Geräte")
+                    withContext(Dispatchers.Main) {
+                        val auftragsReferenz = response?.firstOrNull()?.metadata?.signatureChallenge?.orderReference
+                        // Zeige den Bestätigungsdialog für die S-pushTAN-App
+                        AlertDialog.Builder(this@MainActivity)
+                            .setTitle("S-pushTAN-App")
+                            .setMessage("Bitte bestätigen Sie die Registrierung in Ihrer S-pushTAN-App und klicken Sie dann hier.")
+                            .setPositiveButton("OK") { _, _ ->
+                                // Versuche, die Registrierung abzuschließen
+                                try {
+                                    lifecycleScope.launch(Dispatchers.IO) {
+                                        val response =
+                                            mkaSession.finishRegistration(auftragsReferenz!!, "923")
+                                        withContext(Dispatchers.Main) {
+                                            if (response?.firstOrNull()?.code == 20) {
+                                                val sharedPreferences =
+                                                    this@MainActivity.getSharedPreferences(
+                                                        "MyPreferences",
+                                                        Context.MODE_PRIVATE
+                                                    )
+                                                val editor = sharedPreferences.edit()
+                                                editor.putString("kundenSystemId", kundenSystemId)
+                                                editor.apply()  // apply() speichert asynchron
+                                                Toast.makeText(
+                                                    this@MainActivity,
+                                                    "Gerät erfolgreich registriert!",
+                                                    Toast.LENGTH_LONG
+                                                ).show()
+                                            }
+                                        }
+                                    }
+                                } catch (e: Exception) {
+                                    // Handle errors
+                                }
+                            }
+                            .show()
+                    }
+                }
+            }
+            .setNegativeButton("Abbrechen") { dialog, _ ->
+                dialog.dismiss()
+                // Hier kannst du eine Aktion ausführen, wenn der Benutzer abbricht
+            }
+            .show()
+    }
+
 
     private fun proceedToMainApp() {
         // Logik zum Starten der App nach erfolgreichem Login
