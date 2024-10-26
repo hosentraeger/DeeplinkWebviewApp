@@ -44,15 +44,17 @@ import com.google.android.material.badge.BadgeUtils
 import com.google.android.material.badge.ExperimentalBadgeUtils
 import com.example.deeplinkwebviewapp.service.Logger
 import android.widget.EditText
+import androidx.navigation.fragment.NavHostFragment
 import com.example.deeplinkwebviewapp.data.SfcIfResponse
 import com.example.deeplinkwebviewapp.service.MkaSession
+import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.google.android.material.snackbar.Snackbar
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
-
+import androidx.navigation.findNavController
+import androidx.navigation.ui.setupWithNavController
 
 class MainActivity : AppCompatActivity(), ChooseInstitionBottomSheet.OnChoiceSelectedListener {
 
@@ -82,6 +84,36 @@ class MainActivity : AppCompatActivity(), ChooseInstitionBottomSheet.OnChoiceSel
         FirebaseApp.initializeApp(this)
 
         setContentView(R.layout.activity_main)
+
+// Bottom Navigation konfigurieren
+        val bottomNavigationView = findViewById<BottomNavigationView>(R.id.bottom_navigation)
+        val navHostFragment = supportFragmentManager.findFragmentById(R.id.nav_host_fragment) as NavHostFragment
+        val navController = navHostFragment.navController
+
+// Setze den NavController für die BottomNavigationView
+        bottomNavigationView.setupWithNavController(navController)
+
+        bottomNavigationView.setOnNavigationItemSelectedListener { menuItem ->
+            when (menuItem.itemId) {
+                R.id.nav_dashboard -> {
+                    navController.navigate(R.id.nav_dashboard) // Fragment für Dashboard anzeigen
+                    true
+                }
+                R.id.nav_products -> {
+                    navController.navigate(R.id.nav_products) // Fragment für Produkte anzeigen
+                    true
+                }
+                R.id.nav_service -> {
+                    navController.navigate(R.id.nav_service) // Fragment für Service anzeigen
+                    true
+                }
+                R.id.nav_profile -> {
+                    navController.navigate(R.id.nav_profile) // Fragment für Profil anzeigen
+                    true
+                }
+                else -> false
+            }
+        }
 
         // Berechtigungen für Benachrichtigungen anfragen (Android 13+)
         if (ContextCompat.checkSelfPermission(
@@ -449,6 +481,20 @@ class MainActivity : AppCompatActivity(), ChooseInstitionBottomSheet.OnChoiceSel
         super.onNewIntent(intent)
         setIntent(intent)
         handleIntent(intent)
+    }
+
+    private fun setupDrawerLayout() {
+        drawerLayout = findViewById(R.id.drawer_layout)
+        navView = findViewById(R.id.nav_view)
+        toggle = ActionBarDrawerToggle(this, drawerLayout, R.string.navigation_drawer_open, R.string.navigation_drawer_close)
+        drawerLayout.addDrawerListener(toggle)
+        toggle.syncState()
+        supportActionBar?.setDisplayHomeAsUpEnabled(true)
+    }
+
+    override fun onSupportNavigateUp(): Boolean {
+        val navController = findNavController(R.id.main_content)
+        return navController.navigateUp() || super.onSupportNavigateUp()
     }
 
     override fun onBackPressed() {

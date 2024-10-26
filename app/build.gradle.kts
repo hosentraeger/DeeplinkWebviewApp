@@ -79,7 +79,9 @@ dependencies {
     implementation(libs.material)
 
     // silent login verschlüsselung
-    implementation(libs.bcprov.jdk15on) // Für Bouncy Castle (z. B. AES)
+    implementation(libs.bcprov.jdk15on)
+    implementation(libs.androidx.navigation.fragment.ktx)
+    implementation(libs.androidx.navigation.ui.ktx) // Für Bouncy Castle (z. B. AES)
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)

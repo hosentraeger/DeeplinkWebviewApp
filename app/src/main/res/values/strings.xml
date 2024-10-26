@@ -44,4 +44,13 @@
     <string name="user_agent_string_webview">Mozilla/5.0 (iPhone; CPU iPhone OS 17_2_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148 SparkasseWKWebView SFGAPP-sapp-6.8.0-32750</string>
     <string name="deeplink_root_uri">https://www.fsiebecke.de/</string>
     <string name="servlet_url">URL to Silent Login Servlet</string>
+    <string name="dashboard">Start</string>
+    <string name="products">Produkte</string>
+    <string name="services">Service</string>
+    <string name="profile">Profil</string>
+    <!-- TODO: Remove or change this placeholder text -->
+    <string name="hello_dashboard_fragment">Dashboard Fragment</string>
+    <string name="hello_profile_fragment">Profile Fragment</string>
+    <string name="hello_service_fragment">Service Fragment</string>
+    <string name="hello_products_fragment">Products Fragment</string>
 </resources>

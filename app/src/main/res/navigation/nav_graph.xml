@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/nav_graph"
+    xmlns:tools="http://schemas.android.com/tools"
+    app:startDestination="@id/nav_dashboard">
+
+    <fragment
+        android:id="@+id/nav_dashboard"
+        android:name="com.example.deeplinkwebviewapp.ui.DashboardFragment"
+        tools:layout="@layout/fragment_dashboard"
+        android:label="Dashboard" />
+
+    <fragment
+        android:id="@+id/nav_products"
+        android:name="com.example.deeplinkwebviewapp.ui.ProductsFragment"
+        tools:layout="@layout/fragment_products"
+        android:label="Products" />
+
+    <fragment
+        android:id="@+id/nav_service"
+        android:name="com.example.deeplinkwebviewapp.ui.ServiceFragment"
+        tools:layout="@layout/fragment_service"
+        android:label="Service" />
+
+    <fragment
+        android:id="@+id/nav_profile"
+        android:name="com.example.deeplinkwebviewapp.ui.ProfileFragment"
+        tools:layout="@layout/fragment_profile"
+        android:label="Profile" />
+</navigation>
