@@ -25,11 +25,17 @@
     </string-array>
     <string name="title_activity_log">LogActivity</string>
     <string name="default_notification_channel_id">default_channel</string>
-    <string name="default_notification_channel_name">DeeplinkWebviewAppChannel</string>
-    <string name="default_notification_channel_description">DeeplinkWebviewAppChannel für meine App</string>
+    <string name="default_notification_channel_name">Allgemein</string>
+    <string name="default_notification_channel_description">Benachrichtigungen ohne besonderen Bezug</string>
     <string name="system_notification_channel_id">system_channel</string>
-    <string name="system_notification_channel_name">DeeplinkWebviewApp System Channel</string>
-    <string name="system_notification_channel_description">DeeplinkWebviewApp System Channel für meine App</string>
+    <string name="system_notification_channel_name">System</string>
+    <string name="system_notification_channel_description">Benachrichtigungen für Aktualisierungen und Sicherheit</string>
+    <string name="account_alert_notification_channel_id">account_alert_channel</string>
+    <string name="account_alert_notification_channel_name">Kontowecker</string>
+    <string name="account_alert_notification_channel_description">Benachrichtigungen für selbst erstellte Kontowecker</string>
+    <string name="iam_notification_channel_id">iam_channel</string>
+    <string name="iam_notification_channel_name">Individuelle Angebote</string>
+    <string name="iam_notification_channel_description">Benachrichtigungen für Aktualisierungen und Sicherheit</string>
     <string name="disrupter_image">Disrupter image</string>
     <string name="header_text">HEADER TEXT</string>
     <string name="subtitle_text">SUBTITLE TEXT</string>

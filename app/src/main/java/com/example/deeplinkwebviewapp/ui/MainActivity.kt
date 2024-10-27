@@ -79,6 +79,8 @@ class MainActivity : AppCompatActivity(), ChooseInstitionBottomSheet.OnChoiceSel
         super.onCreate(savedInstanceState)
         createNotificationChannel()
         createSystemNotificationChannel()
+        createAccountAlertNotificationChannel()
+        createIamNotificationChannel()
 
         // Firebase initialisieren
         FirebaseApp.initializeApp(this)
@@ -540,6 +542,35 @@ class MainActivity : AppCompatActivity(), ChooseInstitionBottomSheet.OnChoiceSel
         val channel = NotificationChannel(channelId, channelName, importance).apply {
             description = channelDescriptionText
             setShowBadge(true) // Badge-Anzeige aktivieren
+        }
+        // Register the channel with the system
+        val notificationManager: NotificationManager =
+            getSystemService(NOTIFICATION_SERVICE) as NotificationManager
+        notificationManager.createNotificationChannel(channel)
+    }
+
+    private fun createAccountAlertNotificationChannel() {
+        val channelId = getString(R.string.account_alert_notification_channel_id)
+        val channelName = getString(R.string.account_alert_notification_channel_name)
+        val channelDescriptionText =
+            getString(R.string.account_alert_notification_channel_description)
+        val importance = NotificationManager.IMPORTANCE_HIGH
+        val channel = NotificationChannel(channelId, channelName, importance).apply {
+            description = channelDescriptionText
+        }
+        // Register the channel with the system
+        val notificationManager: NotificationManager =
+            getSystemService(NOTIFICATION_SERVICE) as NotificationManager
+        notificationManager.createNotificationChannel(channel)
+    }
+    private fun createIamNotificationChannel() {
+        val channelId = getString(R.string.iam_notification_channel_id)
+        val channelName = getString(R.string.iam_notification_channel_name)
+        val channelDescriptionText =
+            getString(R.string.iam_notification_channel_description)
+        val importance = NotificationManager.IMPORTANCE_HIGH
+        val channel = NotificationChannel(channelId, channelName, importance).apply {
+            description = channelDescriptionText
         }
         // Register the channel with the system
         val notificationManager: NotificationManager =

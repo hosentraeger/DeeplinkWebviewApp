@@ -292,7 +292,12 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
         pushNotificationPayload: PushNotificationPayload?,
         imageBitmap: Bitmap?) {
         val notificationId = System.currentTimeMillis().toInt()
-        val channelId = getString(R.string.default_notification_channel_id)
+        val channelId = when {
+            pushNotificationPayload?.iam != null -> getString(R.string.iam_notification_channel_id)
+            pushNotificationPayload?.balance != null -> getString(R.string.account_alert_notification_channel_id)
+            pushNotificationPayload?.mailbox != null -> getString(R.string.system_notification_channel_id)
+            else -> getString(R.string.default_notification_channel_id)
+        }
 
         val intent = Intent(this, MainActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP
