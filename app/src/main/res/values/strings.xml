@@ -4,6 +4,7 @@
     <string name="navigation_drawer_open">Open Navigation</string>
     <string name="navigation_drawer_close">Close Navigation</string>
     <string name="title_activity_settings">SettingsActivity</string>
+    <string name="title_activity_system_parameters">SystemParametersActivity</string>
     <string-array name="sf_stage_array">
         <item>Rhein</item>
         <item>Beta</item>
@@ -59,4 +60,9 @@
     <string name="hello_profile_fragment">Profile Fragment</string>
     <string name="hello_service_fragment">Service Fragment</string>
     <string name="hello_products_fragment">Products Fragment</string>
+    <string name="profile_entry_name_settings">Einstellungen</string>
+    <string name="profile_entry_name_notification_settings">Benachrichtigungen</string>
+    <string name="profile_entry_name_log">Kommunikationsprotokoll</string>
+    <string name="profile_entry_name_system_parameter">Systemparameter</string>
+    <string name="profile_entry_name_logout">Logout</string>
 </resources>

@@ -687,6 +687,15 @@ class MainActivity : AppCompatActivity(), ChooseInstitionBottomSheet.OnChoiceSel
         ) // Aktion für Einstellungen
     }
 
+    fun showSystemParameter() {
+        startActivity(
+            Intent(
+                this,
+                SystemParametersActivity::class.java
+            )
+        ) // Aktion für Einstellungen
+    }
+
     private fun showLog() {
         startActivity(
             Intent(

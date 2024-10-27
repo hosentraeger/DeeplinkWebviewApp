@@ -52,19 +52,22 @@ class ProfileFragment : Fragment() {
 
     private fun handleMenuClick(menuItem: String) {
         when (menuItem) {
-            "Einstellungen" -> {
+            getString(R.string.profile_entry_name_settings) -> {
                 (activity as? MainActivity)?.showSettings()
             }
-            "Benachrichtigungen" -> {
-                // Navigate to the notifications screen
+            getString(R.string.profile_entry_name_notification_settings) -> {
+                val intent = Intent(requireContext(), NotificationSettingsActivity::class.java)
+                startActivity(intent)
             }
-            "Kommunikationsprotokoll" -> {
+            getString(R.string.profile_entry_name_log) -> {
                 val intent = Intent(requireContext(), LogActivity::class.java)
                 startActivity(intent)
             }
-            "Logout" -> {
+            getString(R.string.profile_entry_name_system_parameter) -> {
+                (activity as? MainActivity)?.showSystemParameter()
+            }
+            getString(R.string.profile_entry_name_logout) -> {
                 activity?.finishAffinity()
             }
         }
-    }
-}
+    }}
