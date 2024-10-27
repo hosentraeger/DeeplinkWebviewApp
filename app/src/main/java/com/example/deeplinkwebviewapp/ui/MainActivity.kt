@@ -647,7 +647,7 @@ class MainActivity : AppCompatActivity(), ChooseInstitionBottomSheet.OnChoiceSel
  */
     }
 
-    private fun showSettings() {
+    fun showSettings() {
         startActivity(
             Intent(
                 this,
