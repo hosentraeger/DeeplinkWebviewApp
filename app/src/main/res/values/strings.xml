@@ -65,4 +65,6 @@
     <string name="profile_entry_name_log">Kommunikationsprotokoll</string>
     <string name="profile_entry_name_system_parameter">Systemparameter</string>
     <string name="profile_entry_name_logout">Logout</string>
+    <string name="ad_banner">overview banner</string>
+    <string name="show_promoted_product">Klick hier für ein cooles Angebot!</string>
 </resources>

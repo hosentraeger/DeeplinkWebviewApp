@@ -1,7 +1,6 @@
 package com.example.deeplinkwebviewapp.ui
 
 import com.example.deeplinkwebviewapp.viewmodel.MainViewModel
-import com.example.deeplinkwebviewapp.viewmodel.MainViewModelFactory
 import com.example.deeplinkwebviewapp.viewmodel.SettingsViewModel
 import com.example.deeplinkwebviewapp.viewmodel.SettingsViewModelFactory
 import android.Manifest
@@ -55,6 +54,7 @@ import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
 import androidx.navigation.findNavController
 import androidx.navigation.ui.setupWithNavController
+import com.example.deeplinkwebviewapp.viewmodel.MainViewModelFactory
 
 class MainActivity : AppCompatActivity(), ChooseInstitionBottomSheet.OnChoiceSelectedListener {
 
@@ -72,11 +72,14 @@ class MainActivity : AppCompatActivity(), ChooseInstitionBottomSheet.OnChoiceSel
         private const val TAG = "MainActivity"
     }
 
+    private lateinit var productsFragment: ProductsFragment
+
     @androidx.annotation.OptIn(ExperimentalBadgeUtils::class)
     @RequiresApi(Build.VERSION_CODES.TIRAMISU)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        productsFragment = ProductsFragment()
         createNotificationChannel()
         createSystemNotificationChannel()
         createAccountAlertNotificationChannel()
@@ -102,7 +105,11 @@ class MainActivity : AppCompatActivity(), ChooseInstitionBottomSheet.OnChoiceSel
                     true
                 }
                 R.id.nav_products -> {
-                    navController.navigate(R.id.nav_products) // Fragment für Produkte anzeigen
+                    val bundle = Bundle().apply {
+                        putString("url_key", "https://m164an08-421.if-etaps.de/de/home/service.webview.html?n=true&start=true&IF_SILENT_LOGIN=true")
+                    }
+                    // Navigiere zur ProductsFragment mit dem Bundle
+                    navController.navigate(R.id.nav_products, bundle)
                     true
                 }
                 R.id.nav_service -> {
@@ -843,71 +850,7 @@ class MainActivity : AppCompatActivity(), ChooseInstitionBottomSheet.OnChoiceSel
             handlePushNotification(intent)
         }
     }
-/*
-    @OptIn(DelicateCoroutinesApi::class)
-    private fun fetchImageAndShowNotification(
-        title: String?,
-        message: String?,
-        customKey1: String?,
-        customKey2: String?
-    ) {
-        // Hier kannst du eine Coroutine oder eine andere Methode verwenden,
-        // um das Bild asynchron abzurufen.
-        GlobalScope.launch(Dispatchers.IO) {
-            val imageBitmap = BitmapFactory.decodeResource(resources, R.drawable.sample_banner)
-            showNotification(title, message, customKey1, customKey2, imageBitmap)
-        }
-    }
 
-    private fun showNotification(
-        title: String?,
-        message: String?,
-        pushNotificationPayload: PushNotificationPayload,
-        imageBitmap: Bitmap?
-    ) {
-        val notificationId = System.currentTimeMillis().toInt()
-        val channelId = getString(R.string.default_notification_channel_id)
-
-        val intent = Intent(this, MainActivity::class.java).apply {
-            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP
-            putExtra("customKey1", customKey1)
-            putExtra("customKey2", customKey2)
-        }
-        val pendingIntent = PendingIntent.getActivity(
-            this,
-            0,
-            intent,
-            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-        )
-
-        val notificationBuilder = NotificationCompat.Builder(this, channelId)
-            .setSmallIcon(R.drawable.ic_notification) // Setze hier dein Icon
-            .setContentTitle(title)
-            .setContentText(message)
-            .setPriority(NotificationCompat.PRIORITY_HIGH)
-            .setContentIntent(pendingIntent)
-            .setAutoCancel(true)
-
-        // Wenn das Bild vorhanden ist, setze es in die Benachrichtigung
-        if (imageBitmap != null) {
-            notificationBuilder.setStyle(
-                NotificationCompat.BigPictureStyle()
-                    .bigPicture(imageBitmap)
-                    .bigLargeIcon(null as Bitmap?)
-            ) // Optional, um das große Icon zu entfernen
-        }
-
-        val notificationManager = NotificationManagerCompat.from(this)
-        if (ActivityCompat.checkSelfPermission(
-                this,
-                Manifest.permission.POST_NOTIFICATIONS
-            ) != PackageManager.PERMISSION_GRANTED
-        ) {
-            return
-        }
-        notificationManager.notify(notificationId, notificationBuilder.build())
-    }
- */
     override fun onResume() {
         super.onResume()
 
