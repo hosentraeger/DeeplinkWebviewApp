@@ -139,7 +139,7 @@ class MainActivity : AppCompatActivity(), ChooseInstitionBottomSheet.OnChoiceSel
 
         val sharedPreferences = getSharedPreferences("MyPreferences", MODE_PRIVATE)
         val factory = MainViewModelFactory(application, sharedPreferences)
-        viewModel = ViewModelProvider(this, factory).get(MainViewModel::class.java)
+        viewModel = ViewModelProvider(this, factory)[MainViewModel::class.java]
         // Lade Preferences
         viewModel.initializePreferences()
 
@@ -249,11 +249,11 @@ class MainActivity : AppCompatActivity(), ChooseInstitionBottomSheet.OnChoiceSel
                         if (response != null ) {
                             for(mkaResponseEntry in response) {
                                 if (mkaResponseEntry.code == 3991) {
-                                    val kundenSystemId: String? =
-                                        mkaResponseEntry?.metadata?.hbciResponseList?.firstOrNull()
+                                    val assignedKundenSystemId: String? =
+                                        mkaResponseEntry.metadata.hbciResponseList?.firstOrNull()
 
-                                    if (kundenSystemId != null) {
-                                        registerDevice(kundenSystemId)
+                                    if (assignedKundenSystemId != null) {
+                                        registerDevice(assignedKundenSystemId)
                                     }
                                 }
                             }
@@ -301,10 +301,10 @@ class MainActivity : AppCompatActivity(), ChooseInstitionBottomSheet.OnChoiceSel
                                 // Versuche, die Registrierung abzuschließen
                                 try {
                                     lifecycleScope.launch(Dispatchers.IO) {
-                                        val response =
+                                        val finishRegistrationResponse =
                                             mkaSession.finishRegistration(auftragsReferenz!!, "923")
                                         withContext(Dispatchers.Main) {
-                                            if (response?.firstOrNull()?.code == 20) {
+                                            if (finishRegistrationResponse?.firstOrNull()?.code == 20) {
                                                 val sharedPreferences =
                                                     this@MainActivity.getSharedPreferences(
                                                         "MyPreferences",
@@ -372,7 +372,7 @@ class MainActivity : AppCompatActivity(), ChooseInstitionBottomSheet.OnChoiceSel
                     val intent = Intent(this, DisrupterActivity::class.java)
                     startActivity(intent)
                 } else {
-                    val url = sfcIfResponse?.services?.firstOrNull()?.IF?.disrupter?.firstLink?.url
+                    val url = sfcIfResponse.services.firstOrNull()?.IF?.disrupter?.firstLink?.url
                     if ( url != null )
                         openWebView(url, false)
                 }
@@ -639,11 +639,8 @@ class MainActivity : AppCompatActivity(), ChooseInstitionBottomSheet.OnChoiceSel
         Log.d(TAG, "handlePushNotification")
         // Daten aus dem Intent holen
         val pushNotificationPayload: PushNotificationPayload? = intent?.extras?.getParcelable("pushNotificationPayload")
-        val title = intent?.getStringExtra("title")
-        val body = intent?.getStringExtra("body")
-        // TODO hier Informationen aus dem intent holen, welches Image verwendet werden soll
-        // TODO könnte in die Sharedprefs geschrieben werden, die DisrupterActivity kann die Info von dort holen
-        // TODO gleiches gilt für die Info, welche URL verwendet werden soll
+//        val title = intent?.getStringExtra("title")
+//        val body = intent?.getStringExtra("body")
         if (pushNotificationPayload?.iam != null) {
             viewModel.loadVkaData(pushNotificationPayload)
         }
@@ -756,10 +753,10 @@ class MainActivity : AppCompatActivity(), ChooseInstitionBottomSheet.OnChoiceSel
         }
     }
 
-    fun handleGenericWebviewDeeplink(deeplinkUri: Uri) {
+    private fun handleGenericWebviewDeeplink(deeplinkUri: Uri) {
         var isSilentLogin = false
         var blz: String? = null
-        Log.d(TAG, "handleGenericWebviewDeeplink, Uri: ${deeplinkUri}")
+        Log.d(TAG, "handleGenericWebviewDeeplink, Uri: $deeplinkUri")
 
         val uriBuilder = Uri.parse("https://" + viewModel.getHostname()).buildUpon()
         val queryParameterNames = deeplinkUri.queryParameterNames
@@ -780,16 +777,15 @@ class MainActivity : AppCompatActivity(), ChooseInstitionBottomSheet.OnChoiceSel
         }
         val targetUri = uriBuilder.build().toString()
         val myObvs = settingsViewModel.getObvs()
-        val filteredEntries = when {
-            blz == null ||
-            blz == "" -> listOf(settingsViewModel.getMainObv())
-            blz == "choice" -> myObvs
-            else -> myObvs.filter { it.blz in blz.split(",").map { it.trim() } }
+        val filteredEntries = when (blz) {
+            null, "" -> listOf(settingsViewModel.getMainObv())
+            "choice" -> myObvs
+            else -> myObvs.filter { it -> it.blz in blz.split(",").map { it.trim() } }
         }
         when (filteredEntries.size) {
             0 -> Toast.makeText(this@MainActivity, "Dieses Angebot ist in Ihrer Sparkasse nicht verfügbar", Toast.LENGTH_LONG).show()
             1 -> {
-                Log.d(TAG, "starting webview with uri ${targetUri}")
+                Log.d(TAG, "starting webview with uri $targetUri")
                 openWebView(targetUri, isSilentLogin)
                 }
             else -> {
@@ -799,35 +795,35 @@ class MainActivity : AppCompatActivity(), ChooseInstitionBottomSheet.OnChoiceSel
         }
     }
 
-    fun handleIamWebviewDeeplink(deeplinkUri: Uri) {
+    private fun handleIamWebviewDeeplink(deeplinkUri: Uri) {
         val contentId = deeplinkUri.getQueryParameter("contentId")
         // val eventId = deeplinkUri.getQueryParameter("eventId")
         if (contentId != null) {
             // bau eine Struktur, als wäre eine push notification gekommen
             val iamPayload = IamPayload(contentId = contentId)
-            var pushNotificationPayload = PushNotificationPayload(iam = iamPayload)
+            val pushNotificationPayload = PushNotificationPayload(iam = iamPayload)
             viewModel.loadVkaData(pushNotificationPayload)
         }
     }
 
-    fun handleMailboxBadge(pushNotificationPayload: PushNotificationPayload ) {
+    private fun handleMailboxBadge(pushNotificationPayload: PushNotificationPayload ) {
         val badgeCount: Int = pushNotificationPayload.mailbox?.count ?: 0
         Log.d(TAG, "handleMailboxBadge, badgeCount: $badgeCount")
     }
 
-    fun handleBalanceNotification(pushNotificationPayload: PushNotificationPayload ) {
+    private fun handleBalanceNotification(pushNotificationPayload: PushNotificationPayload ) {
         val balance = pushNotificationPayload.balance?.balance
         Toast.makeText(this@MainActivity, "Kontostand aktualisiert! ($balance)", Toast.LENGTH_LONG).show()
     }
 
-    fun handleWebviewNotification(pushNotificationPayload: PushNotificationPayload){
+    private fun handleWebviewNotification(pushNotificationPayload: PushNotificationPayload){
         val url = pushNotificationPayload.webview?.path
         if (url != null && url != "") {
             openWebView(url, false /* dummy parameter */)
         }
     }
 
-    fun handleUpdateNotification(pushNotificationPayload: PushNotificationPayload){
+    private fun handleUpdateNotification(pushNotificationPayload: PushNotificationPayload){
         val version = pushNotificationPayload.update?.fromVersion
         if (version != null && version != "") {
             Toast.makeText(this@MainActivity, "mach ein Update!", Toast.LENGTH_LONG).show()
@@ -837,7 +833,7 @@ class MainActivity : AppCompatActivity(), ChooseInstitionBottomSheet.OnChoiceSel
     // Implementierung der Schnittstelle
     override fun onChoiceSelected(choice: BankEntry?, targetUri: String, isSilentLogin: Boolean) {
         if (choice?.blz != null ) {
-            Log.d(TAG, "starting webview with uri ${targetUri}")
+            Log.d(TAG, "starting webview with uri $targetUri")
             openWebView(targetUri, isSilentLogin)
         } else {
             Toast.makeText(this@MainActivity, "abgebrochen", Toast.LENGTH_LONG).show()
