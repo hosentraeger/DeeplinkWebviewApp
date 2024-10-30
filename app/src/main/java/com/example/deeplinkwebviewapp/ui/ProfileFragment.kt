@@ -52,8 +52,14 @@ class ProfileFragment : Fragment() {
 
     private fun handleMenuClick(menuItem: String) {
         when (menuItem) {
-            getString(R.string.profile_entry_name_settings) -> {
-                (activity as? MainActivity)?.showSettings()
+            getString(R.string.profile_entry_name_account_settings) -> {
+                (activity as? MainActivity)?.showAccountSettings()
+            }
+            getString(R.string.profile_entry_name_feature_settings) -> {
+                (activity as? MainActivity)?.showFeatureSettings()
+            }
+            getString(R.string.profile_entry_name_system_settings) -> {
+                (activity as? MainActivity)?.showSystemSettings()
             }
             getString(R.string.profile_entry_name_notification_settings) -> {
                 val intent = Intent(requireContext(), NotificationSettingsActivity::class.java)
@@ -63,11 +69,9 @@ class ProfileFragment : Fragment() {
                 val intent = Intent(requireContext(), LogActivity::class.java)
                 startActivity(intent)
             }
-            getString(R.string.profile_entry_name_system_parameter) -> {
-                (activity as? MainActivity)?.showSystemParameter()
-            }
             getString(R.string.profile_entry_name_logout) -> {
                 activity?.finishAffinity()
             }
         }
-    }}
+    }
+}

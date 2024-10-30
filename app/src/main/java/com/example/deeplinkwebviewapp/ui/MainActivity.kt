@@ -1,8 +1,6 @@
 package com.example.deeplinkwebviewapp.ui
 
 import com.example.deeplinkwebviewapp.viewmodel.MainViewModel
-import com.example.deeplinkwebviewapp.viewmodel.SettingsViewModel
-import com.example.deeplinkwebviewapp.viewmodel.SettingsViewModelFactory
 import android.Manifest
 import android.app.NotificationChannel
 import android.app.NotificationManager
@@ -54,6 +52,8 @@ import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
 import androidx.navigation.findNavController
 import androidx.navigation.ui.setupWithNavController
+import com.example.deeplinkwebviewapp.viewmodel.AccountSettingsViewModel
+import com.example.deeplinkwebviewapp.viewmodel.AccountSettingsViewModelFactory
 import com.example.deeplinkwebviewapp.viewmodel.MainViewModelFactory
 
 class MainActivity : AppCompatActivity(), ChooseInstitionBottomSheet.OnChoiceSelectedListener {
@@ -62,9 +62,9 @@ class MainActivity : AppCompatActivity(), ChooseInstitionBottomSheet.OnChoiceSel
     private lateinit var navView: NavigationView
     private lateinit var toggle: ActionBarDrawerToggle
     private lateinit var viewModel: MainViewModel
-    private val settingsViewModel: SettingsViewModel by viewModels {
+    private val accountSettingsViewModel: AccountSettingsViewModel by viewModels {
         val sharedPreferences = getSharedPreferences("MyPreferences", Context.MODE_PRIVATE)
-        SettingsViewModelFactory(application, sharedPreferences)
+        AccountSettingsViewModelFactory(application, sharedPreferences)
     }
     private lateinit var mkaSession: MkaSession
 
@@ -449,7 +449,7 @@ class MainActivity : AppCompatActivity(), ChooseInstitionBottomSheet.OnChoiceSel
             }
 
             R.id.nav_function_einstellungen -> {
-                showSettings()
+                showFeatureSettings()
                 true
             }
 
@@ -616,7 +616,7 @@ class MainActivity : AppCompatActivity(), ChooseInstitionBottomSheet.OnChoiceSel
                 }
 
                 data.path!!.startsWith("/_deeplink/settings") -> {
-                    showSettings()
+                    showFeatureSettings()
                 }
 
                 data.path!!.startsWith("/_deeplink/log") -> {
@@ -644,7 +644,7 @@ class MainActivity : AppCompatActivity(), ChooseInstitionBottomSheet.OnChoiceSel
         if (pushNotificationPayload?.mailbox != null) {
             val userName = pushNotificationPayload.obv
             val blz = pushNotificationPayload.blz
-            val myMainObv = settingsViewModel.getMainObv()
+            val myMainObv = accountSettingsViewModel.getMainObv()
             if ((blz == null || myMainObv.blz == blz)&&(userName == null || myMainObv.username == userName))
                 handleMailboxBadge(pushNotificationPayload)
         }
@@ -678,7 +678,7 @@ class MainActivity : AppCompatActivity(), ChooseInstitionBottomSheet.OnChoiceSel
  */
     }
 
-    fun showSettings() {
+    fun showFeatureSettings() {
         startActivity(
             Intent(
                 this,
@@ -687,7 +687,17 @@ class MainActivity : AppCompatActivity(), ChooseInstitionBottomSheet.OnChoiceSel
         ) // Aktion für Einstellungen
     }
 
-    fun showSystemParameter() {
+
+    fun showAccountSettings() {
+        startActivity(
+            Intent(
+                this,
+                AccountSettingsActivity::class.java
+            )
+        ) // Aktion für Einstellungen
+    }
+
+    fun showSystemSettings() {
         startActivity(
             Intent(
                 this,
@@ -728,9 +738,9 @@ class MainActivity : AppCompatActivity(), ChooseInstitionBottomSheet.OnChoiceSel
 
     private fun initializeSilentLoginAndAdvisorDataService() {
         val servletUrl = viewModel.getServletUrl()
-        val blz = settingsViewModel.getBLZ()
-        val loginName = settingsViewModel.getUsername()
-        val onlineBankingPin = settingsViewModel.getPIN()
+        val blz = accountSettingsViewModel.getBLZ()
+        val loginName = accountSettingsViewModel.getUsername()
+        val onlineBankingPin = accountSettingsViewModel.getPIN()
 
         if (servletUrl.isNotEmpty() && blz.isNotEmpty() && loginName.isNotEmpty() && onlineBankingPin.isNotEmpty()) {
             // Initialisiere die Factory
@@ -772,9 +782,9 @@ class MainActivity : AppCompatActivity(), ChooseInstitionBottomSheet.OnChoiceSel
             }
         }
         val targetUri = uriBuilder.build().toString()
-        val myObvs = settingsViewModel.getObvs()
+        val myObvs = accountSettingsViewModel.getObvs()
         val filteredEntries = when (blz) {
-            null, "" -> listOf(settingsViewModel.getMainObv())
+            null, "" -> listOf(accountSettingsViewModel.getMainObv())
             "choice" -> myObvs
             else -> myObvs.filter { it -> it.blz in blz.split(",").map { it.trim() } }
         }

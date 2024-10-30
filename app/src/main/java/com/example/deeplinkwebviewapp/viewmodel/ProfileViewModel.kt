@@ -14,10 +14,11 @@ class ProfileViewModel(application: Application) : AndroidViewModel(application)
 
     // Liste der Menüeinträge (Ressourcen-IDs)
     private val menuItemsResourceIds = listOf(
-        R.string.profile_entry_name_settings,
+        R.string.profile_entry_name_account_settings,
+        R.string.profile_entry_name_feature_settings,
+        R.string.profile_entry_name_system_settings,
         R.string.profile_entry_name_notification_settings,
         R.string.profile_entry_name_log,
-        R.string.profile_entry_name_system_parameter,
         R.string.profile_entry_name_logout
     )
 

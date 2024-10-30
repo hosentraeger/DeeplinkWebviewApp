@@ -60,13 +60,18 @@
     <string name="hello_profile_fragment">Profile Fragment</string>
     <string name="hello_service_fragment">Service Fragment</string>
     <string name="hello_products_fragment">Products Fragment</string>
-    <string name="profile_entry_name_settings">Einstellungen</string>
-    <string name="profile_entry_name_notification_settings">Benachrichtigungen</string>
     <string name="profile_entry_name_log">Kommunikationsprotokoll</string>
-    <string name="profile_entry_name_system_parameter">Systemparameter</string>
     <string name="profile_entry_name_logout">Logout</string>
     <string name="ad_banner">overview banner</string>
     <string name="show_promoted_product">Klick hier für ein cooles Angebot!</string>
     <string name="profile_image">Beraterbild</string>
-    <string name="profile_entry_name_account">Konto\n</string>
+    <string name="profile_entry_name_account_settings">Konto</string>
+    <string name="profile_entry_name_feature_settings">Features</string>
+    <string name="profile_entry_name_system_settings">System</string>
+    <string name="profile_entry_name_notification_settings">Benachrichtigungen</string>
+    <string name="title_activity_account_setings">Konto</string>
+    <string name="featureSettings">Feature-Einstellungen</string>
+    <string name="systemSettings">Systemeinstellungen</string>
+    <string name="accountSettings">Kontoeinstellungen</string>
+    <string name="notificationSettings">Benachrichtigungs-Einstellungen</string>
 </resources>

@@ -1,73 +1,30 @@
+// SettingsViewModel.kt
 package com.example.deeplinkwebviewapp.viewmodel
 
-import com.example.deeplinkwebviewapp.service.MyHttpClient
-import com.example.deeplinkwebviewapp.data.DeviceDataSingleton
-import com.example.deeplinkwebviewapp.service.Logger
 import android.app.Application
 import android.content.SharedPreferences
-import androidx.lifecycle.AndroidViewModel
-import androidx.lifecycle.viewModelScope
-import com.example.deeplinkwebviewapp.data.BankEntry
-import kotlinx.coroutines.launch
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 
-class SettingsViewModelFactory(private val application: Application, private val sharedPreferences: SharedPreferences) : ViewModelProvider.Factory {
-    override fun <T : ViewModel> create(modelClass: Class<T>): T {
-        if (modelClass.isAssignableFrom(SettingsViewModel::class.java)) {
-            @Suppress("UNCHECKED_CAST")
-            return SettingsViewModel(application, sharedPreferences) as T
-        }
-        throw IllegalArgumentException("Unknown ViewModel class")
-    }
-}
+class SettingsViewModel : ViewModel() {
 
-class SettingsViewModel(application: Application, private val sharedPreferences: SharedPreferences) : AndroidViewModel(application) {
+    private var _appLanguage: String = "de"
+    private var _sorting: String = "holder"
+    private var _maxSessionDuration: Int = 5
+    private var _autoUpdateBalance: Boolean = false
 
-    val deviceData = DeviceDataSingleton.deviceData
+    fun saveSettings(language: String, sorting: String, maxSessionDuration: Int, autoUpdate: Boolean) {
+        _appLanguage = language
+        _sorting = sorting
+        _maxSessionDuration = maxSessionDuration
+        _autoUpdateBalance = autoUpdate
 
-    fun getBLZ(): String {
-        return sharedPreferences.getString("BLZ", "") ?: ""
+        // Hier kannst du die Einstellungen in SharedPreferences oder einer Datenbank speichern
     }
 
-    fun getMainObv(): BankEntry {
-        return BankEntry(getBLZ(),getUsername())
-    }
-
-    fun getObvs(): List<BankEntry> {
-        return listOf(
-            BankEntry("25050180" , "mickymouse"),
-            BankEntry("94059421" , "Lasttest_drno"),
-            BankEntry("94059549" , "GandalfTheGrey"),
-            BankEntry("94050310" , "DarthVader")
-        ).plus(getMainObv())
-    }
-
-    fun getBlzs(): List<String> {
-        return getObvs().map { it.blz }
-    }
-
-    fun getUsername(): String {
-        return sharedPreferences.getString("Username", "") ?: ""
-    }
-
-    fun getPersonennummer(): String {
-        return sharedPreferences.getString("Personennummer", "") ?: ""
-    }
-
-    fun getPIN(): String {
-        return sharedPreferences.getString("PIN", "") ?: ""
-    }
-
-    fun saveSettings(blz: String, username: String, personennummer: String, pin: String) {
-        viewModelScope.launch {
-            sharedPreferences.edit().apply {
-                putString("BLZ", blz)
-                putString("Username", username)
-                putString("Personennummer", personennummer)
-                putString("PIN", pin)
-                apply()
-            }
-        }
-    }
+    // Hier kannst du Getter-Methoden hinzufügen, um die gespeicherten Einstellungen abzurufen
+    fun getAppLanguage() = _appLanguage
+    fun getSorting() = _sorting
+    fun getMaxSessionDuration() = _maxSessionDuration
+    fun isAutoUpdateBalanceEnabled() = _autoUpdateBalance
 }

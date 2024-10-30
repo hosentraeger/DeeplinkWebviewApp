@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="16dp">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/accountSettings"
+            android:textSize="24sp"
+            android:layout_marginBottom="16dp" />
+
+        <!-- BLZ Eingabefeld -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="BLZ:"
+            android:layout_marginBottom="4dp" />
+        <EditText
+            android:id="@+id/editTextBLZ"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="BLZ" />
+
+        <!-- Anmeldename Eingabefeld -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Anmeldename:"
+            android:layout_marginBottom="4dp" />
+
+        <EditText
+            android:id="@+id/editTextUsername"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Anmeldename" />
+
+        <!-- PIN Eingabefeld -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="PIN:"
+            android:layout_marginBottom="4dp" />
+
+        <EditText
+            android:id="@+id/editTextPIN"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:inputType="numberPassword"
+            android:hint="PIN" />
+
+        <!-- Anmeldename Eingabefeld -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Personennummer:"
+            android:layout_marginBottom="4dp" />
+
+        <EditText
+            android:id="@+id/editTextPersonennummer"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Personennummer" />
+
+        <Button
+            android:id="@+id/buttonSave"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Speichern" />
+
+
+    </LinearLayout>
+</ScrollView>

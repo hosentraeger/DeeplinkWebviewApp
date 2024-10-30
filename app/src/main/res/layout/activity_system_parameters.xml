@@ -9,6 +9,13 @@
         android:orientation="vertical"
         android:padding="16dp">
 
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/systemSettings"
+            android:textSize="24sp"
+            android:layout_marginBottom="16dp" />
+
         <!-- SF Stage Spinner -->
         <TextView
             android:layout_width="wrap_content"

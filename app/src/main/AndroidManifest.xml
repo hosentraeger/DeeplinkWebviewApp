@@ -62,6 +62,11 @@
             android:exported="false"
             android:label="@string/title_activity_system_parameters"
             android:theme="@style/Theme.DeeplinkWebviewApp" />
+        <activity
+            android:name="com.example.deeplinkwebviewapp.ui.AccountSettingsActivity"
+            android:exported="false"
+            android:label="@string/title_activity_account_setings"
+            android:theme="@style/Theme.DeeplinkWebviewApp" />
         <service
             android:name=".service.MyFirebaseMessagingService"
             android:exported="false">

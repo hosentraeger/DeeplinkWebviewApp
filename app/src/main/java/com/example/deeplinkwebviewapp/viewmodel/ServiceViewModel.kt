@@ -1,9 +1,12 @@
 package com.example.deeplinkwebviewapp.viewmodel
 
 // ProfileViewModel.kt
+import android.app.Application
+import android.content.SharedPreferences
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
 
 class ServiceViewModel : ViewModel() {
     // Kontaktinformationen
