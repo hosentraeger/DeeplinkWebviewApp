@@ -10,6 +10,10 @@ android {
     namespace = "com.example.deeplinkwebviewapp"
     compileSdk = 34
 
+    viewBinding {
+        enable = true
+    }
+
     defaultConfig {
         applicationId = "com.example.deeplinkwebviewapp"
         minSdk = 30

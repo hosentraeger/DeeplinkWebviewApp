@@ -67,4 +67,6 @@
     <string name="profile_entry_name_logout">Logout</string>
     <string name="ad_banner">overview banner</string>
     <string name="show_promoted_product">Klick hier für ein cooles Angebot!</string>
+    <string name="profile_image">Beraterbild</string>
+    <string name="profile_entry_name_account">Konto\n</string>
 </resources>

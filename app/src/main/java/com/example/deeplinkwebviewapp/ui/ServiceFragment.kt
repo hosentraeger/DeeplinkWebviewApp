@@ -1,61 +1,56 @@
 package com.example.deeplinkwebviewapp.ui
-
+// ProfileFragment.kt
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Switch
 import androidx.fragment.app.Fragment
-import com.example.deeplinkwebviewapp.R
+import androidx.fragment.app.viewModels
+import androidx.lifecycle.Observer
+import com.example.deeplinkwebviewapp.databinding.FragmentServiceBinding
+import com.example.deeplinkwebviewapp.viewmodel.ServiceViewModel
 
-// TODO: Rename parameter arguments, choose names that match
-// the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
-private const val ARG_PARAM1 = "param1"
-private const val ARG_PARAM2 = "param2"
-
-
-/**
- * A simple [Fragment] subclass.
- * Use the [ServiceFragment.newInstance] factory method to
- * create an instance of this fragment.
- */
 class ServiceFragment : Fragment() {
-    // TODO: Rename and change types of parameters
-    private var param1: String? = null
-    private var param2: String? = null
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        arguments?.let {
-            param1 = it.getString(ARG_PARAM1)
-            param2 = it.getString(ARG_PARAM2)
-        }
-    }
+    private var _binding: FragmentServiceBinding? = null
+    private val binding get() = _binding!!
+
+    private val viewModel: ServiceViewModel by viewModels()
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
-    ): View? {
-        // Inflate the layout for this fragment
-        return inflater.inflate(R.layout.fragment_service, container, false)
+    ): View {
+        _binding = FragmentServiceBinding.inflate(inflater, container, false)
+
+        // ViewModel-Observer für die Kontaktdaten
+        viewModel.contactName.observe(viewLifecycleOwner, Observer { name ->
+            binding.contactName.text = name
+        })
+        viewModel.contactEmail.observe(viewLifecycleOwner, Observer { email ->
+            binding.contactEmail.text = email
+        })
+        viewModel.contactPhone.observe(viewLifecycleOwner, Observer { phone ->
+            binding.contactPhone.text = phone
+        })
+
+        // Schieberegler für Aloha, Wero und Cashback
+        binding.switchAloha.setOnCheckedChangeListener { _, isChecked ->
+            viewModel.setAlohaEnabled(isChecked)
+        }
+        binding.switchWero.setOnCheckedChangeListener { _, isChecked ->
+            viewModel.setWeroEnabled(isChecked)
+        }
+        binding.switchCashback.setOnCheckedChangeListener { _, isChecked ->
+            viewModel.setCashbackEnabled(isChecked)
+        }
+
+        return binding.root
     }
 
-    companion object {
-        /**
-         * Use this factory method to create a new instance of
-         * this fragment using the provided parameters.
-         *
-         * @param param1 Parameter 1.
-         * @param param2 Parameter 2.
-         * @return A new instance of fragment DashboardFragment.
-         */
-        // TODO: Rename and change types and number of parameters
-        @JvmStatic
-        fun newInstance(param1: String, param2: String) =
-            ServiceFragment().apply {
-                arguments = Bundle().apply {
-                    putString(ARG_PARAM1, param1)
-                    putString(ARG_PARAM2, param2)
-                }
-            }
+    override fun onDestroyView() {
+        super.onDestroyView()
+        _binding = null
     }
 }
