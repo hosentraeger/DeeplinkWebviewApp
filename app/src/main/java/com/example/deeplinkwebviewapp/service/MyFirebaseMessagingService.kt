@@ -93,11 +93,13 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
                                         Json.decodeFromString(response)
                                     Log.d(TAG, "SfcIfData loaded")
                                     val ifData = sfcIfResponse?.services?.firstOrNull()?.IF
+                                    val iamTitle = ifData?.disrupter?.headline
+                                    val iamBody = ifData?.disrupter?.text
 
                                     when (pushNotificationPayload.iam.notificationImage) {
                                         "1" -> showNotificationWithImage(
-                                            title,
-                                            body,
+                                            iamTitle,
+                                            iamBody,
                                             pushNotificationPayload,
                                             ifData?.overview?.get(0)?.banner
                                         )
@@ -109,8 +111,8 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
                                                 ) { response: AemBanner? ->
                                                     response?.let {
                                                         showNotificationWithImage(
-                                                            title,
-                                                            body,
+                                                            iamTitle,
+                                                            iamBody,
                                                             pushNotificationPayload,
                                                             response.banner
                                                         )
@@ -120,8 +122,8 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
                                         }
 
                                         "3" -> showNotificationWithImage(
-                                            title,
-                                            body,
+                                            iamTitle,
+                                            iamBody,
                                             pushNotificationPayload,
                                             ifData?.disrupter?.image
                                         )
@@ -130,8 +132,8 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
                                             ifData?.logoutPageURL?.let { it2 ->
                                                 sfcService.fetchAemPage(it2) { result ->
                                                     showNotificationWithImage(
-                                                        title,
-                                                        body,
+                                                        ifData.logoutPage?.headline,
+                                                        ifData.logoutPage?.text,
                                                         pushNotificationPayload,
                                                         result?.image
                                                     )
@@ -140,7 +142,7 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
                                         }
                                         else -> showNotification(
                                             title,
-                                            body,
+                                            iamBody,
                                             pushNotificationPayload,
                                             null
                                         )
