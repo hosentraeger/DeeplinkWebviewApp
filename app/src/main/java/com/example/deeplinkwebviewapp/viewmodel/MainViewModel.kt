@@ -137,6 +137,11 @@ class MainViewModel(
             response?.let {
                 try {
                     sfmMobiResponse = response
+                    editor.putString("servletUrl", getServletUrl())
+                    editor.putString("serviceCenterUrl", getServiceCenterUrl())
+                    editor.putString("mailboxUrl", getMailboxUrl())
+                    editor.putString("individualOffersUrl", getIndividualOffersUrl())
+                    editor.commit()
                     _mobiDataLoaded.postValue(true)  // Signalisiere, dass die Daten geladen sind
                     Log.d(TAG, "SfmMobData loaded")
                 } catch (e: Exception) {
@@ -151,15 +156,27 @@ class MainViewModel(
     }
 
     fun getServletUrl ( ): String {
-        val bankServlet = sfmMobiResponse?.bankCodesSettings?.data?.values?.firstOrNull()?.servlet ?: "Kein Servlet gefunden"
-        println("Bank Servlet: $bankServlet")
-        return bankServlet
+        val url = sfmMobiResponse?.bankCodesSettings?.data?.values?.firstOrNull()?.servlet ?: ""
+        println("Bank Servlet: $url")
+        return url
     }
 
     fun getMailboxUrl ( ): String {
-        val mailBoxUrl = sfmMobiResponse?.bankCodesSettings?.data?.values?.firstOrNull()?.postbox ?: "Kein Servlet gefunden"
+        val mailBoxUrl = sfmMobiResponse?.bankCodesSettings?.data?.values?.firstOrNull()?.postbox ?: ""
         println("mailBoxUrl: $mailBoxUrl")
         return mailBoxUrl
+    }
+
+    fun getIndividualOffersUrl ( ): String {
+        val url = sfmMobiResponse?.agency?.data?.individualProducts ?: ""
+        println("getIndividualOffersUrl: $url")
+        return url
+    }
+
+    fun getServiceCenterUrl ( ): String {
+        val url = sfmMobiResponse?.bankCodesSettings?.data?.values?.firstOrNull()?.serviceCenter ?: ""
+        println("Bank Servlet: $url")
+        return url
     }
 
     fun getHostname() : String? {

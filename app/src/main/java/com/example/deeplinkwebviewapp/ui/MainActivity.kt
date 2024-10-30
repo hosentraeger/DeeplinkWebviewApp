@@ -105,11 +105,7 @@ class MainActivity : AppCompatActivity(), ChooseInstitionBottomSheet.OnChoiceSel
                     true
                 }
                 R.id.nav_products -> {
-                    val bundle = Bundle().apply {
-                        putString("url_key", "https://m164an08-421.if-etaps.de/de/home/service.webview.html?n=true&start=true&IF_SILENT_LOGIN=true")
-                    }
-                    // Navigiere zur ProductsFragment mit dem Bundle
-                    navController.navigate(R.id.nav_products, bundle)
+                    navController.navigate(R.id.nav_products)
                     true
                 }
                 R.id.nav_service -> {
