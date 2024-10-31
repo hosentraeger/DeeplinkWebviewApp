@@ -35,7 +35,7 @@ class SystemParametersActivity : AppCompatActivity() {
 
         // Zugriff auf die Views
         val mkaEditText: EditText = findViewById(R.id.editTextMKALine)
-        val deeplinkURLEditText: EditText = findViewById(R.id.editTextDeeplinkURL)
+        val deeplinkUrlEditText: EditText = findViewById(R.id.editTextDeeplinkURL)
         fcmTokenTextView = findViewById(R.id.textViewFCMToken)
         deviceIdTextView = findViewById(R.id.textViewDeviceId)
         servletUrlTextView = findViewById(R.id.textViewServletUrl)
@@ -55,7 +55,7 @@ class SystemParametersActivity : AppCompatActivity() {
 
         // Gespeicherte Daten anzeigen
         mkaEditText.setText(systemParametersViewModel.getMKALine())
-        deeplinkURLEditText.setText(systemParametersViewModel.getDeeplinkURL())
+        deeplinkUrlEditText.setText(systemParametersViewModel.getDeeplinkURL())
 
         // Stage Spinner
         val stage = systemParametersViewModel.getSFStage()
@@ -83,7 +83,7 @@ class SystemParametersActivity : AppCompatActivity() {
                 mkaEditText.text.toString(),
                 stageSpinner.selectedItem.toString(),
                 appSpinner.selectedItem.toString(),
-                deeplinkURLEditText.text.toString()
+                deeplinkUrlEditText.text.toString()
             )
             Toast.makeText(this, "Einstellungen gespeichert", Toast.LENGTH_SHORT).show()
         }
