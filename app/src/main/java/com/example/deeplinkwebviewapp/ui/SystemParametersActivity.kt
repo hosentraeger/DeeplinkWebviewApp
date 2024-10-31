@@ -12,6 +12,7 @@ import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.ViewModelProvider
 import com.example.deeplinkwebviewapp.R
+import com.example.deeplinkwebviewapp.data.DeviceDataSingleton
 import com.example.deeplinkwebviewapp.viewmodel.SystemParametersViewModelFactory
 import com.example.deeplinkwebviewapp.viewmodel.SystemParametersViewModel
 
@@ -92,12 +93,12 @@ class SystemParametersActivity : AppCompatActivity() {
         val regenerateButton: Button = findViewById(R.id.buttonRegenerate)
         regenerateButton.setOnClickListener {
             systemParametersViewModel.regenerateDeviceId()
-            deviceIdTextView.text = systemParametersViewModel.deviceData.device_id
+            deviceIdTextView.text = DeviceDataSingleton.getDeviceData().deviceMetaData?.deviceId
         }
 
         // FCM Token anzeigen
-        fcmTokenTextView.text = systemParametersViewModel.deviceData.push_id
-        deviceIdTextView.text = systemParametersViewModel.deviceData.device_id
+        fcmTokenTextView.text = DeviceDataSingleton.getDeviceData().userData?.push_id
+        deviceIdTextView.text = DeviceDataSingleton.getDeviceData().deviceMetaData?.deviceId
         servletUrlTextView.text = getString(R.string.servlet_url)
     }
     private fun resetBadgeCounterOfPushMessages() {

@@ -17,13 +17,10 @@ import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
 import java.util.Locale
 import com.example.deeplinkwebviewapp.R
-import com.example.deeplinkwebviewapp.data.AemBanner
 import com.example.deeplinkwebviewapp.data.AemPage
 import com.example.deeplinkwebviewapp.data.DeviceData
 import com.example.deeplinkwebviewapp.data.DeviceDataSingleton
-import com.example.deeplinkwebviewapp.data.IFData
 import com.example.deeplinkwebviewapp.data.PushNotificationPayload
-import com.example.deeplinkwebviewapp.data.Service
 import com.example.deeplinkwebviewapp.data.SfcIfResponse
 import com.example.deeplinkwebviewapp.service.Logger
 import com.example.deeplinkwebviewapp.service.MyHttpClient
@@ -31,7 +28,6 @@ import com.example.deeplinkwebviewapp.service.SilentLoginAndAdvisorDataService
 import com.google.firebase.messaging.FirebaseMessaging
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.encodeToString
-import kotlinx.serialization.modules.SerializersModule
 import java.util.UUID
 
 class MainViewModelFactory(
@@ -59,7 +55,6 @@ class MainViewModel(
 
     private val context: Context = application.applicationContext
     private val editor = sharedPreferences.edit()
-    val deviceData: DeviceData = DeviceDataSingleton.deviceData
     private lateinit var previousLogin: String
     private var sfmMobiResponse: SfmMobiResponse? = null
 
@@ -98,8 +93,8 @@ class MainViewModel(
                             response?.let {
                                 val newIf = ifData.copy(logoutPage=response)
                                 val newSfcIfResponse = SfcIfResponse(
-                                    services = sfcIfResponse?.services.toMutableList().apply {
-                                        set(0, sfcIfResponse?.services[0].copy(IF = newIf))
+                                    services = sfcIfResponse.services.toMutableList().apply {
+                                        set(0, sfcIfResponse.services[0].copy(IF = newIf))
                                     }
                                 )
                                 saveIfDataToSharedPrefs(pushNotificationPayload,newSfcIfResponse)
@@ -206,23 +201,23 @@ class MainViewModel(
         if (sharedPreferences.getString("DeviceId", "").isNullOrEmpty()) {
             editor.putString("DeviceId", UUID.randomUUID().toString())
         }
-        previousLogin = sharedPreferences.getString("LastLogin", deviceData.last_login).toString()
+        previousLogin = sharedPreferences.getString("LastLogin", DeviceDataSingleton.getDeviceData().userData?.last_login).toString()
         editor.putString("LastLogin", getCurrentTimestamp())
 
         editor.apply() // Änderungen speichern
     }
 
     fun initializeDeviceData() {
+        val deviceData = DeviceDataSingleton.getDeviceData()
         // Letzten Login und Device-ID abrufen
-        deviceData.device_id = sharedPreferences.getString("DeviceId", deviceData.device_id).toString()
-        deviceData.push_id = sharedPreferences.getString("FCMToken", deviceData.push_id).toString()
-        deviceData.login_id = sharedPreferences.getString("Username", deviceData.login_id).toString()
-        deviceData.last_login = previousLogin
+        deviceData.deviceMetaData?.deviceId = sharedPreferences.getString("DeviceId", deviceData.deviceMetaData?.deviceId).toString()
+        deviceData.userData.push_id = sharedPreferences.getString("FCMToken", deviceData.userData.push_id).toString()
+        deviceData.userData.login_id = sharedPreferences.getString("Username", deviceData.userData.login_id).toString()
+        deviceData.userData.last_login = previousLogin
     }
 
     fun sendDeviceData() {
-        val deviceData: DeviceData = DeviceDataSingleton.deviceData
-        MyHttpClient.getInstance().postDeviceData(deviceData) { response ->
+        MyHttpClient.getInstance().postDeviceData(DeviceDataSingleton.getDeviceData()) { response ->
             if (response != null) {
                 Logger.log("Gerätedaten erfolgreich gesendet: $response")
             } else {
@@ -232,17 +227,18 @@ class MainViewModel(
     }
 
     fun fetchFcmToken() {
-        val deviceData: DeviceData = DeviceDataSingleton.deviceData
         FirebaseMessaging.getInstance().token.addOnCompleteListener { task ->
             if (task.isSuccessful) {
                 val token = task.result
                 _fcmToken.value = token
 
+                val deviceData = DeviceDataSingleton.getDeviceData()
+
                 // Speichere den Token in SharedPreferences, wenn es sich geändert hat
-                if (deviceData.push_id != token) {
-                    deviceData.push_id = token
+                if (deviceData.userData.push_id != token) {
+                    deviceData.userData.push_id = token
                     sharedPreferences.edit().putString("FCMToken", token).apply()
-                    sharedPreferences.edit().commit()
+                    sharedPreferences.edit().apply()
                     sendDeviceData()
                 }
             } else {
