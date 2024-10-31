@@ -41,6 +41,7 @@ import com.google.android.material.badge.BadgeUtils
 import com.google.android.material.badge.ExperimentalBadgeUtils
 import com.example.deeplinkwebviewapp.service.Logger
 import android.widget.EditText
+import androidx.activity.OnBackPressedCallback
 import androidx.navigation.fragment.NavHostFragment
 import com.example.deeplinkwebviewapp.data.SfcIfResponse
 import com.example.deeplinkwebviewapp.service.MkaSession
@@ -90,6 +91,19 @@ class MainActivity : AppCompatActivity(), ChooseInstitionBottomSheet.OnChoiceSel
 
         setContentView(R.layout.activity_main)
 
+        // Setze den OnBackPressedCallback
+        onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
+            override fun handleOnBackPressed() {
+                // Überprüfen, ob das Navigation Drawer geöffnet ist
+                if (drawerLayout.isDrawerOpen(GravityCompat.START)) {
+                    drawerLayout.closeDrawer(GravityCompat.START)
+                } else {
+                    // Wenn der Drawer nicht geöffnet ist, die Aktivität schließen
+                    isEnabled = false // Deaktiviert den Callback
+                    finish() // Aktivität schließen
+                }
+            }
+        })
 // Bottom Navigation konfigurieren
         val bottomNavigationView = findViewById<BottomNavigationView>(R.id.bottom_navigation)
         val navHostFragment = supportFragmentManager.findFragmentById(R.id.nav_host_fragment) as NavHostFragment
@@ -98,7 +112,7 @@ class MainActivity : AppCompatActivity(), ChooseInstitionBottomSheet.OnChoiceSel
 // Setze den NavController für die BottomNavigationView
         bottomNavigationView.setupWithNavController(navController)
 
-        bottomNavigationView.setOnNavigationItemSelectedListener { menuItem ->
+        bottomNavigationView.setOnItemSelectedListener { menuItem ->
             when (menuItem.itemId) {
                 R.id.nav_dashboard -> {
                     navController.navigate(R.id.nav_dashboard) // Fragment für Dashboard anzeigen
@@ -488,26 +502,9 @@ class MainActivity : AppCompatActivity(), ChooseInstitionBottomSheet.OnChoiceSel
         handleIntent(intent)
     }
 
-    private fun setupDrawerLayout() {
-        drawerLayout = findViewById(R.id.drawer_layout)
-        navView = findViewById(R.id.nav_view)
-        toggle = ActionBarDrawerToggle(this, drawerLayout, R.string.navigation_drawer_open, R.string.navigation_drawer_close)
-        drawerLayout.addDrawerListener(toggle)
-        toggle.syncState()
-        supportActionBar?.setDisplayHomeAsUpEnabled(true)
-    }
-
     override fun onSupportNavigateUp(): Boolean {
         val navController = findNavController(R.id.main_content)
         return navController.navigateUp() || super.onSupportNavigateUp()
-    }
-
-    override fun onBackPressed() {
-        if (drawerLayout.isDrawerOpen(GravityCompat.START)) {
-            drawerLayout.closeDrawer(GravityCompat.START)
-        } else {
-            super.onBackPressed()
-        }
     }
 
     override fun onRequestPermissionsResult(
@@ -634,7 +631,11 @@ class MainActivity : AppCompatActivity(), ChooseInstitionBottomSheet.OnChoiceSel
     private fun handlePushNotification(intent: Intent?) {
         Log.d(TAG, "handlePushNotification")
         // Daten aus dem Intent holen
-        val pushNotificationPayload: PushNotificationPayload? = intent?.extras?.getParcelable("pushNotificationPayload")
+        val pushNotificationPayload: PushNotificationPayload? = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            intent?.extras?.getParcelable("pushNotificationPayload", PushNotificationPayload::class.java)
+        } else {
+            return
+        }
 //        val title = intent?.getStringExtra("title")
 //        val body = intent?.getStringExtra("body")
         if (pushNotificationPayload?.iam != null) {

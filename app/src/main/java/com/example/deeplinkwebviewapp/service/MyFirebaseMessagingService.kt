@@ -223,6 +223,7 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
         }
     }
 
+    @OptIn(DelicateCoroutinesApi::class)
     fun showNotificationWithImage(title: String?, body: String?, pushNotificationPayload: PushNotificationPayload?, imageData: String?) {
         val decodedBytes = android.util.Base64.decode(imageData, android.util.Base64.DEFAULT)
         val imageBitmap:Bitmap? = decodedBytes?.let { it1 -> BitmapFactory.decodeByteArray(decodedBytes, 0, it1.size) }

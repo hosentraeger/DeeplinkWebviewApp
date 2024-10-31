@@ -28,8 +28,8 @@ class DisrupterActivity : AppCompatActivity() {
         val iamPayload = Json.decodeFromString<IamPayload>(jsonIamPayloadString)
         val jsonVkaString = sharedPreferences.getString("vkaData", "").toString()
         val sfcIfResponse = Json.decodeFromString<SfcIfResponse>(jsonVkaString)
-        val disrupterData = sfcIfResponse?.services?.firstOrNull()?.IF?.disrupter
-        val logoutPageData = sfcIfResponse?.services?.firstOrNull()?.IF?.logoutPage
+        val disrupterData = sfcIfResponse.services.firstOrNull()?.IF?.disrupter
+        val logoutPageData = sfcIfResponse.services.firstOrNull()?.IF?.logoutPage
 
         val imageView = findViewById<ImageView>(R.id.disrupterImageView)
 
@@ -97,57 +97,49 @@ class DisrupterActivity : AppCompatActivity() {
         val tvSubtitle = findViewById<TextView>(R.id.subtitle_text)
 
         if (disrupterData?.firstLink?.title != null) {
-            val title = disrupterData?.firstLink?.title?.trimEnd() ?: ""
-            btnLink1.setText(title)
+            val title = disrupterData.firstLink.title.trimEnd()
+            btnLink1.text = title
         } else {
-            btnLink1.setVisibility(View.GONE);
+            btnLink1.visibility = View.GONE
         }
         if (disrupterData?.secondLink?.title != null) {
-            val title = disrupterData?.secondLink?.title?.trimEnd() ?: ""
-            btnLink2.setText(title)
+            val title = disrupterData.secondLink.title.trimEnd()
+            btnLink2.text = title
         } else {
-            btnLink2.setVisibility(View.GONE);
+            btnLink2.visibility = View.GONE
         }
         if (disrupterData?.thirdLink?.title != null) {
-            val title = disrupterData?.thirdLink?.title?.trimEnd() ?: ""
-            btnLink3.setText(title)
+            val title = disrupterData.thirdLink.title.trimEnd()
+            btnLink3.text = title
         } else {
-            btnLink3.setVisibility(View.GONE);
+            btnLink3.visibility = View.GONE
         }
         if (disrupterData?.forwardLink?.title != null) {
-            val title = disrupterData?.forwardLink?.title?.trimEnd() ?: ""
-            tvRemindLater.setText(title)
+            val title = disrupterData.forwardLink.title.trimEnd()
+            tvRemindLater.text = title
         } else {
-            tvRemindLater.setVisibility(View.GONE);
+            tvRemindLater.visibility = View.GONE
         }
         if (disrupterData?.noInterestLink?.title != null) {
-            val title = disrupterData?.noInterestLink?.title?.trimEnd() ?: ""
-            tvNoInterest.setText(title)
+            val title = disrupterData.noInterestLink.title.trimEnd()
+            tvNoInterest.text = title
         } else {
-            tvNoInterest.setVisibility(View.GONE);
+            tvNoInterest.visibility = View.GONE
         }
         if (disrupterData?.headline != null) {
-            val headline = disrupterData?.headline?.trimEnd() ?: ""
-            tvTitle.setText(Html.fromHtml(headline, Html.FROM_HTML_MODE_LEGACY))
+            val headline = disrupterData.headline.trimEnd()
+            tvTitle.text = Html.fromHtml(headline, Html.FROM_HTML_MODE_LEGACY)
         } else {
-            tvTitle.setVisibility(View.GONE);
+            tvTitle.visibility = View.GONE
         }
         if (disrupterData?.text != null) {
-            val text = disrupterData?.text?.trimEnd() ?: ""
-            tvSubtitle.setText(Html.fromHtml(text, Html.FROM_HTML_MODE_LEGACY))
+            val text = disrupterData.text.trimEnd()
+            tvSubtitle.text = Html.fromHtml(text, Html.FROM_HTML_MODE_LEGACY)
         } else {
-            tvSubtitle.setVisibility(View.GONE);
+            tvSubtitle.visibility = View.GONE
         }
     }
-    fun loadSfcIfResponseFromPrefs(context: Context): SfcIfResponse? {
-        val sharedPreferences = context.getSharedPreferences("MyPreferences", Context.MODE_PRIVATE)
-        val jsonResponse = sharedPreferences.getString("vkaData", null)
-        return if (jsonResponse != null) {
-            Json.decodeFromString(jsonResponse)
-        } else {
-            null  // Falls nichts gespeichert wurde
-        }
-    }
+
     private fun openWebView(uriString: String) {
         if (uriString.isNotBlank()) { // Überprüfe, ob die URL nicht leer ist
             MyHttpClient.getInstance().getRedirectLocation(uriString) { newLocation ->

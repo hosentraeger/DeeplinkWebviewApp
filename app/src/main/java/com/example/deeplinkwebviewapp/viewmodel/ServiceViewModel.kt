@@ -17,6 +17,7 @@ class ServiceViewModelFactory(
 
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         if (modelClass.isAssignableFrom(ServiceViewModel::class.java)) {
+            @Suppress("UNCHECKED_CAST") // Warnung unterdrücken
             return ServiceViewModel(application, sharedPreferences) as T
         }
         throw IllegalArgumentException("Unknown ViewModel class")

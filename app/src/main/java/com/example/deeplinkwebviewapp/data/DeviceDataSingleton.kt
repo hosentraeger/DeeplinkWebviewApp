@@ -80,7 +80,6 @@ object DeviceDataSingleton {
     private fun createDeviceMetaData(): DeviceMetaData {
         return DeviceMetaData(
             deviceId = "deviceIdPlaceholder",
-            obvId = "obvIdPlaceholder",
             lastConnect = "2023-01-01T00:00:00Z",
             lastCommitIp = "192.168.0.1",
             lastCommit = "2023-01-01T00:00:00Z",

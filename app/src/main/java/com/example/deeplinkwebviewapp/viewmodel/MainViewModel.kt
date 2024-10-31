@@ -18,7 +18,6 @@ import java.time.format.DateTimeFormatter
 import java.util.Locale
 import com.example.deeplinkwebviewapp.R
 import com.example.deeplinkwebviewapp.data.AemPage
-import com.example.deeplinkwebviewapp.data.DeviceData
 import com.example.deeplinkwebviewapp.data.DeviceDataSingleton
 import com.example.deeplinkwebviewapp.data.PushNotificationPayload
 import com.example.deeplinkwebviewapp.data.SfcIfResponse
@@ -36,6 +35,7 @@ class MainViewModelFactory(
 ) : ViewModelProvider.Factory {
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         if (modelClass.isAssignableFrom(MainViewModel::class.java)) {
+            @Suppress("UNCHECKED_CAST") // Warnung unterdrücken
             return MainViewModel(application, sharedPreferences) as T
         }
         throw IllegalArgumentException("Unknown ViewModel class")
@@ -76,8 +76,6 @@ class MainViewModel(
         sharedPreferences.getString("SFStage", "").toString(),
         444 // TODO:
     )
-
-    private var silentLoginService: SilentLoginAndAdvisorDataService? = null
 
     fun loadVkaData(pushNotificationPayload: PushNotificationPayload) {
         pushNotificationPayload.iam?.let {
@@ -201,7 +199,7 @@ class MainViewModel(
         if (sharedPreferences.getString("DeviceId", "").isNullOrEmpty()) {
             editor.putString("DeviceId", UUID.randomUUID().toString())
         }
-        previousLogin = sharedPreferences.getString("LastLogin", DeviceDataSingleton.getDeviceData().userData?.last_login).toString()
+        previousLogin = sharedPreferences.getString("LastLogin", DeviceDataSingleton.getDeviceData().userData.last_login).toString()
         editor.putString("LastLogin", getCurrentTimestamp())
 
         editor.apply() // Änderungen speichern

@@ -16,8 +16,12 @@ class ProfileMenuAdapter(
 
         init {
             itemView.setOnClickListener {
-                val item = menuItems[adapterPosition]
-                onItemClick(item)
+                // Verwende 'bindingAdapterPosition' anstelle von 'adapterPosition'
+                val position = bindingAdapterPosition
+                if (position != RecyclerView.NO_POSITION) { // Überprüfen, ob die Position gültig ist
+                    val item = menuItems[position]
+                    onItemClick(item)
+                }
             }
         }
     }

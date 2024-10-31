@@ -94,7 +94,6 @@ data class AppMetrics(
 @Serializable
 data class DeviceMetaData(
     var deviceId: String,
-    var obvId: String,
     var lastConnect: String,
     var lastCommitIp: String,
     var lastCommit: String,

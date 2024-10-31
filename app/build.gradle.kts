@@ -1,14 +1,15 @@
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
-    kotlin("plugin.parcelize") // Achte darauf, dass du die richtige Plugin-Referenz verwendest
+    kotlin("plugin.parcelize")
     id("org.jetbrains.kotlin.plugin.serialization") version "2.0.20"
     id("com.google.gms.google-services")
+    id("com.squareup.sqldelight") version "1.5.5"
 }
 
 android {
     namespace = "com.example.deeplinkwebviewapp"
-    compileSdk = 34
+    compileSdk = 35
 
     viewBinding {
         enable = true

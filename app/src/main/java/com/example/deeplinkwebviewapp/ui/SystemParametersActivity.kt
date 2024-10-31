@@ -97,7 +97,7 @@ class SystemParametersActivity : AppCompatActivity() {
         }
 
         // FCM Token anzeigen
-        fcmTokenTextView.text = DeviceDataSingleton.getDeviceData().userData?.push_id
+        fcmTokenTextView.text = DeviceDataSingleton.getDeviceData().userData.push_id
         deviceIdTextView.text = DeviceDataSingleton.getDeviceData().deviceMetaData?.deviceId
         servletUrlTextView.text = getString(R.string.servlet_url)
     }

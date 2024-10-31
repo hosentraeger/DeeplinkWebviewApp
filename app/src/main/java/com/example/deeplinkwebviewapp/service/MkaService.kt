@@ -123,7 +123,7 @@ class MkaSession (
         }
     }
 
-    suspend fun getRoute(blz: String): String {
+    private suspend fun getRoute(blz: String): String {
         val request = Request.Builder()
             .url("https://global.sfg-mkg-etaps.de/route/blz/mkg?blz=$blz")
             .addHeader("X-Auth-ETAPS-PRODUCT-NAME", "ENDUSER_SAPP")
@@ -167,7 +167,7 @@ class MkaSession (
 
         val request = Request.Builder()
             .url(url)
-            .post(RequestBody.create("application/json".toMediaTypeOrNull(), jsonString))
+            .post(jsonString.toRequestBody("application/json".toMediaTypeOrNull()))
             .addHeader("Accept", "application/osplus.mkg.v5+json")
             .addHeader("X-Auth-ETAPS-PRODUCT-NAME", "sapp")
             .addHeader("x-uui-request-nonce", UUID.randomUUID().toString())
@@ -286,15 +286,4 @@ class MkaSession (
             response.close()
         }
     }
-
-    fun saveKeyValueToSharedPrefs(key: String, value: String) {
-        val sharedPreferences = context.getSharedPreferences(
-            "MyPreferences",
-            Context.MODE_PRIVATE)
-        val editor = sharedPreferences.edit()
-        editor.putString(key, value)
-        editor.apply()  // apply() speichert asynchron
-
-    }
-
 }
