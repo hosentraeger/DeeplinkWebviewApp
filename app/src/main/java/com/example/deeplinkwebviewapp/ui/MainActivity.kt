@@ -58,6 +58,7 @@ import com.example.deeplinkwebviewapp.viewmodel.AccountSettingsViewModelFactory
 import com.example.deeplinkwebviewapp.viewmodel.MainViewModelFactory
 
 class MainActivity : AppCompatActivity(), ChooseInstitionBottomSheet.OnChoiceSelectedListener {
+    private val REQUEST_NOTIFICATION_PERMISSION_CODE = 101
 
     private lateinit var drawerLayout: DrawerLayout
     private lateinit var navView: NavigationView
@@ -134,18 +135,7 @@ class MainActivity : AppCompatActivity(), ChooseInstitionBottomSheet.OnChoiceSel
             }
         }
 
-        // Berechtigungen für Benachrichtigungen anfragen (Android 13+)
-        if (ContextCompat.checkSelfPermission(
-                this,
-                Manifest.permission.POST_NOTIFICATIONS
-            ) != PackageManager.PERMISSION_GRANTED
-        ) {
-            ActivityCompat.requestPermissions(
-                this,
-                arrayOf(Manifest.permission.POST_NOTIFICATIONS),
-                101
-            )
-        }
+        showPermissionExplanationDialog()
 
         val sharedPreferences = getSharedPreferences("MyPreferences", MODE_PRIVATE)
         val factory = MainViewModelFactory(application, sharedPreferences)
@@ -208,6 +198,41 @@ class MainActivity : AppCompatActivity(), ChooseInstitionBottomSheet.OnChoiceSel
         // Zeige den Login-Dialog, bevor die App startet
         showLoginDialog()
     }
+
+    @RequiresApi(Build.VERSION_CODES.TIRAMISU)
+    private fun showPermissionExplanationDialog() {
+        // Berechtigungen für Benachrichtigungen anfragen (Android 13+)
+        if (ContextCompat.checkSelfPermission(
+                this,
+                Manifest.permission.POST_NOTIFICATIONS
+            ) != PackageManager.PERMISSION_GRANTED
+        ) {
+            val builder = AlertDialog.Builder(this)
+            builder.setTitle("Benachrichtigungen")
+            builder.setMessage("Wir möchten dir Push-Benachrichtigungen senden, damit du immer informiert bist. Du kannst die Einstellungen später anpassen. Bitte klicke im nächsten Screen auf 'Zulassen'!")
+            builder.setPositiveButton("Weiter") { _, _ ->
+                // Starte die Berechtigungsanfrage, wenn der Nutzer zustimmt
+                ActivityCompat.requestPermissions(
+                    this,
+                    arrayOf(Manifest.permission.POST_NOTIFICATIONS),
+                    REQUEST_NOTIFICATION_PERMISSION_CODE
+                )
+            }
+            builder.create().show()
+        }
+    }
+
+    override fun onRequestPermissionsResult(
+        requestCode: Int,
+        permissions: Array<out String>,
+        grantResults: IntArray
+    ) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        if (requestCode == REQUEST_NOTIFICATION_PERMISSION_CODE && grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+            Log.d(TAG, "Permission granted")
+        }
+    }
+
 
     private fun showLoginDialog() {
         val dialogView = layoutInflater.inflate(R.layout.dialog_login, null)
@@ -505,17 +530,6 @@ class MainActivity : AppCompatActivity(), ChooseInstitionBottomSheet.OnChoiceSel
     override fun onSupportNavigateUp(): Boolean {
         val navController = findNavController(R.id.main_content)
         return navController.navigateUp() || super.onSupportNavigateUp()
-    }
-
-    override fun onRequestPermissionsResult(
-        requestCode: Int,
-        permissions: Array<out String>,
-        grantResults: IntArray
-    ) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-        if (requestCode == 101 && grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-            Log.d(TAG, "Permission granted")
-        }
     }
 
     private fun createNotificationChannel() {
