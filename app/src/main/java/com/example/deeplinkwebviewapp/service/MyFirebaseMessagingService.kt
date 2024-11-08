@@ -11,6 +11,7 @@ import android.util.Log
 import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
+import androidx.core.text.HtmlCompat
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import com.example.deeplinkwebviewapp.R
 import com.example.deeplinkwebviewapp.ui.MainActivity
@@ -42,122 +43,140 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
     override fun onMessageReceived(remoteMessage: RemoteMessage) {
         Log.d(TAG, "From: ${remoteMessage.from}")
 
-        // Log the message data payload
-        remoteMessage.data.let {
-            Log.d(TAG, "Message data payload: $it")
-        }
-
         // Log the message notification payload (falls vorhanden)
         remoteMessage.notification?.let {
             Log.d(TAG, "Message Notification Title: ${it.title}")
             Log.d(TAG, "Message Notification Body: ${it.body}")
         }
 
-        val pushPayloadStringB64 =
-            remoteMessage.data["customKey1"] // Der Base64-codierte String
-        if (pushPayloadStringB64 != null) {
-            // Base64-Dekodierung
-            val decodedBytes = Base64.getDecoder().decode(pushPayloadStringB64)
-            val pushPayloadString =
-                String(decodedBytes, Charsets.UTF_8) // ByteArray in String umwandeln
-            try {
-                // JSON-Deserialisierung
-                val pushNotificationPayload =
-                    myJsonDecoder.decodeFromString<PushNotificationPayload>(pushPayloadString)
-                val title = pushNotificationPayload.title
-                val body = pushNotificationPayload.body
-                // Prüfen, ob IAM enthalten ist
-                if (pushNotificationPayload.iam != null) {
-                    // Code ausführen, wenn IAM vorhanden ist
-                    Log.d(TAG, "IAM detected: ${pushNotificationPayload.iam}")
-                    if (pushNotificationPayload.iam.notificationImage != null) {
-                        val sharedPreferences = getSharedPreferences(
-                            "MyPreferences",
-                            Context.MODE_PRIVATE
-                        )
+        remoteMessage.data.let {
+            Log.d(TAG, "Message data payload: $it")
 
-                        val blz = sharedPreferences.getString("BLZ", "").toString()
-                        val stage = sharedPreferences.getString("SFStage", "").toString()
-                        val productId = 444
+            val pushPayloadStringB64 =
+                remoteMessage.data["customKey1"] // Der Base64-codierte String
 
-                        val sfcService = SfcServiceFactory.create(
-                            blz,
-                            stage,
-                            productId
-                        )
+            if (pushPayloadStringB64 != null) {
+                // Base64-Dekodierung
+                val decodedBytes = Base64.getDecoder().decode(pushPayloadStringB64)
 
-                        sfcService.fetchVkaData(pushNotificationPayload.iam.contentId) { response: String? ->
-                            response?.let {
-                                try {
-                                    val sfcIfResponse: SfcIfResponse? =
-                                        Json.decodeFromString(response)
-                                    Log.d(TAG, "SfcIfData loaded")
-                                    val ifData = sfcIfResponse?.services?.firstOrNull()?.IF
-                                    val iamTitle = ifData?.disrupter?.headline
-                                    val iamBody = ifData?.disrupter?.text
+                val pushPayloadString =
+                    String(decodedBytes, Charsets.UTF_8) // ByteArray in String umwandeln
 
-                                    when (pushNotificationPayload.iam.notificationImage) {
-                                        "1" -> showNotificationWithImage(
-                                            iamTitle,
-                                            iamBody,
-                                            pushNotificationPayload,
-                                            ifData?.overview?.get(0)?.banner
-                                        )
+                try {
+                    // JSON-Deserialisierung
+                    val pushNotificationPayload =
+                        myJsonDecoder.decodeFromString<PushNotificationPayload>(pushPayloadString)
+                    val title = pushNotificationPayload.title
+                    val body = pushNotificationPayload.body
+                    // Prüfen, ob IAM enthalten ist
+                    if (pushNotificationPayload.iam != null) {
+                        // Code ausführen, wenn IAM vorhanden ist
+                        Log.d(TAG, "IAM detected: ${pushNotificationPayload.iam}")
+                        if (pushNotificationPayload.iam.notificationImage != null) {
+                            val sharedPreferences = getSharedPreferences(
+                                "MyPreferences",
+                                Context.MODE_PRIVATE
+                            )
 
-                                        "2" -> {
-                                            ifData?.confirmationBannerURL?.let { it1 ->
-                                                sfcService.fetchAemBanner(
-                                                    it1
-                                                ) { response: AemBanner? ->
-                                                    response?.let {
+                            val blz = sharedPreferences.getString("BLZ", "").toString()
+                            val stage = sharedPreferences.getString("SFStage", "").toString()
+                            val productId = 444
+
+                            val sfcService = SfcServiceFactory.create(
+                                blz,
+                                stage,
+                                productId
+                            )
+
+                            sfcService.fetchVkaData(pushNotificationPayload.iam.contentId) { response: String? ->
+                                response?.let {
+                                    try {
+                                        val sfcIfResponse: SfcIfResponse? =
+                                            Json.decodeFromString(response)
+                                        Log.d(TAG, "SfcIfData loaded")
+                                        val ifData = sfcIfResponse?.services?.firstOrNull()?.IF
+                                        val iamTitle = ifData?.disrupter?.headline?.let { it1 ->
+                                            HtmlCompat.fromHtml(
+                                                it1, HtmlCompat.FROM_HTML_MODE_LEGACY).toString()
+                                        }
+                                        val iamBody = ifData?.disrupter?.text?.let { it1 ->
+                                            HtmlCompat.fromHtml(
+                                                it1, HtmlCompat.FROM_HTML_MODE_LEGACY).toString()
+                                        }
+
+                                        when (pushNotificationPayload.iam.notificationImage) {
+                                            "1" -> showNotificationWithImage(
+                                                (if ( title == "" ) iamTitle else title),
+                                                if ( body == "" ) iamBody else body,
+                                                pushNotificationPayload,
+                                                ifData?.overview?.get(0)?.banner
+                                            )
+
+                                            "2" -> {
+                                                ifData?.confirmationBannerURL?.let { it1 ->
+                                                    sfcService.fetchAemBanner(
+                                                        it1
+                                                    ) { response: AemBanner? ->
+                                                        response?.let {
+                                                            showNotificationWithImage(
+                                                                if ( title == "" ) iamTitle else title,
+                                                                if ( body == "" ) iamBody else body,
+                                                                pushNotificationPayload,
+                                                                response.banner
+                                                            )
+                                                        }
+                                                    }
+                                                }
+                                            }
+
+                                            "3" -> showNotificationWithImage(
+                                                if ( title == "" ) iamTitle else title,
+                                                if ( body == "" ) iamBody else body,
+                                                pushNotificationPayload,
+                                                ifData?.disrupter?.image
+                                            )
+
+                                            "4" -> {
+                                                ifData?.logoutPageURL?.let { it2 ->
+                                                    sfcService.fetchAemPage(it2) { result ->
                                                         showNotificationWithImage(
-                                                            iamTitle,
-                                                            iamBody,
+                                                            if ( title == "" ) ifData.logoutPage?.headline else title,
+                                                            if ( body == "" ) ifData.logoutPage?.text else body,
                                                             pushNotificationPayload,
-                                                            response.banner
+                                                            result?.image
                                                         )
                                                     }
                                                 }
                                             }
+                                            else -> showNotification(
+                                                if ( title == "" ) iamTitle else title,
+                                                if ( body == "" ) iamBody else body,
+                                                pushNotificationPayload,
+                                                null
+                                            )
                                         }
-
-                                        "3" -> showNotificationWithImage(
-                                            iamTitle,
-                                            iamBody,
-                                            pushNotificationPayload,
-                                            ifData?.disrupter?.image
-                                        )
-
-                                        "4" -> {
-                                            ifData?.logoutPageURL?.let { it2 ->
-                                                sfcService.fetchAemPage(it2) { result ->
-                                                    showNotificationWithImage(
-                                                        ifData.logoutPage?.headline,
-                                                        ifData.logoutPage?.text,
-                                                        pushNotificationPayload,
-                                                        result?.image
-                                                    )
-                                                }
-                                            }
-                                        }
-                                        else -> showNotification(
-                                            title,
-                                            iamBody,
-                                            pushNotificationPayload,
-                                            null
+                                    } catch (e: Exception) {
+                                        Log.e(
+                                            TAG,
+                                            "Error processing SfmMobiResponse: ${e.localizedMessage}"
                                         )
                                     }
-                                } catch (e: Exception) {
-                                    Log.e(
-                                        TAG,
-                                        "Error processing SfmMobiResponse: ${e.localizedMessage}"
-                                    )
+                                } ?: run {
+                                    Log.e(TAG, "Fehler bei der Anfrage")
                                 }
-                            } ?: run {
-                                Log.e(TAG, "Fehler bei der Anfrage")
                             }
+                        } else {
+                            showNotification(
+                                title,
+                                body,
+                                pushNotificationPayload,
+                                null
+                            )
                         }
-                    } else {
+                    }
+
+                    if (pushNotificationPayload.webview != null) {
+                        Log.d(TAG, "WEBVIEW detected: ${pushNotificationPayload.webview}")
                         showNotification(
                             title,
                             body,
@@ -165,60 +184,50 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
                             null
                         )
                     }
-                }
 
-                if (pushNotificationPayload.webview != null) {
-                    Log.d(TAG, "WEBVIEW detected: ${pushNotificationPayload.webview}")
-                    showNotification(
-                        title,
-                        body,
-                        pushNotificationPayload,
-                        null
-                    )
-                }
-
-                if (pushNotificationPayload.mailbox != null) {
-                    // silent notification
-                    Log.d(TAG, "MAILBOX detected: ${pushNotificationPayload.mailbox}")
-                    if (MyApplication.isAppInForeground) {
-                        broadcastNotificationIntent(title, body, pushNotificationPayload)
+                    if (pushNotificationPayload.mailbox != null) {
+                        // silent notification
+                        Log.d(TAG, "MAILBOX detected: ${pushNotificationPayload.mailbox}")
+                        if (MyApplication.isAppInForeground) {
+                            broadcastNotificationIntent(title, body, pushNotificationPayload)
+                        }
+                        handleMailboxBadge(pushNotificationPayload)
                     }
-                    handleMailboxBadge(pushNotificationPayload)
-                }
 
-                if (pushNotificationPayload.balance != null) {
-                    // wenn app im vordergrund, keine notification zeigen. das erledigt die app anders
-                    if (MyApplication.isAppInForeground) {
-                        broadcastNotificationIntent(title, body, pushNotificationPayload)
-                    } else {
-                        showNotification(
-                            title,
-                            body,
-                            pushNotificationPayload,
-                            null
-                        )
+                    if (pushNotificationPayload.balance != null) {
+                        // wenn app im vordergrund, keine notification zeigen. das erledigt die app anders
+                        if (MyApplication.isAppInForeground) {
+                            broadcastNotificationIntent(title, body, pushNotificationPayload)
+                        } else {
+                            showNotification(
+                                title,
+                                body,
+                                pushNotificationPayload,
+                                null
+                            )
+                        }
                     }
-                }
 
-                if (pushNotificationPayload.update != null) {
-                    Log.d(TAG, "UPDATE detected: ${pushNotificationPayload.update}")
-                    // wenn app im vordergrund, ist keine benachrichtigung notwendig
-                    if (!MyApplication.isAppInForeground) {
-                        showNotification(
-                            title,
-                            body,
-                            pushNotificationPayload,
-                            null
-                        )
+                    if (pushNotificationPayload.update != null) {
+                        Log.d(TAG, "UPDATE detected: ${pushNotificationPayload.update}")
+                        // wenn app im vordergrund, ist keine benachrichtigung notwendig
+                        if (!MyApplication.isAppInForeground) {
+                            showNotification(
+                                title,
+                                body,
+                                pushNotificationPayload,
+                                null
+                            )
+                        }
                     }
-                }
 
-                if (pushNotificationPayload.ping != null) {
-                    Log.d(TAG, "PING detected: ${pushNotificationPayload.ping}")
-                    // TODO: hier ein Pong durchführen
+                    if (pushNotificationPayload.ping != null) {
+                        Log.d(TAG, "PING detected: ${pushNotificationPayload.ping}")
+                        // TODO: hier ein Pong durchführen
+                    }
+                } catch (e: Exception) {
+                    Log.e(TAG, e.toString())
                 }
-            } catch (e: Exception) {
-                Log.e(TAG, e.toString())
             }
         }
     }
