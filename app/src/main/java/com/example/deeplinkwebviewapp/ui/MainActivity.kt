@@ -777,26 +777,42 @@ class MainActivity : AppCompatActivity(), ChooseInstitionBottomSheet.OnChoiceSel
     private fun handleGenericWebviewDeeplink(deeplinkUri: Uri) {
         var isSilentLogin = false
         var blz: String? = null
+
         Log.d(TAG, "handleGenericWebviewDeeplink, Uri: $deeplinkUri")
 
-        val uriBuilder = Uri.parse("https://" + viewModel.getHostname()).buildUpon()
-        val queryParameterNames = deeplinkUri.queryParameterNames
-        for (paramName in queryParameterNames) {
-            val paramValue = deeplinkUri.getQueryParameter(paramName)
-            println("Parameter: $paramName, Wert: $paramValue")
-            when (paramName) {
-                "path" -> {
-                    val decodedPath = Uri.decode(paramValue) // Dekodieren des Wertes
-                    uriBuilder.appendEncodedPath(decodedPath.trim('/'))
-                }
+        val decodedPath =Uri.decode(deeplinkUri.getQueryParameter("path")).trim('/')
 
-                "fallback" -> {}
-                "blz" -> blz = paramValue
-                "IF_SILENT_LOGIN" -> isSilentLogin = (paramValue == "true")
-                else -> uriBuilder.appendQueryParameter(paramName, paramValue)
+        val uriBuilder = Uri.parse("https://" + viewModel.getHostname()).buildUpon()
+
+        if (decodedPath != null) {
+            // Versuche decodedPath als Uri zu parsen
+            val parsedUri = Uri.parse(decodedPath)
+
+            // Prüfe, ob die geparste Uri ein Schema und einen Host enthält
+            if (parsedUri.scheme != null && parsedUri.host != null) {
+                // Verwende Schema, Host und Path von decodedPath
+                uriBuilder.scheme(parsedUri.scheme)
+                    .authority(parsedUri.authority)
+                    .path(parsedUri.path)
+            } else {
+                // decodedPath hat kein gültiges Schema oder keinen Host, füge es als Pfad hinzu
+                uriBuilder.appendEncodedPath(decodedPath)
+            }
+            val queryParameterNames = deeplinkUri.queryParameterNames
+            for (paramName in queryParameterNames) {
+                val paramValue = deeplinkUri.getQueryParameter(paramName)
+                println("Parameter: $paramName, Wert: $paramValue")
+                when (paramName) {
+                    "path" -> {}
+                    "fallback" -> {}
+                    "blz" -> blz = paramValue
+                    "IF_SILENT_LOGIN" -> isSilentLogin = (paramValue == "true")
+                    else -> uriBuilder.appendQueryParameter(paramName, paramValue)
+                }
             }
         }
-        val targetUri = uriBuilder.build().toString()
+
+        val targetUriString = uriBuilder.build().toString()
         val myObvs = accountSettingsViewModel.getObvs()
         val filteredEntries = when (blz) {
             null, "" -> listOf(accountSettingsViewModel.getMainObv())
@@ -806,11 +822,11 @@ class MainActivity : AppCompatActivity(), ChooseInstitionBottomSheet.OnChoiceSel
         when (filteredEntries.size) {
             0 -> Toast.makeText(this@MainActivity, "Dieses Angebot ist in Ihrer Sparkasse nicht verfügbar", Toast.LENGTH_LONG).show()
             1 -> {
-                Log.d(TAG, "starting webview with uri $targetUri")
-                openWebView(targetUri, isSilentLogin)
+                Log.d(TAG, "starting webview with uri $targetUriString")
+                openWebView(targetUriString, isSilentLogin)
                 }
             else -> {
-                val bottomSheet = ChooseInstitionBottomSheet(filteredEntries.toTypedArray(), targetUri, isSilentLogin)
+                val bottomSheet = ChooseInstitionBottomSheet(filteredEntries.toTypedArray(), targetUriString, isSilentLogin)
                 bottomSheet.show(supportFragmentManager, bottomSheet.tag)
             }
         }
