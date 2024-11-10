@@ -34,7 +34,7 @@ object DeviceDataSingleton {
         return UserData(
             push_id = "<not assigned>",
             login_id = "<nobody>",
-            last_login = "1971-01-01T00:00:00Z"
+            last_login = "1971-01-04T00:00:00.000000"
         )
     }
 
@@ -80,9 +80,9 @@ object DeviceDataSingleton {
     private fun createDeviceMetaData(): DeviceMetaData {
         return DeviceMetaData(
             deviceId = "deviceIdPlaceholder",
-            lastConnect = "2023-01-01T00:00:00Z",
+            lastConnect = "1971-01-04T00:00:00.000000",
             lastCommitIp = "192.168.0.1",
-            lastCommit = "2023-01-01T00:00:00Z",
+            lastCommit = "1971-01-04T00:00:00.000000",
             deviceDataCommitted = false
         )
     }

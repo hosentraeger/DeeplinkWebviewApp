@@ -23,7 +23,6 @@ import com.example.deeplinkwebviewapp.data.PushNotificationPayload
 import com.example.deeplinkwebviewapp.data.SfcIfResponse
 import com.example.deeplinkwebviewapp.service.Logger
 import com.example.deeplinkwebviewapp.service.MyHttpClient
-import com.example.deeplinkwebviewapp.service.SilentLoginAndAdvisorDataService
 import com.google.firebase.messaging.FirebaseMessaging
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.encodeToString
@@ -179,7 +178,7 @@ class MainViewModel(
 
     private fun getCurrentTimestamp(): String {
         val currentDateTime = ZonedDateTime.now(java.time.ZoneOffset.UTC)
-        val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.getDefault())
+        val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSSSS", Locale.getDefault())
         return currentDateTime.format(formatter)
     }
 

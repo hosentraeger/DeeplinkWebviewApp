@@ -31,6 +31,7 @@ data class IamPayload(
     val contentId: String,
     val notificationImage: String? = null,
     val overlayImage : String? = null,
+    val eventId : String? = null,
     val expectFeedbackIfDisplayed: Boolean? = false,
     val expectFeedbackIfHit: Boolean? = false
 ) : Parcelable
